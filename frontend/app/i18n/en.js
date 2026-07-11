@@ -1,4 +1,14 @@
 export default {
+  breadcrumb: {
+    home: 'Home',
+    current: 'AI Maintenance',
+    history: 'History',
+    schedule: 'Schedule',
+    settings: 'Settings',
+    workflow: 'Workflow',
+    mcp: 'MCP Settings',
+    skill: 'AI Skill Settings'
+  },
   sidebar: {
     chat: 'Chat',
     workflow: 'Workflow',
@@ -155,7 +165,7 @@ export default {
     expandToolbar: 'Expand toolbar',
     collapsePanel: 'Collapse properties panel',
     expandPanel: 'Expand properties panel',
-    editorTitle: 'Workflow Editor (React Flow)',
+    editorTitle: 'Workflow Editor',
     selectWorkflow: 'Select workflow',
     unsaved: 'unsaved',
     clickToRun: 'Click to run this workflow in a new tab',

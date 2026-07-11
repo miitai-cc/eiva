@@ -85,13 +85,45 @@ const scheduleRefreshIntervalMs = 10000;
 function RobotIcon() {
   const { t } = useI18n();
   return (
-    <svg className="robot-icon" viewBox="0 0 24 24" role="img" aria-label={t('misc.robot')}>
-      <path className="robot-antenna" d="M12 5V3" />
-      <circle className="robot-antenna-dot" cx="12" cy="2.5" r="1" />
-      <rect className="robot-face" x="5" y="7" width="14" height="12" rx="4" />
-      <circle className="robot-eye" cx="9.5" cy="12" r="1.25" />
-      <circle className="robot-eye" cx="14.5" cy="12" r="1.25" />
-      <path className="robot-mouth" d="M9 15.5h6" />
+    <svg className="robot-icon" viewBox="0 0 64 64" role="img" aria-label={t('misc.robot')} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="nordic-body" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#f8fafc" />
+          <stop offset="100%" stopColor="#cbd5e1" />
+        </linearGradient>
+        <linearGradient id="nordic-glass" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#1e293b" />
+          <stop offset="100%" stopColor="#0f172a" />
+        </linearGradient>
+        <linearGradient id="nordic-eye" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#38bdf8" />
+          <stop offset="100%" stopColor="#0284c7" />
+        </linearGradient>
+        <filter id="soft-shadow" x="-10%" y="-10%" width="120%" height="120%">
+          <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#0f172a" floodOpacity="0.15" />
+        </filter>
+      </defs>
+      
+      {/* Ears */}
+      <rect x="6" y="28" width="6" height="12" rx="3" fill="#94a3b8" />
+      <rect x="52" y="28" width="6" height="12" rx="3" fill="#94a3b8" />
+
+      {/* Background shadow & Body */}
+      <rect x="12" y="16" width="40" height="36" rx="12" fill="url(#nordic-body)" filter="url(#soft-shadow)" />
+      
+      {/* Top highlight (3D edge) */}
+      <rect x="12" y="16" width="40" height="36" rx="12" fill="none" stroke="#ffffff" strokeWidth="2" strokeOpacity="0.8" />
+
+      {/* Antenna */}
+      <rect x="30" y="6" width="4" height="12" rx="2" fill="#94a3b8" />
+      <circle cx="32" cy="6" r="4" fill="url(#nordic-eye)" filter="url(#soft-shadow)" />
+
+      {/* Screen/Face */}
+      <rect x="18" y="24" width="28" height="16" rx="6" fill="url(#nordic-glass)" />
+
+      {/* Eyes */}
+      <circle cx="26" cy="32" r="2.5" fill="url(#nordic-eye)" />
+      <circle cx="38" cy="32" r="2.5" fill="url(#nordic-eye)" />
     </svg>
   );
 }
@@ -1299,9 +1331,13 @@ function App() {
 
       <section className="chat-panel">
         <header className="chat-header">
-          <div>
-            <h1>{t('chat.title')}</h1>
-            <p>{t('chat.subtitle')}</p>
+          <div className="chat-header-inner">
+            <nav className="breadcrumb" aria-label="breadcrumb">
+              <span className="breadcrumb-item">{t('breadcrumb.home')}</span>
+              <span className="breadcrumb-sep">/</span>
+              <span className="breadcrumb-item active">{t(`breadcrumb.${activeView}`)}</span>
+            </nav>
+            <h1 className="hero-title">{t(`breadcrumb.${activeView}`)}</h1>
           </div>
           {taskId && <span className="task-chip">Task ID: {taskId}</span>}
         </header>

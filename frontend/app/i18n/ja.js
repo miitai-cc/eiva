@@ -1,4 +1,14 @@
 export default {
+  breadcrumb: {
+    home: 'ホーム',
+    current: 'AIメンテナンス',
+    history: '履歴',
+    schedule: 'スケジュール',
+    settings: '設定',
+    workflow: 'ワークフロー',
+    mcp: 'MCP設定',
+    skill: 'AIスキル設定'
+  },
   sidebar: {
     chat: 'チャット',
     workflow: 'ワークフロー',
@@ -155,7 +165,7 @@ export default {
     expandToolbar: 'ツールバーを展開する',
     collapsePanel: 'プロパティパネルを折りたたむ',
     expandPanel: 'プロパティパネルを展開する',
-    editorTitle: 'ワークフローエディター (React Flow)',
+    editorTitle: 'ワークフローエディター',
     selectWorkflow: 'ワークフローを選択',
     unsaved: '未保存',
     clickToRun: 'クリックして新しいタブで実行',

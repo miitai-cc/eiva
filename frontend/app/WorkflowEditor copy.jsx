@@ -253,9 +253,9 @@ export default function WorkflowEditor() {
     swimlaneNode: SwimlaneNode,
   }), [t]);
 
-  const initialNodes = useMemo(() => [
+  const initialNodes = [
     { id: '1', type: 'startNode', position: { x: 250, y: 50 }, data: { label: t('workflow.nodes.startNode'), prompt: '' } },
-  ], [t]);
+  ];
 
   const LOCAL_STORAGE_KEY = 'eiva_workflow_data';
 
@@ -540,7 +540,7 @@ export default function WorkflowEditor() {
     }
   };
 
-  const addNode = useCallback((type, label, position) => {
+  const addNode = (type, label, position) => {
     const newNodeId = `node_${Date.now()}`;
     const newNode = {
       id: newNodeId,
@@ -559,7 +559,7 @@ export default function WorkflowEditor() {
     }
 
     setNodes((nds) => nds.concat(newNode));
-  }, [handleNodeDataChange, setNodes]);
+  };
 
   const onDragStart = (event, nodeType, label) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
@@ -599,7 +599,7 @@ export default function WorkflowEditor() {
     const data = propertyModalNode.data;
     const updateField = (key, value) => {
       handleNodeDataChange(propertyModalNode.id, key, value);
-
+      
       // Auto-update styles if noteNode autoSize is changed
       if (type === 'noteNode' && key === 'autoSize') {
         setNodes(nds => nds.map(n => {

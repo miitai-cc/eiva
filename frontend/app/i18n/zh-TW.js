@@ -1,4 +1,15 @@
 export default {
+  // Breadcrumb
+  breadcrumb: {
+    home: '首頁',
+    current: 'AI 功能維護',
+    history: '歷史紀錄',
+    schedule: '排程設定',
+    settings: '系統設定',
+    workflow: '工作流程',
+    mcp: 'MCP 設定',
+    skill: 'AI Skill 設定'
+  },
   sidebar: {
     chat: '對話',
     workflow: '工作流程',
@@ -155,7 +166,7 @@ export default {
     expandToolbar: '展開工具列',
     collapsePanel: '收合屬性面板',
     expandPanel: '展開屬性面板',
-    editorTitle: 'Workflow 編輯器 (React Flow)',
+    editorTitle: '工作流程 編輯器',
     selectWorkflow: '選擇工作流程',
     unsaved: '未儲存',
     clickToRun: '點擊在新分頁執行此工作流程',

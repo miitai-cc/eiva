@@ -303,6 +303,12 @@
   background-color: var(--c-danger-light, #fee2e2);
 }
 
+.workflow-context-menu-separator {
+  height: 1px;
+  background-color: var(--c-border);
+  margin: 4px 0;
+}
+
 /* ── Property Modal ─────────────────────────────────────────────────────── */
 .workflow-property-modal-overlay {
   position: absolute;
@@ -497,4 +503,334 @@
   white-space: pre-wrap;
   word-break: break-word;
   overflow: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Workflow Editor — Sidebar & Toolbar (Light Theme)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Left Sidebar ────────────────────────────────────────────────────── */
+
+.workflow-sidebar {
+  background-color: var(--c-surface);
+  overflow-y: auto;
+}
+
+.workflow-sidebar h3 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--c-text);
+  border-bottom: 1px solid var(--c-border);
+  padding-bottom: 8px;
+}
+
+.workflow-sidebar.right-sidebar h3 {
+  font-size: 16px;
+  margin-bottom: 16px;
+}
+
+.left-sidebar {
+  width: 200px;
+  border-right: 1px solid var(--c-border);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Node Palette Buttons ────────────────────────────────────────────── */
+
+.wf-toolbar-btn {
+  text-align: left;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm, 6px);
+  background-color: var(--c-surface);
+  color: var(--c-text);
+  border: 1px solid var(--c-border);
+  cursor: grab;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s var(--ease, ease);
+}
+
+.wf-toolbar-btn:hover {
+  background-color: var(--c-primary-light);
+  border-color: var(--c-primary);
+  color: var(--c-primary);
+}
+
+.wf-toolbar-btn:active {
+  cursor: grabbing;
+  transform: scale(0.97);
+}
+
+/* ── Sidebar Toggle ──────────────────────────────────────────────────── */
+
+.wf-toggle {
+  width: 20px;
+  background-color: var(--c-surface-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--c-text-faint);
+  font-size: 10px;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.wf-toggle:hover {
+  background-color: var(--c-border);
+  color: var(--c-text);
+}
+
+.left-sidebar + .wf-toggle {
+  border-right: 1px solid var(--c-border);
+}
+
+.right-sidebar-toggle {
+  border-left: 1px solid var(--c-border);
+}
+
+/* ── Right Sidebar (Property Panel) ──────────────────────────────────── */
+
+.right-sidebar {
+  width: 320px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--c-border);
+}
+
+/* ── Workflow Header ─────────────────────────────────────────────────── */
+
+.wf-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.wf-header-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.wf-header-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.wf-api-info {
+  font-size: 11px;
+  color: var(--c-text-faint);
+  margin-top: 4px;
+}
+
+.wf-api-link {
+  font-size: 11px;
+  color: var(--c-success);
+  margin-top: 2px;
+  display: flex;
+  gap: 4px;
+}
+
+.wf-api-link a {
+  color: var(--c-success);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 0.15s;
+}
+
+.wf-api-link a:hover {
+  text-decoration-color: var(--c-success);
+}
+
+/* ── Action Buttons ──────────────────────────────────────────────────── */
+
+.wf-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.wf-action-btn {
+  white-space: nowrap;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm, 6px);
+  background-color: var(--c-surface);
+  border: 1px solid var(--c-border);
+  color: var(--c-text);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s var(--ease, ease);
+}
+
+.wf-action-btn:hover {
+  background-color: var(--c-surface-alt);
+  border-color: var(--c-border-focus);
+}
+
+.wf-action-btn.primary {
+  background-color: var(--c-primary);
+  border-color: var(--c-primary);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.wf-action-btn.primary:hover {
+  background-color: var(--c-primary-hover);
+  border-color: var(--c-primary-hover);
+}
+
+.wf-action-btn.danger {
+  background-color: var(--c-danger-light);
+  border-color: var(--c-danger);
+  color: var(--c-danger);
+  font-weight: 600;
+}
+
+.wf-action-btn.danger:hover {
+  background-color: var(--c-danger);
+  color: #ffffff;
+}
+
+/* ── Workflow Selector ───────────────────────────────────────────────── */
+
+.wf-select {
+  padding: 6px;
+  border-radius: var(--radius-sm, 6px);
+  background-color: var(--c-surface);
+  color: var(--c-text);
+  border: 1px solid var(--c-border);
+  outline: none;
+  font-size: 13px;
+}
+
+.wf-select:focus {
+  border-color: var(--c-primary);
+}
+
+/* ── Property Panel Items ────────────────────────────────────────────── */
+
+.property-panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.property-panel-content .modal-field {
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.property-panel-content .modal-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--c-text-muted);
+}
+
+.property-panel-content .modal-field input,
+.property-panel-content .modal-field textarea,
+.property-panel-content .modal-field select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--c-border);
+  background-color: var(--c-bg);
+  color: var(--c-text);
+  font-size: 13px;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.property-panel-content .modal-field input:focus,
+.property-panel-content .modal-field textarea:focus,
+.property-panel-content .modal-field select:focus {
+  outline: none;
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 2px var(--c-primary-ring);
+}
+
+.property-panel-content .modal-select {
+  appearance: auto;
+}
+
+.wf-apply-btn {
+  padding: 10px;
+  border-radius: var(--radius-sm, 6px);
+  background-color: var(--c-primary);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background-color 0.15s;
+}
+
+.wf-apply-btn:hover {
+  background-color: var(--c-primary-hover);
+}
+
+.wf-delete-node-btn {
+  padding: 8px;
+  border-radius: var(--radius-sm, 6px);
+  background-color: transparent;
+  color: var(--c-danger);
+  border: 1px solid var(--c-danger);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+
+.wf-delete-node-btn:hover {
+  background-color: var(--c-danger);
+  color: #ffffff;
+}
+
+.wf-empty-hint {
+  color: var(--c-text-faint);
+  text-align: center;
+  margin-top: 60px;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+/* ── MiniMap Override ────────────────────────────────────────────────── */
+
+.react-flow__minimap {
+  background-color: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm, 6px);
+  box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.07));
+}
+
+/* ── Background Dots ─────────────────────────────────────────────────── */
+
+.react-flow__background {
+  background-color: var(--c-bg, #f8fafc);
+}
+
+.react-flow__background pattern circle {
+  fill: var(--c-border);
+}
+
+/* ── Context Menu Fix ────────────────────────────────────────────────── */
+
+.workflow-context-menu {
+  background-color: var(--c-surface);
+  border: 1px solid var(--c-border);
+}
+
+.workflow-context-menu .menu-item {
+  color: var(--c-text);
+}
+
+.workflow-context-menu .menu-item:hover {
+  background-color: var(--c-surface-alt);
 }
