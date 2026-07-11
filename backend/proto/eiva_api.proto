@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package eiva;
+
+// Client -> Server messages
+message ClientMessage {
+  oneof payload {
+    CreateTaskRequest create_task = 1;
+    StopTaskRequest stop_task = 2;
+    SubscribeTaskRequest subscribe_task = 3;
+    Ping ping = 4;
+  }
+}
+
+message CreateTaskRequest {
+  string requirement = 1;
+  string system_settings = 2; // JSON string
+}
+
+message StopTaskRequest {
+  string task_id = 1;
+}
+
+message SubscribeTaskRequest {
+  string task_id = 1;
+}
+
+message Ping {}
+
+// Server -> Client messages
+message ServerMessage {
+  oneof payload {
+    TaskCreatedEvent task_created = 1;
+    TaskStatusEvent task_status = 2;
+    TaskLogEvent task_log = 3;
+    TaskCompletedEvent task_completed = 4;
+    TaskFailedEvent task_failed = 5;
+    TaskInterruptedEvent task_interrupted = 6;
+    ErrorEvent error = 7;
+    Pong pong = 8;
+  }
+}
+
+message TaskCreatedEvent {
+  string task_id = 1;
+  string status = 2;
+}
+
+message TaskStatusEvent {
+  string task_id = 1;
+  string status = 2;
+}
+
+message TaskLogEvent {
+  string task_id = 1;
+  string message = 2;
+  string at = 3; // ISO8601 timestamp
+}
+
+message TaskCompletedEvent {
+  string task_id = 1;
+  string result = 2;
+  string at = 3;
+}
+
+message TaskFailedEvent {
+  string task_id = 1;
+  string error = 2;
+  string at = 3;
+}
+
+message TaskInterruptedEvent {
+  string task_id = 1;
+  string error = 2;
+  string at = 3;
+}
+
+message ErrorEvent {
+  string message = 1;
+}
+
+message Pong {}

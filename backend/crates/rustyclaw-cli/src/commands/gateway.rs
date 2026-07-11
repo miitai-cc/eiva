@@ -127,7 +127,7 @@ pub fn handle_status(config: &Config, json: bool) {
         .ssh
         .as_ref()
         .map(|s| s.bind.clone())
-        .unwrap_or_else(|| "0.0.0.0:2222".to_string());
+        .unwrap_or_else(|| "0.0.0.0:3000".to_string());
     let status = daemon::status(&config.settings_dir);
 
     if json {

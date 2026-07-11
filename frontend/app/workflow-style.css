@@ -1,0 +1,314 @@
+.workflow-editor-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--surface-primary, #000);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.workflow-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+  padding: 12px 20px;
+  background-color: var(--surface-secondary, #1a1a1a);
+  border-bottom: 1px solid var(--border-color, #333);
+}
+
+.workflow-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--text-primary, #fff);
+}
+
+.workflow-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.workflow-actions button {
+  white-space: nowrap;
+  background-color: var(--surface-tertiary, #2a2a2a);
+  color: var(--text-primary, #fff);
+  border: 1px solid var(--border-color, #444);
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.workflow-actions button:hover {
+  background-color: var(--surface-hover, #333);
+}
+
+.workflow-actions button.run-btn {
+  background-color: var(--accent-primary, #0066cc);
+  border-color: var(--accent-primary, #0066cc);
+}
+
+.workflow-actions button.run-btn:hover {
+  background-color: var(--accent-hover, #0052a3);
+}
+
+.workflow-canvas {
+  flex-grow: 1;
+  position: relative;
+}
+
+/* Custom Node Styles */
+.custom-node {
+  background-color: var(--surface-secondary, #1a1a1a);
+  border: 1px solid var(--border-color, #444);
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 200px;
+  color: var(--text-primary, #fff);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  font-family: inherit;
+}
+
+.custom-node.selected {
+  border-color: var(--accent-primary, #0066cc);
+  box-shadow: 0 0 0 1px var(--accent-primary, #0066cc);
+}
+
+.custom-node-header {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.custom-node-type {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.node-type-start { background-color: #2e7d32; color: #fff; }
+.node-type-agent { background-color: #0277bd; color: #fff; }
+.node-type-tool { background-color: #f57c00; color: #fff; }
+.node-type-end { background-color: #c62828; color: #fff; }
+.node-type-var { background-color: #6a1b9a; color: #fff; }
+.node-type-calc { background-color: #00838f; color: #fff; }
+.node-type-cond { background-color: #b28900; color: #fff; }
+
+.condition-node {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  min-width: 175px;
+  width: 175px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.condition-node.selected .diamond-shape {
+  background-color: var(--accent-primary, #0066cc);
+}
+
+.condition-node.selected .diamond-shape::after {
+  top: 3px; left: 3px; right: 3px; bottom: 3px;
+}
+
+.diamond-shape {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: var(--border-color, #444);
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  z-index: -1;
+}
+
+.diamond-shape::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px; right: 2px; bottom: 2px;
+  background-color: var(--surface-secondary, #1a1a1a);
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+.diamond-content {
+  text-align: center;
+  z-index: 1;
+  max-width: 120px;
+  word-break: break-word;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.custom-node-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.custom-node-body label {
+  font-size: 12px;
+  color: var(--text-secondary, #aaa);
+}
+
+.custom-node-body textarea, .custom-node-body input {
+  width: 100%;
+  background-color: var(--surface-primary, #000);
+  border: 1px solid var(--border-color, #444);
+  color: var(--text-primary, #fff);
+  border-radius: 4px;
+  padding: 6px;
+  font-size: 12px;
+  resize: vertical;
+  min-height: 40px;
+  box-sizing: border-box;
+}
+
+.custom-node-body textarea:focus, .custom-node-body input:focus {
+  outline: none;
+  border-color: var(--accent-primary, #0066cc);
+}
+
+/* React Flow Overrides for Dark Mode */
+.react-flow__panel {
+  background-color: var(--surface-secondary, #1a1a1a);
+  border-radius: 4px;
+  padding: 4px;
+  border: 1px solid var(--border-color, #333);
+}
+
+.react-flow__controls-button {
+  background-color: var(--surface-secondary, #1a1a1a);
+  border-bottom: 1px solid var(--border-color, #333);
+  color: var(--text-primary, #fff);
+  fill: var(--text-primary, #fff);
+}
+
+.react-flow__controls-button:hover {
+  background-color: var(--surface-hover, #333);
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none;
+}
+
+/* Context Menu */
+.workflow-context-menu {
+  position: absolute;
+  background-color: var(--surface-secondary, #1a1a1a);
+  border: 1px solid var(--border-color, #444);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
+  z-index: 1000;
+  padding: 4px 0;
+  min-width: 150px;
+}
+
+.workflow-context-menu .menu-item {
+  padding: 8px 16px;
+  color: var(--text-primary, #fff);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.workflow-context-menu .menu-item:hover {
+  background-color: var(--surface-hover, #333);
+}
+
+.workflow-context-menu .menu-item.delete {
+  color: #ff5252;
+}
+
+.workflow-context-menu .menu-item.delete:hover {
+  background-color: rgba(255, 82, 82, 0.1);
+}
+
+/* Property Modal */
+.workflow-property-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.workflow-property-modal {
+  background-color: var(--surface-secondary, #1a1a1a);
+  border: 1px solid var(--border-color, #444);
+  border-radius: 8px;
+  width: 400px;
+  max-width: 90%;
+  padding: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.workflow-property-modal h3 {
+  margin-top: 0;
+  color: var(--text-primary, #fff);
+  margin-bottom: 16px;
+}
+
+.modal-field {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-field label {
+  color: var(--text-secondary, #aaa);
+  font-size: 13px;
+}
+
+.modal-field input, .modal-field textarea, .modal-field select {
+  background-color: var(--surface-primary, #000);
+  border: 1px solid var(--border-color, #444);
+  color: var(--text-primary, #fff);
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.modal-field textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.modal-actions button {
+  background-color: var(--accent-primary, #0066cc);
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modal-actions button.secondary {
+  background-color: var(--surface-tertiary, #333);
+}
+
+.modal-actions button:hover {
+  opacity: 0.9;
+}

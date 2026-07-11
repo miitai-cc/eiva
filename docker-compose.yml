@@ -17,13 +17,14 @@ services:
     container_name: rustyclaw
     restart: unless-stopped
     ports:
-      - "3000:3000"   # Gateway / WebSocket
+      # - "3000:3000"   # SSH transport
+      - "39999:39999" # HTTP API (health, tasks, static files)
     volumes:
       - rustyclaw-data:/home/rustyclaw/.config/rustyclaw
       # Mount your config (uncomment and adjust path):
       # - ./config.toml:/home/rustyclaw/.config/rustyclaw/config.toml:ro
     environment:
-      - RUST_LOG=info
+      - RUSTYCLAW_LOG=rustyclaw=info
       # Provider API keys (set in .env or pass via environment):
       # - OPENAI_API_KEY=
       # - ANTHROPIC_API_KEY=
@@ -32,9 +33,9 @@ services:
       # - DISCORD_BOT_TOKEN=
       # - TELEGRAM_BOT_TOKEN=
       # - SLACK_BOT_TOKEN=
-    command: ["gateway", "--bind", "0.0.0.0:3000"]
+    command: ["run", "--ssh-listen", "0.0.0.0:3000"]
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:3000/health"]
+      test: ["CMD", "curl", "-sf", "http://localhost:39999/eiva/backend/api/ver-0.95/health"]
       interval: 30s
       timeout: 5s
       start_period: 10s

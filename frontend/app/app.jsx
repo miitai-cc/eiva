@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { eiva } from './eiva_api.js';
 import './style.css';
+import WorkflowEditor from './WorkflowEditor.jsx';
 
 const statusText = {
   idle: '尚未送出',
@@ -469,7 +471,7 @@ function App() {
   async function addSchedulePrompt(promptItem) {
     let nextItem = promptItem;
     try {
-      const response = await fetch('/api/schedules', {
+      const response = await fetch('/eiva/backend/api/ver-0.95/schedules', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(schedulePromptToPayload(promptItem))
@@ -613,7 +615,7 @@ function App() {
       cancelEditingSchedulePrompt();
     }
 
-    fetch(`/api/schedules/${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => {});
+    fetch(`/eiva/backend/api/ver-0.95/schedules/${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => {});
   }
 
   async function persistSchedulePrompt(item, { showError = false } = {}) {
@@ -621,8 +623,8 @@ function App() {
 
     const isLocalSchedule = isLocalSchedulePromptId(item.id);
     const endpoint = isLocalSchedule
-      ? '/api/schedules'
-      : `/api/schedules/${encodeURIComponent(item.id)}`;
+      ? '/eiva/backend/api/ver-0.95/schedules'
+      : `/eiva/backend/api/ver-0.95/schedules/${encodeURIComponent(item.id)}`;
     const method = isLocalSchedule ? 'POST' : 'PATCH';
 
     try {
@@ -659,7 +661,10 @@ function App() {
   }
 
   useEffect(() => {
-    const socket = window.io();
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.hostname}:39999/eiva/backend/api/ver-0.95/ws`;
+    const socket = new WebSocket(wsUrl);
+    socket.binaryType = 'arraybuffer';
     socketRef.current = socket;
 
     const appendLog = (entry, options = {}) => {
@@ -679,69 +684,74 @@ function App() {
       }
     };
 
-    socket.on('connect', () => appendLog({ message: 'WebSocket 已連線' }));
-    socket.on('disconnect', () => appendLog({ message: 'WebSocket 已中斷' }));
-    socket.on('task_started', (event) => {
-      setIsStopping(false);
-      setStatus('running');
-      appendLog({
-        taskId: event.taskId,
-        message: event.message || '任務已開始',
-        at: event.at
-      }, { addToHistory: true });
-    });
-    socket.on('task_log', (event) => {
-      const shouldRecordLog = !event.message?.startsWith('已訂閱任務 ');
-      appendLog({
-        taskId: event.taskId,
-        message: event.message,
-        at: event.at
-      }, { addToHistory: shouldRecordLog });
-    });
-    socket.on('task_completed', (event) => {
-      setIsStopping(false);
-      setStatus('completed');
-      setResult(event.result);
-      updateHistoryByTaskId(event.taskId, {
-        result: event.result,
-        completedAt: event.at
-      });
-      appendLog({
-        taskId: event.taskId,
-        message: '任務完成',
-        at: event.at
-      }, { addToHistory: true });
-    });
-    socket.on('task_failed', (event) => {
-      setIsStopping(false);
-      setStatus('failed');
-      setError(event.error || '任務處理失敗');
-      updateHistoryByTaskId(event.taskId, {
-        error: event.error || '任務處理失敗',
-        completedAt: event.at
-      });
-      appendLog({
-        taskId: event.taskId,
-        message: event.error || '任務處理失敗',
-        at: event.at
-      }, { addToHistory: true });
-    });
-    socket.on('task_interrupted', (event) => {
-      setIsStopping(false);
-      setStatus('interrupted');
-      setError(event.error || '任務已停止');
-      updateHistoryByTaskId(event.taskId, {
-        error: event.error || '任務已停止',
-        completedAt: event.at
-      });
-      appendLog({
-        taskId: event.taskId,
-        message: event.error || '任務已停止',
-        at: event.at
-      }, { addToHistory: true });
-    });
+    socket.onopen = () => {
+      appendLog({ message: 'WebSocket 已連線' });
+      const pingMsg = eiva.ClientMessage.create({ ping: {} });
+      socket.send(eiva.ClientMessage.encode(pingMsg).finish());
+    };
+    
+    socket.onclose = () => appendLog({ message: 'WebSocket 已中斷' });
+    
+    socket.onmessage = (event) => {
+      try {
+        const data = new Uint8Array(event.data);
+        const serverMsg = eiva.ServerMessage.decode(data);
+        const payloadType = serverMsg.payload;
+        
+        if (payloadType === 'taskCreated') {
+            const ev = serverMsg.taskCreated;
+            setTaskId(ev.taskId);
+            updateLatestHistory({ taskId: ev.taskId });
+            setRequirement('');
+            setLogs([{ at: new Date().toISOString(), message: '任務已建立' }]);
+            setStatus('queued');
+            setIsSubmitting(false);
+        } else if (payloadType === 'taskStatus') {
+            const ev = serverMsg.taskStatus;
+            if (ev.status === 'stopping') setIsStopping(true);
+            else if (ev.status === 'running') {
+              setIsStopping(false);
+              setStatus('running');
+              appendLog({ taskId: ev.taskId, message: '任務已開始', at: new Date().toISOString() }, { addToHistory: true });
+            }
+        } else if (payloadType === 'taskLog') {
+            const ev = serverMsg.taskLog;
+            const shouldRecordLog = !ev.message?.startsWith('已訂閱任務 ');
+            appendLog({ taskId: ev.taskId, message: ev.message, at: ev.at }, { addToHistory: shouldRecordLog });
+        } else if (payloadType === 'taskCompleted') {
+            const ev = serverMsg.taskCompleted;
+            setIsStopping(false);
+            setStatus('completed');
+            setResult(ev.result);
+            updateHistoryByTaskId(ev.taskId, { result: ev.result, completedAt: ev.at });
+            appendLog({ taskId: ev.taskId, message: '任務完成', at: ev.at }, { addToHistory: true });
+        } else if (payloadType === 'taskFailed') {
+            const ev = serverMsg.taskFailed;
+            setIsStopping(false);
+            setStatus('failed');
+            setError(ev.error || '任務處理失敗');
+            updateHistoryByTaskId(ev.taskId, { error: ev.error || '任務處理失敗', completedAt: ev.at });
+            appendLog({ taskId: ev.taskId, message: ev.error || '任務處理失敗', at: ev.at }, { addToHistory: true });
+        } else if (payloadType === 'taskInterrupted') {
+            const ev = serverMsg.taskInterrupted;
+            setIsStopping(false);
+            setStatus('interrupted');
+            setError(ev.error || '任務已停止');
+            updateHistoryByTaskId(ev.taskId, { error: ev.error || '任務已停止', completedAt: ev.at });
+            appendLog({ taskId: ev.taskId, message: ev.error || '任務已停止', at: ev.at }, { addToHistory: true });
+        } else if (payloadType === 'error') {
+            setIsSubmitting(false);
+            setStatus('failed');
+            setError(serverMsg.error.message);
+            updateLatestHistory({ error: serverMsg.error.message });
+            setLogs([{ at: new Date().toISOString(), message: serverMsg.error.message }]);
+        }
+      } catch (err) {
+        console.error("Failed to decode ServerMessage:", err);
+      }
+    };
 
-    return () => socket.disconnect();
+    return () => socket.close();
   }, []);
 
   useEffect(() => {
@@ -749,7 +759,7 @@ function App() {
 
 	    async function loadSchedulesFromApi() {
 	      try {
-	        const response = await fetch('/api/schedules');
+	        const response = await fetch('/eiva/backend/api/ver-0.95/schedules');
 	        if (!response.ok) return;
 	        const payload = await response.json();
 	        if (!isMounted || !Array.isArray(payload.schedules)) return;
@@ -789,7 +799,7 @@ function App() {
 
     async function loadHistoryFromApi() {
       try {
-        const response = await fetch('/api/tasks?limit=30');
+        const response = await fetch('/eiva/backend/api/ver-0.95/tasks?limit=30');
         if (!response.ok) return;
         const payload = await response.json();
         if (!isMounted || !Array.isArray(payload.tasks)) return;
@@ -821,7 +831,7 @@ function App() {
     async function syncPendingHistory() {
       const updates = await Promise.all(pendingItems.map(async (item) => {
         try {
-          const response = await fetch(`/api/tasks/${encodeURIComponent(item.taskId)}`);
+          const response = await fetch(`/eiva/backend/api/ver-0.95/tasks/${encodeURIComponent(item.taskId)}`);
           if (response.status === 404) {
             return {
               taskId: item.taskId,
@@ -908,7 +918,7 @@ function App() {
           id: crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
           requirement: trimmed,
           taskId: '',
-          processLogs: [{ at: now, message: '任務已建立' }],
+          processLogs: [{ at: now, message: '任務已送出，等待後端建立...' }],
           createdAt: now
         },
         ...current
@@ -918,56 +928,19 @@ function App() {
     });
     setSelectedHistoryId('');
 
-    try {
-      const response = await fetch('/api/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requirement: trimmed, systemSettings })
-      });
-      const payload = await response.json();
-
-      if (!response.ok) {
-        throw new Error(payload.error || '建立任務失敗');
-      }
-
-      if (payload.type === 'schedule' && payload.schedule) {
-        const scheduleItem = normalizeSchedulePrompt(payload.schedule);
-        const message = payload.message || `已建立排程：${scheduleItem.sendAt}`;
-        const now = new Date().toISOString();
-
-        setStatus('completed');
-        setTaskId('');
-        setRequirement('');
-        setResult(message);
-        setLogs([{ at: now, message }]);
-        updateLatestHistory({
-          result: message,
-          completedAt: now,
-          processLogs: [{ at: now, message }]
-        });
-        setSchedulePrompts((current) => {
-          const next = [
-            scheduleItem,
-            ...current.filter((item) => item.id !== scheduleItem.id)
-          ];
-          saveSchedulePrompts(next);
-          return next;
-        });
-        return;
-      }
-
-      setTaskId(payload.taskId);
-      updateLatestHistory({ taskId: payload.taskId });
-      setRequirement('');
-      setLogs([{ at: new Date().toISOString(), message: '任務已建立' }]);
-      socketRef.current.emit('task_subscribe', payload.taskId);
-    } catch (submitError) {
-      setStatus('failed');
-      updateLatestHistory({ error: submitError.message });
-      setError(submitError.message);
-      setLogs([{ at: new Date().toISOString(), message: submitError.message }]);
-    } finally {
-      setIsSubmitting(false);
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+       const req = eiva.ClientMessage.create({
+           createTask: {
+               requirement: trimmed,
+               systemSettings: JSON.stringify(systemSettings)
+           }
+       });
+       socketRef.current.send(eiva.ClientMessage.encode(req).finish());
+    } else {
+       setIsSubmitting(false);
+       setStatus('failed');
+       setError('WebSocket 未連線');
+       updateLatestHistory({ error: 'WebSocket 未連線' });
     }
   }
 
@@ -979,21 +952,18 @@ function App() {
     setLogs((current) => [...current, entry]);
     appendProcessLogToHistory(taskId, entry);
 
-    try {
-      const response = await fetch(`/api/tasks/${encodeURIComponent(taskId)}/stop`, {
-        method: 'POST'
-      });
-      const payload = await response.json();
-
-      if (!response.ok) {
-        throw new Error(payload.error || '停止任務失敗');
-      }
-    } catch (stopError) {
-      const message = stopError instanceof Error ? stopError.message : '停止任務失敗';
-      const errorEntry = { at: new Date().toISOString(), message };
-      setLogs((current) => [...current, errorEntry]);
-      appendProcessLogToHistory(taskId, errorEntry);
-      setIsStopping(false);
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+       const req = eiva.ClientMessage.create({
+           stopTask: {
+               taskId: taskId
+           }
+       });
+       socketRef.current.send(eiva.ClientMessage.encode(req).finish());
+    } else {
+       setIsStopping(false);
+       const errorEntry = { at: new Date().toISOString(), message: 'WebSocket 未連線' };
+       setLogs((current) => [...current, errorEntry]);
+       appendProcessLogToHistory(taskId, errorEntry);
     }
   }
 
@@ -1250,6 +1220,13 @@ function App() {
           >
             系統設定
           </button>
+          <button
+            className={`nav-item ${activeView === 'workflow' ? 'active' : ''}`}
+            type="button"
+            onClick={() => setActiveView('workflow')}
+          >
+            工作流程 編輯器
+          </button>
         </nav>
       </aside>
 
@@ -1459,6 +1436,10 @@ function App() {
                 )}
 	              </div>
 	            </article>
+          ) : activeView === 'workflow' ? (
+            <article className="message assistant-message workflow-message" style={{ padding: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <WorkflowEditor />
+            </article>
           ) : (
             <article className="message assistant-message settings-message">
               <div className="avatar">

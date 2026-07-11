@@ -59,6 +59,13 @@ serde_yaml = "0.9"
 toml = "0.9"
 uuid = { version = "1.0", features = ["v4", "serde"] }
 
+# Web Framework
+salvo = { version = "0.73", features = ["cors", "serve-static", "logging", "websocket"] }
+
+# Protobuf
+prost = "0.13"
+prost-types = "0.13"
+
 # Error handling
 anyhow = "1.0"
 # `anyhow-tracing` is a drop-in extension of anyhow that supports named

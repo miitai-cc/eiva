@@ -329,7 +329,7 @@ pub async fn run_gateway(
                 }
             })
         })
-        .unwrap_or_else(|| "0.0.0.0:2222".to_string());
+        .unwrap_or_else(|| "0.0.0.0:3000".to_string());
 
     let bind_addr: SocketAddr = ssh_listen
         .parse()
@@ -362,10 +362,34 @@ pub async fn run_gateway(
         allow_unknown_keys_with_totp: config.totp_enabled,
     };
 
+    let db_path = config.settings_dir.join("workflows.sqlite3");
+    let workflow_db = crate::db::WorkflowDb::new(db_path);
+    if let Err(e) = workflow_db.init() {
+        error!(error = %e, "Failed to init workflow DB");
+    }
+
     let mut ssh_server = SshServer::new(ssh_cfg).await?;
     ssh_server.listen(bind_addr).await?;
 
-    info!(address = %bind_addr, "Gateway listening (SSH-only)");
+    // Start the Salvo API server in the background, tied to the cancel token
+    // so it shuts down when the gateway stops (preventing "Address already in use" on restart).
+    let task_mgr_api = task_mgr.clone();
+    let workflow_db_api = workflow_db.clone();
+    let api_cancel = cancel.child_token();
+    tokio::spawn(async move {
+        tokio::select! {
+            _ = api_cancel.cancelled() => {
+                info!("Salvo API server shutting down");
+            }
+            result = crate::api::run_server(task_mgr_api, workflow_db_api, 39999) => {
+                if let Err(e) = result {
+                    error!(error = %e, "Salvo API server error");
+                }
+            }
+        }
+    });
+
+    info!(address = %bind_addr, api_port = 39999, "Gateway started — SSH on {bind_addr}, API on 0.0.0.0:39999");
     if messenger_mgr.is_some() {
         info!("Messenger polling enabled");
     }

@@ -1,0 +1,61 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Kill Port 39999",
+      "type": "shell",
+      "command": "lsof -ti:39999 | xargs kill -9 2>/dev/null; echo 'Port 39999 freed'",
+      "presentation": {
+        "group": "eiva"
+      }
+    },
+    {
+      "label": "Start Frontend (Vite)",
+      "type": "npm",
+      "script": "dev",
+      "path": "frontend",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "custom",
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "VITE v",
+          "endsPattern": "ready in"
+        }
+      },
+      "presentation": {
+        "group": "eiva"
+      }
+    },
+    {
+      "label": "Start Backend Gateway (RustyClaw)",
+      "type": "shell",
+      "command": "cargo run -p rustyclaw -- gateway start",
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "rust",
+        "fileLocation": [
+          "relative",
+          "${workspaceFolder}/backend"
+        ],
+        "pattern": {
+          "regexp": "^$"
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Compiling",
+          "endsPattern": "Finished|gateway running"
+        }
+      },
+      "presentation": {
+        "group": "eiva"
+      }
+    }
+  ]
+}

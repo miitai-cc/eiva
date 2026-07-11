@@ -1,0 +1,43 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Frontend (Chrome)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:38999",
+      "webRoot": "${workspaceFolder}/frontend/app",
+      "preLaunchTask": "Start Frontend (Vite)"
+    },
+    {
+      "name": "Debug Backend Gateway (CodeLLDB)",
+      "type": "lldb",
+      "request": "launch",
+      "preLaunchTask": "Kill Port 39999",
+      "cargo": {
+        "args": [
+          "build",
+          "--manifest-path",
+          "${workspaceFolder}/backend/Cargo.toml",
+          "-p",
+          "rustyclaw-gateway"
+        ]
+      },
+      "args": [
+        "run",
+        "--ssh-listen",
+        "0.0.0.0:3000"
+      ],
+      "cwd": "${workspaceFolder}/backend"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Launch EIVA (Full Stack)",
+      "configurations": [
+        "Launch Frontend (Chrome)",
+        "Debug Backend Gateway (CodeLLDB)"
+      ]
+    }
+  ]
+}

@@ -5,12 +5,14 @@
 //! [`rustyclaw_core::gateway`], which this crate builds upon.
 
 mod admin;
+mod api;
 mod auth;
 mod canvas_handler;
 mod chat;
 mod cli;
 mod command_wrapper;
 mod concurrent;
+pub mod db;
 mod dispatch;
 mod engine_handler;
 mod errors;
@@ -45,6 +47,7 @@ use anyhow::Result;
 use clap::Parser;
 use rustyclaw_core::config::Config;
 use rustyclaw_core::daemon;
+use rustyclaw_core::logging;
 use rustyclaw_core::gateway::{CopilotSession, GatewayOptions, ModelContext};
 use rustyclaw_core::secrets::SecretsManager;
 use rustyclaw_core::skills::SkillManager;
@@ -97,6 +100,7 @@ pub(crate) const COMPACTION_THRESHOLD: f64 = 0.75;
 async fn main() -> Result<()> {
     let cli = GatewayCli::parse();
     t::init_color(cli.common.no_color);
+    logging::init_from_env();
     let config_path = cli.common.config_path();
     let mut config = Config::load(config_path)?;
     cli.common.apply_overrides(&mut config);
@@ -155,7 +159,7 @@ async fn main() -> Result<()> {
                 }
             })
         })
-        .unwrap_or_else(|| "0.0.0.0:2222".to_string());
+        .unwrap_or_else(|| "0.0.0.0:3000".to_string());
 
     if !protocol_stdio {
         println!(
