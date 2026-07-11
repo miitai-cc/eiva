@@ -20,9 +20,11 @@ services:
       # - "3000:3000"   # SSH transport
       - "39999:39999" # HTTP API (health, tasks, static files)
     volumes:
-      - rustyclaw-data:/home/rustyclaw/.config/rustyclaw
-      # Mount your config (uncomment and adjust path):
-      # - ./config.toml:/home/rustyclaw/.config/rustyclaw/config.toml:ro
+      - rustyclaw-data:/home/rustyclaw/.config/rustyclaw  # settings / config / workspace root
+      - ./vol/skills:/home/rustyclaw/.config/rustyclaw/workspace/skills
+      - ./vol/prompts:/home/rustyclaw/.config/rustyclaw/workspace/prompts
+      - ./vol/files:/home/rustyclaw/.config/rustyclaw/workspace/files
+      - ./vol/assets:/home/rustyclaw/assets                   # served by Salvo API
     environment:
       - RUSTYCLAW_LOG=rustyclaw=info
       # Provider API keys (set in .env or pass via environment):

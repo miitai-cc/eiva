@@ -88,5 +88,5 @@ const vite = await createViteServer({
 app.use(vite.middlewares);
 
 server.listen(PORT, () => {
-  console.log(`web-Codex running at http://localhost:${PORT}`);
+  console.log(`Eiva running at http://localhost:${PORT}`);
 });

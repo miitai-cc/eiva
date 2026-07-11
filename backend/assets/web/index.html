@@ -1,24 +1,27 @@
 <!doctype html>
 <html lang="zh-Hant">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>web-Codex</title>
-    <script>
-      // Mock socket.io until migrated to SSE / RustyClaw WebSocket
-      window.io = function() {
-        return {
-          on: function(event, cb) { console.log('mock socket.on:', event); },
-          emit: function(event, data) { console.log('mock socket.emit:', event, data); },
-          off: function() {},
-          disconnect: function() {}
-        };
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eiva</title>
+  <script>
+    // Mock socket.io until migrated to SSE / RustyClaw WebSocket
+    window.io = function () {
+      return {
+        on: function (event, cb) { console.log('mock socket.on:', event); },
+        emit: function (event, data) { console.log('mock socket.emit:', event, data); },
+        off: function () { },
+        disconnect: function () { }
       };
-    </script>
-    <script type="module" crossorigin src="/assets/index-DTGE-26V.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-C65tI2pe.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+    };
+  </script>
+  <script type="module" crossorigin src="/assets/index-DTGE-26V.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-C65tI2pe.css">
+</head>
+
+<body>
+  <div id="root"></div>
+</body>
+
 </html>

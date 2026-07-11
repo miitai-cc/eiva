@@ -334,6 +334,142 @@ async fn run_workflow(req: &mut Request, res: &mut Response) {
     }
 }
 
+// --- MCP Server Handlers ---
+#[handler]
+async fn list_mcp_servers(res: &mut Response) {
+    if let Some(db) = WORKFLOW_DB.get() {
+        match db.list_mcp_servers().await {
+            Ok(list) => {
+                let parsed: Vec<serde_json::Value> = list.into_iter().filter_map(|s| serde_json::from_str(&s).ok()).collect();
+                res.render(Json(parsed));
+            }
+            Err(e) => {
+                res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+                res.render(Json(serde_json::json!({"error": e.to_string()})));
+            }
+        }
+    }
+}
+
+#[handler]
+async fn get_mcp_server(req: &mut Request, res: &mut Response) {
+    let id = req.param::<String>("id").unwrap_or_default();
+    if let Some(db) = WORKFLOW_DB.get() {
+        match db.get_mcp_server(id).await {
+            Ok(Some(data)) => res.render(Text::Json(data)),
+            Ok(None) => {
+                res.status_code(StatusCode::NOT_FOUND);
+                res.render(Json(serde_json::json!({"error": "Not found"})));
+            }
+            Err(e) => {
+                res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+                res.render(Json(serde_json::json!({"error": e.to_string()})));
+            }
+        }
+    }
+}
+
+#[handler]
+async fn save_mcp_server(req: &mut Request, res: &mut Response) {
+    let id = req.param::<String>("id").unwrap_or_default();
+    if let Ok(body) = req.parse_json::<serde_json::Value>().await {
+        if let Some(db) = WORKFLOW_DB.get() {
+            match db.save_mcp_server(id.clone(), body.to_string()).await {
+                Ok(_) => res.render(Json(serde_json::json!({"status": "success", "id": id}))),
+                Err(e) => {
+                    res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+                    res.render(Json(serde_json::json!({"error": e.to_string()})));
+                }
+            }
+        }
+    } else {
+        res.status_code(StatusCode::BAD_REQUEST);
+        res.render(Json(serde_json::json!({"error": "Invalid JSON"})));
+    }
+}
+
+#[handler]
+async fn delete_mcp_server(req: &mut Request, res: &mut Response) {
+    let id = req.param::<String>("id").unwrap_or_default();
+    if let Some(db) = WORKFLOW_DB.get() {
+        match db.delete_mcp_server(id).await {
+            Ok(_) => res.render(Json(serde_json::json!({"status": "success"}))),
+            Err(e) => {
+                res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+                res.render(Json(serde_json::json!({"error": e.to_string()})));
+            }
+        }
+    }
+}
+
+// --- AI Skill Handlers ---
+#[handler]
+async fn list_skills(res: &mut Response) {
+    if let Some(db) = WORKFLOW_DB.get() {
+        match db.list_skills().await {
+            Ok(list) => {
+                let parsed: Vec<serde_json::Value> = list.into_iter().filter_map(|s| serde_json::from_str(&s).ok()).collect();
+                res.render(Json(parsed));
+            }
+            Err(e) => {
+                res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+                res.render(Json(serde_json::json!({"error": e.to_string()})));
+            }
+        }
+    }
+}
+
+#[handler]
+async fn get_skill(req: &mut Request, res: &mut Response) {
+    let id = req.param::<String>("id").unwrap_or_default();
+    if let Some(db) = WORKFLOW_DB.get() {
+        match db.get_skill(id).await {
+            Ok(Some(data)) => res.render(Text::Json(data)),
+            Ok(None) => {
+                res.status_code(StatusCode::NOT_FOUND);
+                res.render(Json(serde_json::json!({"error": "Not found"})));
+            }
+            Err(e) => {
+                res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+                res.render(Json(serde_json::json!({"error": e.to_string()})));
+            }
+        }
+    }
+}
+
+#[handler]
+async fn save_skill(req: &mut Request, res: &mut Response) {
+    let id = req.param::<String>("id").unwrap_or_default();
+    if let Ok(body) = req.parse_json::<serde_json::Value>().await {
+        if let Some(db) = WORKFLOW_DB.get() {
+            match db.save_skill(id.clone(), body.to_string()).await {
+                Ok(_) => res.render(Json(serde_json::json!({"status": "success", "id": id}))),
+                Err(e) => {
+                    res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+                    res.render(Json(serde_json::json!({"error": e.to_string()})));
+                }
+            }
+        }
+    } else {
+        res.status_code(StatusCode::BAD_REQUEST);
+        res.render(Json(serde_json::json!({"error": "Invalid JSON"})));
+    }
+}
+
+#[handler]
+async fn delete_skill(req: &mut Request, res: &mut Response) {
+    let id = req.param::<String>("id").unwrap_or_default();
+    if let Some(db) = WORKFLOW_DB.get() {
+        match db.delete_skill(id).await {
+            Ok(_) => res.render(Json(serde_json::json!({"status": "success"}))),
+            Err(e) => {
+                res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+                res.render(Json(serde_json::json!({"error": e.to_string()})));
+            }
+        }
+    }
+}
+
 pub async fn run_server(task_mgr: Arc<TaskManager>, workflow_db: crate::db::WorkflowDb, port: u16) -> anyhow::Result<()> {
     // Initialize global state
     let _ = TASK_MGR.set(task_mgr);
@@ -388,6 +524,28 @@ pub async fn run_server(task_mgr: Arc<TaskManager>, workflow_db: crate::db::Work
                         .delete(delete_workflow)
                         .options(handle_options)
                         .push(Router::with_path("run").get(run_workflow))
+                )
+                .push(
+                    Router::with_path("mcp-servers")
+                        .get(list_mcp_servers)
+                )
+                .push(
+                    Router::with_path("mcp-server/<id>")
+                        .get(get_mcp_server)
+                        .post(save_mcp_server)
+                        .delete(delete_mcp_server)
+                        .options(handle_options)
+                )
+                .push(
+                    Router::with_path("skills")
+                        .get(list_skills)
+                )
+                .push(
+                    Router::with_path("skill/<id>")
+                        .get(get_skill)
+                        .post(save_skill)
+                        .delete(delete_skill)
+                        .options(handle_options)
                 )
         )
         .push(

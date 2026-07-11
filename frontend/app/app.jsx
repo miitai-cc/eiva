@@ -3,6 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { eiva } from './eiva_api.js';
 import './style.css';
 import WorkflowEditor from './WorkflowEditor.jsx';
+import McpConfigPage from './McpConfigPage.jsx';
+import SkillConfigPage from './SkillConfigPage.jsx';
 
 const statusText = {
   idle: '尚未送出',
@@ -103,7 +105,7 @@ function isMacPlatform() {
 
 function loadHistory() {
   try {
-    const parsed = JSON.parse(localStorage.getItem('web-codex-history') || '[]');
+    const parsed = JSON.parse(localStorage.getItem('Eiva-history') || '[]');
     if (!Array.isArray(parsed)) return [];
 
     return parsed.map((item) => {
@@ -120,7 +122,7 @@ function loadHistory() {
 
 function saveHistory(history) {
   try {
-    localStorage.setItem('web-codex-history', JSON.stringify(history.slice(0, 30)));
+    localStorage.setItem('Eiva-history', JSON.stringify(history.slice(0, 30)));
   } catch {
     // History is a convenience feature; task submission should still work without storage.
   }
@@ -128,7 +130,7 @@ function saveHistory(history) {
 
 function loadSchedulePrompts() {
   try {
-    const parsed = JSON.parse(localStorage.getItem('web-codex-schedule-prompts') || '[]');
+    const parsed = JSON.parse(localStorage.getItem('Eiva-schedule-prompts') || '[]');
     if (!Array.isArray(parsed)) return [];
 
     return parsed
@@ -315,7 +317,7 @@ function normalizeIntegerText(value, fallback, min, max) {
 
 function saveSchedulePrompts(prompts) {
   try {
-    localStorage.setItem('web-codex-schedule-prompts', JSON.stringify(prompts.slice(0, 30)));
+    localStorage.setItem('Eiva-schedule-prompts', JSON.stringify(prompts.slice(0, 30)));
   } catch {
     // Schedule prompts are local convenience data; the rest of the app should keep working.
   }
@@ -323,7 +325,7 @@ function saveSchedulePrompts(prompts) {
 
 function loadSystemSettings() {
   try {
-    const parsed = JSON.parse(localStorage.getItem('web-codex-system-settings') || '{}');
+    const parsed = JSON.parse(localStorage.getItem('Eiva-system-settings') || '{}');
     return systemSettingFields.reduce((settings, field) => ({
       ...settings,
       [field.key]: typeof parsed[field.key] === 'string' ? parsed[field.key] : ''
@@ -335,7 +337,7 @@ function loadSystemSettings() {
 
 function saveSystemSettings(settings) {
   try {
-    localStorage.setItem('web-codex-system-settings', JSON.stringify(settings));
+    localStorage.setItem('Eiva-system-settings', JSON.stringify(settings));
   } catch {
     // Settings are local convenience data; task submission can continue without storage.
   }
@@ -362,6 +364,7 @@ function App() {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
+  const [systemSidebarOpen, setSystemSidebarOpen] = useState(true);
   const [systemSettings, setSystemSettings] = useState(() => loadSystemSettings());
   const socketRef = useRef(null);
   const logRef = useRef(null);
@@ -615,7 +618,7 @@ function App() {
       cancelEditingSchedulePrompt();
     }
 
-    fetch(`/eiva/backend/api/ver-0.95/schedules/${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => {});
+    fetch(`/eiva/backend/api/ver-0.95/schedules/${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => { });
   }
 
   async function persistSchedulePrompt(item, { showError = false } = {}) {
@@ -689,62 +692,62 @@ function App() {
       const pingMsg = eiva.ClientMessage.create({ ping: {} });
       socket.send(eiva.ClientMessage.encode(pingMsg).finish());
     };
-    
+
     socket.onclose = () => appendLog({ message: 'WebSocket 已中斷' });
-    
+
     socket.onmessage = (event) => {
       try {
         const data = new Uint8Array(event.data);
         const serverMsg = eiva.ServerMessage.decode(data);
         const payloadType = serverMsg.payload;
-        
+
         if (payloadType === 'taskCreated') {
-            const ev = serverMsg.taskCreated;
-            setTaskId(ev.taskId);
-            updateLatestHistory({ taskId: ev.taskId });
-            setRequirement('');
-            setLogs([{ at: new Date().toISOString(), message: '任務已建立' }]);
-            setStatus('queued');
-            setIsSubmitting(false);
+          const ev = serverMsg.taskCreated;
+          setTaskId(ev.taskId);
+          updateLatestHistory({ taskId: ev.taskId });
+          setRequirement('');
+          setLogs([{ at: new Date().toISOString(), message: '任務已建立' }]);
+          setStatus('queued');
+          setIsSubmitting(false);
         } else if (payloadType === 'taskStatus') {
-            const ev = serverMsg.taskStatus;
-            if (ev.status === 'stopping') setIsStopping(true);
-            else if (ev.status === 'running') {
-              setIsStopping(false);
-              setStatus('running');
-              appendLog({ taskId: ev.taskId, message: '任務已開始', at: new Date().toISOString() }, { addToHistory: true });
-            }
+          const ev = serverMsg.taskStatus;
+          if (ev.status === 'stopping') setIsStopping(true);
+          else if (ev.status === 'running') {
+            setIsStopping(false);
+            setStatus('running');
+            appendLog({ taskId: ev.taskId, message: '任務已開始', at: new Date().toISOString() }, { addToHistory: true });
+          }
         } else if (payloadType === 'taskLog') {
-            const ev = serverMsg.taskLog;
-            const shouldRecordLog = !ev.message?.startsWith('已訂閱任務 ');
-            appendLog({ taskId: ev.taskId, message: ev.message, at: ev.at }, { addToHistory: shouldRecordLog });
+          const ev = serverMsg.taskLog;
+          const shouldRecordLog = !ev.message?.startsWith('已訂閱任務 ');
+          appendLog({ taskId: ev.taskId, message: ev.message, at: ev.at }, { addToHistory: shouldRecordLog });
         } else if (payloadType === 'taskCompleted') {
-            const ev = serverMsg.taskCompleted;
-            setIsStopping(false);
-            setStatus('completed');
-            setResult(ev.result);
-            updateHistoryByTaskId(ev.taskId, { result: ev.result, completedAt: ev.at });
-            appendLog({ taskId: ev.taskId, message: '任務完成', at: ev.at }, { addToHistory: true });
+          const ev = serverMsg.taskCompleted;
+          setIsStopping(false);
+          setStatus('completed');
+          setResult(ev.result);
+          updateHistoryByTaskId(ev.taskId, { result: ev.result, completedAt: ev.at });
+          appendLog({ taskId: ev.taskId, message: '任務完成', at: ev.at }, { addToHistory: true });
         } else if (payloadType === 'taskFailed') {
-            const ev = serverMsg.taskFailed;
-            setIsStopping(false);
-            setStatus('failed');
-            setError(ev.error || '任務處理失敗');
-            updateHistoryByTaskId(ev.taskId, { error: ev.error || '任務處理失敗', completedAt: ev.at });
-            appendLog({ taskId: ev.taskId, message: ev.error || '任務處理失敗', at: ev.at }, { addToHistory: true });
+          const ev = serverMsg.taskFailed;
+          setIsStopping(false);
+          setStatus('failed');
+          setError(ev.error || '任務處理失敗');
+          updateHistoryByTaskId(ev.taskId, { error: ev.error || '任務處理失敗', completedAt: ev.at });
+          appendLog({ taskId: ev.taskId, message: ev.error || '任務處理失敗', at: ev.at }, { addToHistory: true });
         } else if (payloadType === 'taskInterrupted') {
-            const ev = serverMsg.taskInterrupted;
-            setIsStopping(false);
-            setStatus('interrupted');
-            setError(ev.error || '任務已停止');
-            updateHistoryByTaskId(ev.taskId, { error: ev.error || '任務已停止', completedAt: ev.at });
-            appendLog({ taskId: ev.taskId, message: ev.error || '任務已停止', at: ev.at }, { addToHistory: true });
+          const ev = serverMsg.taskInterrupted;
+          setIsStopping(false);
+          setStatus('interrupted');
+          setError(ev.error || '任務已停止');
+          updateHistoryByTaskId(ev.taskId, { error: ev.error || '任務已停止', completedAt: ev.at });
+          appendLog({ taskId: ev.taskId, message: ev.error || '任務已停止', at: ev.at }, { addToHistory: true });
         } else if (payloadType === 'error') {
-            setIsSubmitting(false);
-            setStatus('failed');
-            setError(serverMsg.error.message);
-            updateLatestHistory({ error: serverMsg.error.message });
-            setLogs([{ at: new Date().toISOString(), message: serverMsg.error.message }]);
+          setIsSubmitting(false);
+          setStatus('failed');
+          setError(serverMsg.error.message);
+          updateLatestHistory({ error: serverMsg.error.message });
+          setLogs([{ at: new Date().toISOString(), message: serverMsg.error.message }]);
         }
       } catch (err) {
         console.error("Failed to decode ServerMessage:", err);
@@ -757,42 +760,42 @@ function App() {
   useEffect(() => {
     let isMounted = true;
 
-	    async function loadSchedulesFromApi() {
-	      try {
-	        const response = await fetch('/eiva/backend/api/ver-0.95/schedules');
-	        if (!response.ok) return;
-	        const payload = await response.json();
-	        if (!isMounted || !Array.isArray(payload.schedules)) return;
-	        const apiPrompts = payload.schedules.map(normalizeSchedulePrompt);
-	        const localNewerPrompts = [];
-	        setSchedulePrompts((current) => {
-	          const apiById = new Map(apiPrompts.map((item) => [item.id, item]));
-	          current.forEach((item) => {
-	            const apiItem = apiById.get(item.id);
-	            if (shouldPersistLocalSchedulePrompt(item, apiItem)) {
-	              localNewerPrompts.push(item);
-	            }
-	          });
-	          const next = mergeSchedulePrompts(current, apiPrompts);
-	          saveSchedulePrompts(next);
-	          return next;
-	        });
-	        queueMicrotask(() => {
-	          localNewerPrompts.forEach((item) => persistAndReconcileSchedulePrompt(item));
-	        });
-	      } catch {
-	        // Keep localStorage cache if SQLite API is unavailable.
-	      }
-	    }
-	
-	    loadSchedulesFromApi();
-	    const refreshTimer = setInterval(loadSchedulesFromApi, scheduleRefreshIntervalMs);
-	
-	    return () => {
-	      isMounted = false;
-	      clearInterval(refreshTimer);
-	    };
-	  }, []);
+    async function loadSchedulesFromApi() {
+      try {
+        const response = await fetch('/eiva/backend/api/ver-0.95/schedules');
+        if (!response.ok) return;
+        const payload = await response.json();
+        if (!isMounted || !Array.isArray(payload.schedules)) return;
+        const apiPrompts = payload.schedules.map(normalizeSchedulePrompt);
+        const localNewerPrompts = [];
+        setSchedulePrompts((current) => {
+          const apiById = new Map(apiPrompts.map((item) => [item.id, item]));
+          current.forEach((item) => {
+            const apiItem = apiById.get(item.id);
+            if (shouldPersistLocalSchedulePrompt(item, apiItem)) {
+              localNewerPrompts.push(item);
+            }
+          });
+          const next = mergeSchedulePrompts(current, apiPrompts);
+          saveSchedulePrompts(next);
+          return next;
+        });
+        queueMicrotask(() => {
+          localNewerPrompts.forEach((item) => persistAndReconcileSchedulePrompt(item));
+        });
+      } catch {
+        // Keep localStorage cache if SQLite API is unavailable.
+      }
+    }
+
+    loadSchedulesFromApi();
+    const refreshTimer = setInterval(loadSchedulesFromApi, scheduleRefreshIntervalMs);
+
+    return () => {
+      isMounted = false;
+      clearInterval(refreshTimer);
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -929,18 +932,18 @@ function App() {
     setSelectedHistoryId('');
 
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-       const req = eiva.ClientMessage.create({
-           createTask: {
-               requirement: trimmed,
-               systemSettings: JSON.stringify(systemSettings)
-           }
-       });
-       socketRef.current.send(eiva.ClientMessage.encode(req).finish());
+      const req = eiva.ClientMessage.create({
+        createTask: {
+          requirement: trimmed,
+          systemSettings: JSON.stringify(systemSettings)
+        }
+      });
+      socketRef.current.send(eiva.ClientMessage.encode(req).finish());
     } else {
-       setIsSubmitting(false);
-       setStatus('failed');
-       setError('WebSocket 未連線');
-       updateLatestHistory({ error: 'WebSocket 未連線' });
+      setIsSubmitting(false);
+      setStatus('failed');
+      setError('WebSocket 未連線');
+      updateLatestHistory({ error: 'WebSocket 未連線' });
     }
   }
 
@@ -953,17 +956,17 @@ function App() {
     appendProcessLogToHistory(taskId, entry);
 
     if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-       const req = eiva.ClientMessage.create({
-           stopTask: {
-               taskId: taskId
-           }
-       });
-       socketRef.current.send(eiva.ClientMessage.encode(req).finish());
+      const req = eiva.ClientMessage.create({
+        stopTask: {
+          taskId: taskId
+        }
+      });
+      socketRef.current.send(eiva.ClientMessage.encode(req).finish());
     } else {
-       setIsStopping(false);
-       const errorEntry = { at: new Date().toISOString(), message: 'WebSocket 未連線' };
-       setLogs((current) => [...current, errorEntry]);
-       appendProcessLogToHistory(taskId, errorEntry);
+      setIsStopping(false);
+      const errorEntry = { at: new Date().toISOString(), message: 'WebSocket 未連線' };
+      setLogs((current) => [...current, errorEntry]);
+      appendProcessLogToHistory(taskId, errorEntry);
     }
   }
 
@@ -1183,54 +1186,79 @@ function App() {
   const standardSchedulePrompts = schedulePrompts.filter((item) => item.scheduleKind !== 'fixed');
 
   return (
-    <main className="app-shell">
-      <aside className="sidebar" aria-label="工作區">
-        <div className="brand">
-          <span className="brand-mark">
-            <RobotIcon />
-          </span>
-          <span>web-Codex</span>
+    <main className="app-shell" style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', height: '100%' }}>
+        {systemSidebarOpen && (
+          <aside className="sidebar" aria-label="工作區" style={{ width: '220px', overflowY: 'auto' }}>
+            <div className="brand">
+              <span className="brand-mark">
+                <RobotIcon />
+              </span>
+              <span>Eiva</span>
+            </div>
+            <nav className="sidebar-nav" aria-label="任務狀態">
+              <button
+                className={`nav-item ${activeView === 'current' ? 'active' : ''}`}
+                type="button"
+                onClick={() => setActiveView('current')}
+              >
+                AI 功能維護
+              </button>
+              <button
+                className={`nav-item ${activeView === 'history' ? 'active' : ''}`}
+                type="button"
+                onClick={() => setActiveView('history')}
+              >
+                歷史紀錄
+              </button>
+              <button
+                className={`nav-item ${activeView === 'schedule' ? 'active' : ''}`}
+                type="button"
+                onClick={() => setActiveView('schedule')}
+              >
+                排程設定
+              </button>
+              <button
+                className={`nav-item ${activeView === 'settings' ? 'active' : ''}`}
+                type="button"
+                onClick={() => setActiveView('settings')}
+              >
+                系統設定
+              </button>
+              <button
+                className={`nav-item ${activeView === 'workflow' ? 'active' : ''}`}
+                type="button"
+                onClick={() => setActiveView('workflow')}
+              >
+                工作流程 編輯器
+              </button>
+              <button
+                className={`nav-item ${activeView === 'mcp' ? 'active' : ''}`}
+                type="button"
+                onClick={() => setActiveView('mcp')}
+              >
+                MCP 伺服器維護
+              </button>
+              <button
+                className={`nav-item ${activeView === 'skill' ? 'active' : ''}`}
+                type="button"
+                onClick={() => setActiveView('skill')}
+              >
+                AI Skill 維護
+              </button>
+            </nav>
+          </aside>
+        )}
+        <div
+          style={{ width: '20px', backgroundColor: '#222', borderRight: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#888', fontSize: '10px' }}
+          onClick={() => setSystemSidebarOpen(!systemSidebarOpen)}
+          title={systemSidebarOpen ? '收合側邊欄' : '展開側邊欄'}
+        >
+          {systemSidebarOpen ? '◀' : '▶'}
         </div>
-        <nav className="sidebar-nav" aria-label="任務狀態">
-          <button
-            className={`nav-item ${activeView === 'current' ? 'active' : ''}`}
-            type="button"
-            onClick={() => setActiveView('current')}
-          >
-            AI 功能維護
-          </button>
-          <button
-            className={`nav-item ${activeView === 'history' ? 'active' : ''}`}
-            type="button"
-            onClick={() => setActiveView('history')}
-          >
-            歷史紀錄
-          </button>
-          <button
-            className={`nav-item ${activeView === 'schedule' ? 'active' : ''}`}
-            type="button"
-            onClick={() => setActiveView('schedule')}
-          >
-            排程設定
-          </button>
-          <button
-            className={`nav-item ${activeView === 'settings' ? 'active' : ''}`}
-            type="button"
-            onClick={() => setActiveView('settings')}
-          >
-            系統設定
-          </button>
-          <button
-            className={`nav-item ${activeView === 'workflow' ? 'active' : ''}`}
-            type="button"
-            onClick={() => setActiveView('workflow')}
-          >
-            工作流程 編輯器
-          </button>
-        </nav>
-      </aside>
+      </div>
 
-      <section className="chat-panel">
+      <section className="chat-panel" style={{ flex: 1, overflow: 'hidden' }}>
         <header className="chat-header">
           <div>
             <h1>需求派工工具</h1>
@@ -1393,53 +1421,55 @@ function App() {
                 <RobotIcon />
               </div>
               <div className="message-body">
-	                <div className="message-title">
-	                  <span>排程設定</span>
-	                  <div className="schedule-title-actions">
-	                    <button
-	                      className="schedule-text-button primary"
-	                      type="button"
-	                      onClick={addManualSchedulePrompt}
-	                    >
-	                      新增排程
-	                    </button>
-	                    <button
-	                      className="schedule-text-button primary"
-	                      type="button"
-	                      onClick={addManualFixedSchedulePrompt}
-	                    >
-	                      新增固定排程
-	                    </button>
-	                  </div>
-	                </div>
-	                {schedulePrompts.length > 0 ? (
-	                  <div className="schedule-prompt-area">
-	                    {standardSchedulePrompts.length > 0 && (
-	                      <section className="schedule-group">
-	                        <h2>一般排程</h2>
-	                        <div className="schedule-prompt-list" aria-label="一般排程清單">
-	                          {standardSchedulePrompts.map(renderSchedulePromptItem)}
-	                        </div>
-	                      </section>
-	                    )}
-	                    {fixedSchedulePrompts.length > 0 && (
-	                      <section className="schedule-group">
-	                        <h2>固定排程</h2>
-	                        <div className="schedule-prompt-list" aria-label="固定排程清單">
-	                          {fixedSchedulePrompts.map(renderSchedulePromptItem)}
-	                        </div>
-	                      </section>
-	                    )}
-	                  </div>
-	                ) : (
+                <div className="message-title">
+                  <span>排程設定</span>
+                  <div className="schedule-title-actions">
+                    <button
+                      className="schedule-text-button primary"
+                      type="button"
+                      onClick={addManualSchedulePrompt}
+                    >
+                      新增排程
+                    </button>
+                    <button
+                      className="schedule-text-button primary"
+                      type="button"
+                      onClick={addManualFixedSchedulePrompt}
+                    >
+                      新增固定排程
+                    </button>
+                  </div>
+                </div>
+                {schedulePrompts.length > 0 ? (
+                  <div className="schedule-prompt-area">
+                    {standardSchedulePrompts.length > 0 && (
+                      <section className="schedule-group">
+                        <h2>一般排程</h2>
+                        <div className="schedule-prompt-list" aria-label="一般排程清單">
+                          {standardSchedulePrompts.map(renderSchedulePromptItem)}
+                        </div>
+                      </section>
+                    )}
+                    {fixedSchedulePrompts.length > 0 && (
+                      <section className="schedule-group">
+                        <h2>固定排程</h2>
+                        <div className="schedule-prompt-list" aria-label="固定排程清單">
+                          {fixedSchedulePrompts.map(renderSchedulePromptItem)}
+                        </div>
+                      </section>
+                    )}
+                  </div>
+                ) : (
                   <p className="empty-state">目前尚無可調整的排程設定。可從歷史紀錄將需求提示詞加入排程。</p>
                 )}
-	              </div>
-	            </article>
-          ) : activeView === 'workflow' ? (
-            <article className="message assistant-message workflow-message" style={{ padding: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <WorkflowEditor />
+              </div>
             </article>
+          ) : activeView === 'workflow' ? (
+            <WorkflowEditor />
+          ) : activeView === 'mcp' ? (
+            <McpConfigPage />
+          ) : activeView === 'skill' ? (
+            <SkillConfigPage />
           ) : (
             <article className="message assistant-message settings-message">
               <div className="avatar">
