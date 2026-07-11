@@ -1,0 +1,319 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  check:
+    name: Check (${{ matrix.target }}, ${{ matrix.features_label }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ── Native Linux x86_64 ──────────────────────────────────
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+            features: ""
+            features_label: default
+            use_cross: false
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+            features: "--no-default-features"
+            features_label: no-default
+            use_cross: false
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+            features: "--features full"
+            features_label: full
+            use_cross: false
+
+          # ── ARM64 (Raspberry Pi 3/4/5 64-bit) ───────────────────
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-latest
+            features: "--no-default-features"
+            features_label: no-default
+            use_cross: true
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-latest
+            features: "--no-default-features --features web-tools"
+            features_label: web-tools
+            use_cross: true
+
+          # ── ARMv7 (Raspberry Pi 2/3 32-bit) ─────────────────────
+          - target: armv7-unknown-linux-gnueabihf
+            runner: ubuntu-latest
+            features: "--no-default-features"
+            features_label: no-default
+            use_cross: true
+
+          # ── macOS x86_64 ─────────────────────────────────────────
+          - target: x86_64-apple-darwin
+            runner: macos-latest
+            features: ""
+            features_label: default
+            use_cross: false
+
+          # ── macOS Apple Silicon ──────────────────────────────────
+          - target: aarch64-apple-darwin
+            runner: macos-latest
+            features: ""
+            features_label: default
+            use_cross: false
+
+          # ── Windows x86_64 ───────────────────────────────────────
+          - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+            features: ""
+            features_label: default
+            use_cross: false
+          - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+            features: "--no-default-features"
+            features_label: no-default
+            use_cross: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Install Linux system dependencies for desktop GUI
+        if: runner.os == 'Linux' && matrix.use_cross == false
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libxdo-dev
+
+      - name: Install OpenSSL (macOS x86_64)
+        if: matrix.target == 'x86_64-apple-darwin'
+        # Note: no brew onnxruntime here. macos-latest runners are arm64, so a
+        # brewed onnxruntime is the wrong architecture for an x86_64 check;
+        # ort-sys downloads matching x86_64 binaries itself instead.
+        run: |
+          brew install openssl@3
+          echo "OPENSSL_DIR=$(brew --prefix openssl@3)" >> $GITHUB_ENV
+          echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl@3)" >> $GITHUB_ENV
+
+      - name: Install cross
+        if: matrix.use_cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Check (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          if [ "${{ matrix.use_cross }}" = "true" ]; then
+            # Cross-compilation: build only core packages (exclude desktop client)
+            cross check --target ${{ matrix.target }} ${{ matrix.features }} --package rustyclaw-core --package rustyclaw --package rustyclaw-tui
+          elif [ "${{ matrix.target }}" = "x86_64-apple-darwin" ]; then
+            # ort ships no prebuilt ONNX Runtime binaries for x86_64 macOS,
+            # so the gateway's default `semantic-memory` feature cannot build
+            # on this target. Check the gateway without it; everything else
+            # gets a normal default-features check.
+            cargo check --target ${{ matrix.target }} ${{ matrix.features }} --workspace --exclude rustyclaw-gateway
+            cargo check --target ${{ matrix.target }} -p rustyclaw-gateway --no-default-features
+          else
+            cargo check --target ${{ matrix.target }} ${{ matrix.features }}
+          fi
+
+      - name: Check (Windows)
+        if: runner.os == 'Windows'
+        run: cargo check --target ${{ matrix.target }} ${{ matrix.features }}
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux system dependencies for desktop GUI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libxdo-dev
+
+      - uses: Swatinem/rust-cache@v2
+      
+      - name: Run unit tests (default features)
+        run: cargo test --lib --bins --package rustyclaw-core --package rustyclaw --package rustyclaw-tui
+      
+      - name: Run unit tests (no default features)
+        run: cargo test --lib --bins --no-default-features --package rustyclaw-core --package rustyclaw --package rustyclaw-tui
+      
+      - name: Run doc tests
+        run: cargo test --doc
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [check]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux system dependencies for desktop GUI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libxdo-dev
+      - uses: Swatinem/rust-cache@v2
+      
+      - name: Build debug binary
+        run: cargo build
+      
+      - name: Run integration tests
+        run: cargo test --test '*' -- --ignored --test-threads=1
+        env:
+          RUSTYCLAW_TEST_MODE: "1"
+        continue-on-error: true  # Some integration tests may require external services
+
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [check, test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux system dependencies for desktop GUI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libxdo-dev
+      - uses: Swatinem/rust-cache@v2
+      
+      - name: Build release binary
+        run: cargo build --release
+      
+      - name: Run E2E tests (basic)
+        run: |
+          # Run basic CLI E2E tests
+          ./target/release/rustyclaw --version
+          ./target/release/rustyclaw --help
+          ./target/release/rustyclaw gateway --help
+      
+      - name: Run E2E test suite
+        run: cargo test --test e2e -- --ignored --test-threads=1
+        env:
+          RUSTYCLAW_TEST_MODE: "1"
+        continue-on-error: true
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      # Clippy lints the whole workspace, including the Dioxus desktop crate,
+      # which links GTK/WebKit via glib-sys. Without these the clippy step fails
+      # at dependency build time (every other job installs them too).
+      - name: Install Linux system dependencies for desktop GUI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libxdo-dev
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run Clippy
+        # Lints the default-feature surface (what the rest of CI builds and tests).
+        # `--all-features`/`--features full` are NOT used: two optional features are
+        # currently broken and cannot compile —
+        #   - `qr`: qrcode 0.14 has no `Pixel` impl for image 0.25's `Luma<u8>`
+        #   - `browser`: chromiumoxide_cdp fails to build on current toolchains
+        # Restore broader feature coverage once those are resolved.
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: rustsec/audit-check@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+  build-release:
+    name: Build (${{ matrix.target }})
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [check, test, integration-tests]
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+            features: ""
+            use_cross: false
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-latest
+            features: "--no-default-features --features web-tools"
+            use_cross: true
+          - target: armv7-unknown-linux-gnueabihf
+            runner: ubuntu-latest
+            features: "--no-default-features --features web-tools"
+            use_cross: true
+          - target: x86_64-apple-darwin
+            runner: macos-latest
+            features: ""
+            use_cross: false
+          - target: aarch64-apple-darwin
+            runner: macos-latest
+            features: ""
+            use_cross: false
+          - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+            features: ""
+            use_cross: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross
+        if: matrix.use_cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Build release (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          if [ "${{ matrix.use_cross }}" = "true" ]; then
+            cross build --release --target ${{ matrix.target }} ${{ matrix.features }}
+          else
+            cargo build --release --target ${{ matrix.target }} ${{ matrix.features }}
+          fi
+
+      - name: Build release (Windows)
+        if: runner.os == 'Windows'
+        run: cargo build --release --target ${{ matrix.target }} ${{ matrix.features }}
+
+      - name: Package binaries (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p dist
+          cp target/${{ matrix.target }}/release/rustyclaw dist/rustyclaw-${{ matrix.target }} 2>/dev/null || true
+          cp target/${{ matrix.target }}/release/rustyclaw-gateway dist/rustyclaw-gateway-${{ matrix.target }} 2>/dev/null || true
+
+      - name: Package binaries (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+          Copy-Item "target/${{ matrix.target }}/release/rustyclaw.exe" "dist/rustyclaw-${{ matrix.target }}.exe" -ErrorAction SilentlyContinue
+          Copy-Item "target/${{ matrix.target }}/release/rustyclaw-gateway.exe" "dist/rustyclaw-gateway-${{ matrix.target }}.exe" -ErrorAction SilentlyContinue
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rustyclaw-${{ matrix.target }}
+          path: dist/

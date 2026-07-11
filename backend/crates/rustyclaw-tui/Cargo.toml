@@ -1,0 +1,36 @@
+[package]
+name = "rustyclaw-tui"
+description = "Terminal UI client for RustyClaw"
+keywords = ["ai", "agent", "tui", "terminal"]
+categories = ["command-line-utilities"]
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+rustyclaw-core.workspace = true
+rustyclaw-view.workspace = true
+
+# TUI framework
+iocraft.workspace = true
+smol.workspace = true
+
+# clap must remain a direct dependency because its derive macros expand to
+# `::clap::…` absolute paths that require it in the extern prelude.
+clap.workspace = true
+
+# TUI-specific dependencies
+anyhow-tracing.workspace = true
+
+# SSH pairing (used directly in pairing.rs)
+russh = { version = "0.61.2", features = ["async-trait"] }
+
+[features]
+default = []
