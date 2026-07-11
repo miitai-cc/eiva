@@ -83,6 +83,7 @@ const localScheduleIdPrefix = 'local-schedule-';
 const scheduleRefreshIntervalMs = 10000;
 
 function RobotIcon() {
+  const { t } = useI18n();
   return (
     <svg className="robot-icon" viewBox="0 0 24 24" role="img" aria-label={t('misc.robot')}>
       <path className="robot-antenna" d="M12 5V3" />
