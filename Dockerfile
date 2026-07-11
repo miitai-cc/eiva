@@ -7,31 +7,31 @@ WORKDIR /build
 
 # Cache dependencies: copy manifests first
 COPY Cargo.toml Cargo.lock ./
-COPY crates/rustyclaw-core/Cargo.toml crates/rustyclaw-core/
-COPY crates/rustyclaw-gateway/Cargo.toml crates/rustyclaw-gateway/
+COPY crates/eiva-core/Cargo.toml crates/eiva-core/
+COPY crates/eiva-gateway/Cargo.toml crates/eiva-gateway/
 
 # Create stub so cargo can resolve workspace
-RUN mkdir -p crates/rustyclaw-core/src crates/rustyclaw-gateway/src && \
-    echo "" > crates/rustyclaw-core/src/lib.rs && \
-    echo "fn main(){}" > crates/rustyclaw-gateway/src/main.rs
+RUN mkdir -p crates/eiva-core/src crates/eiva-gateway/src && \
+    echo "" > crates/eiva-core/src/lib.rs && \
+    echo "fn main(){}" > crates/eiva-gateway/src/main.rs
 
 # Pre-fetch and compile dependencies (cached unless manifest changes)
-RUN cargo build --release -p rustyclaw-gateway 2>/dev/null || true
+RUN cargo build --release -p eiva-gateway 2>/dev/null || true
 
 # Copy real source
-COPY crates/rustyclaw-core/src crates/rustyclaw-core/src
-COPY crates/rustyclaw-gateway/src crates/rustyclaw-gateway/src
+COPY crates/eiva-core/src crates/eiva-core/src
+COPY crates/eiva-gateway/src crates/eiva-gateway/src
 COPY vendor vendor
 
 # Force recompile of source (deps cache is still valid)
-RUN touch crates/rustyclaw-core/src/lib.rs crates/rustyclaw-gateway/src/main.rs
+RUN touch crates/eiva-core/src/lib.rs crates/eiva-gateway/src/main.rs
 
 # Build release binary (statically linked against musl via Alpine)
-RUN cargo build --release -p rustyclaw-gateway && \
-    cp target/release/rustyclaw-gateway /build/rustyclaw-gateway
+RUN cargo build --release -p eiva-gateway && \
+    cp target/release/eiva-gateway /build/eiva-gateway
 
 # Strip debug symbols
-RUN strip /build/rustyclaw-gateway
+RUN strip /build/eiva-gateway
 
 # ── Stage 2: Runtime ────────────────────────────────────────────────────────
 FROM alpine:3.21
@@ -41,20 +41,20 @@ RUN apk add --no-cache \
     curl
 
 # Create non-root user
-RUN addgroup -S rustyclaw && adduser -S -G rustyclaw -h /home/rustyclaw rustyclaw
+RUN addgroup -S eiva && adduser -S -G eiva -h /home/eiva eiva
 
-COPY --from=builder /build/rustyclaw-gateway /usr/local/bin/rustyclaw-gateway
+COPY --from=builder /build/eiva-gateway /usr/local/bin/eiva-gateway
 
-RUN mkdir -p /home/rustyclaw/.config/rustyclaw && \
-    chown -R rustyclaw:rustyclaw /home/rustyclaw
+RUN mkdir -p /home/eiva/.config/eiva && \
+    chown -R eiva:eiva /home/eiva
 
-USER rustyclaw
-WORKDIR /home/rustyclaw
+USER eiva
+WORKDIR /home/eiva
 
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -sf http://localhost:3000/health || exit 1
 
-ENTRYPOINT ["rustyclaw-gateway"]
+ENTRYPOINT ["eiva-gateway"]
 CMD ["run", "--ssh-listen", "0.0.0.0:39999"]

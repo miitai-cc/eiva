@@ -1,6 +1,6 @@
-# RustyClaw Security Model
+# Eiva Security Model
 
-RustyClaw is designed with the assumption that **AI agents cannot always be trusted**. While agents are powerful assistants, they can be manipulated through prompt injection, confused by adversarial inputs, or simply make mistakes. The security model provides defense-in-depth to protect sensitive data.
+Eiva is designed with the assumption that **AI agents cannot always be trusted**. While agents are powerful assistants, they can be manipulated through prompt injection, confused by adversarial inputs, or simply make mistakes. The security model provides defense-in-depth to protect sensitive data.
 
 ## Threat Model
 
@@ -27,7 +27,7 @@ RustyClaw is designed with the assumption that **AI agents cannot always be trus
 
 ### Layer 1: Encrypted Secrets Vault
 
-All secrets are stored in an AES-256 encrypted vault at `~/.rustyclaw/credentials/vault.json`. The encryption key can be:
+All secrets are stored in an AES-256 encrypted vault at `~/.eiva/credentials/vault.json`. The encryption key can be:
 
 - **Auto-generated**: Stored in `keyfile.key` (default for single-user setups)
 - **Password-derived**: User-provided password via Argon2id KDF
@@ -42,7 +42,7 @@ secrets_password_protected = true
 Optional TOTP 2FA adds a second factor for vault access:
 
 ```bash
-rustyclaw secrets totp enable
+eiva secrets totp enable
 ```
 
 This generates a QR code for your authenticator app. Once enabled, the agent (and user) must provide a valid TOTP code to access secrets.
@@ -60,9 +60,9 @@ Each credential can have its own access policy:
 
 ```bash
 # Set policy when storing
-rustyclaw secrets store github_token --policy approval
-rustyclaw secrets store prod_db_password --policy auth
-rustyclaw secrets store ssh_key --policy skill-only=git,ssh
+eiva secrets store github_token --policy approval
+eiva secrets store prod_db_password --policy auth
+eiva secrets store ssh_key --policy skill-only=git,ssh
 ```
 
 ### Layer 4: Agent Access Control
@@ -78,7 +78,7 @@ When disabled, the `secrets_list`, `secrets_get`, and `secrets_store` tools retu
 
 ### Layer 5: Path Protection
 
-The credentials directory (`~/.rustyclaw/credentials/`) is protected at the tool level:
+The credentials directory (`~/.eiva/credentials/`) is protected at the tool level:
 
 - `read_file` blocks reads from the credentials directory
 - `write_file` blocks writes to the credentials directory
@@ -160,7 +160,7 @@ deny_paths = ["/etc/shadow", "/root"]
 
 ## Credential Types
 
-RustyClaw supports various credential types with appropriate handling:
+Eiva supports various credential types with appropriate handling:
 
 | Type | Storage | Notes |
 |------|---------|-------|
@@ -175,16 +175,16 @@ RustyClaw supports various credential types with appropriate handling:
 
 ### SSH Key Generation
 
-RustyClaw can generate Ed25519 SSH keys directly:
+Eiva can generate Ed25519 SSH keys directly:
 
 ```bash
-rustyclaw secrets generate-ssh github_ssh
+eiva secrets generate-ssh github_ssh
 ```
 
 Both private and public keys are stored encrypted. Export the public key:
 
 ```bash
-rustyclaw secrets export github_ssh --public
+eiva secrets export github_ssh --public
 ```
 
 ## Rate Limiting & Lockout
@@ -197,7 +197,7 @@ To prevent brute force attacks:
 
 ## Audit Logging
 
-Access attempts are logged to `~/.rustyclaw/logs/security.log`:
+Access attempts are logged to `~/.eiva/logs/security.log`:
 
 ```
 2024-01-15T10:30:45Z INFO secrets_access name=github_token policy=WithApproval approved=true
@@ -213,7 +213,7 @@ Without sandbox isolation, an agent could theoretically bypass path checking via
 
 ```bash
 # This would bypass string matching (but sandbox blocks it)
-cat $(echo ~/.rustyclaw/cred*/vault.json)
+cat $(echo ~/.eiva/cred*/vault.json)
 ```
 
 **Mitigation**: Enable sandbox mode (`bwrap`, `landlock`, or `macos`). The credentials directory is not mounted in the sandbox namespace.
@@ -231,14 +231,14 @@ API keys passed via command-line flags (e.g., `--openrouter-api-key=sk-xxx`) are
 
 ```bash
 # ✅ Safe — not visible in process list
-OPENROUTER_API_KEY=sk-xxx rustyclaw onboard
+OPENROUTER_API_KEY=sk-xxx eiva onboard
 
 # ✅ Safe — read from file
 export OPENROUTER_API_KEY=$(cat ~/.secrets/openrouter.key)
-rustyclaw onboard
+eiva onboard
 
 # ❌ Avoid — visible in ps aux
-rustyclaw onboard --openrouter-api-key=sk-xxx
+eiva onboard --openrouter-api-key=sk-xxx
 ```
 
 The onboard wizard's interactive mode prompts for keys securely (no echo, not stored in history).
@@ -246,7 +246,7 @@ The onboard wizard's interactive mode prompts for keys securely (no echo, not st
 ### Memory Inspection (Low Risk)
 
 A sufficiently sophisticated agent could theoretically inspect `/proc/self/mem` or similar. This requires:
-- Same UID as the RustyClaw process
+- Same UID as the Eiva process
 - Knowledge of memory layout
 - Ability to parse raw memory
 
@@ -257,14 +257,14 @@ A sufficiently sophisticated agent could theoretically inspect `/proc/self/mem` 
 Please report security vulnerabilities privately:
 
 1. **Do not** open a public GitHub issue
-2. Email: security@rustyclaw.dev
+2. Email: security@eiva.dev
 3. Or use GitHub's private vulnerability reporting
 
 We aim to respond within 48 hours and release patches promptly.
 
 ## Comparison with OpenClaw
 
-| Feature | RustyClaw | OpenClaw |
+| Feature | Eiva | OpenClaw |
 |---------|-----------|----------|
 | Built-in secrets vault | ✅ Yes | ❌ No (uses 1Password, etc.) |
 | Built-in TOTP | ✅ Yes | ❌ No |

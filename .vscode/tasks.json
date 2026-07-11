@@ -31,9 +31,9 @@
       }
     },
     {
-      "label": "Start Backend Gateway (RustyClaw)",
+      "label": "Start Backend Gateway (Eiva)",
       "type": "shell",
-      "command": "cargo run -p rustyclaw -- gateway start",
+      "command": "cargo run -p eiva -- gateway start",
       "options": {
         "cwd": "${workspaceFolder}/backend"
       },

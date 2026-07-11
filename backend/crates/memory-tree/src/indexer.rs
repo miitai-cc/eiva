@@ -4,7 +4,7 @@
 //! can supply an [`Indexer`] that gets called on every admitted chunk —
 //! typically a wrapper around a vector store. The trait lives here, but
 //! production implementations live in their host crate (e.g.
-//! `rustyclaw_core::steel_memory_indexer`) to avoid forcing the dep on every
+//! `eiva_core::steel_memory_indexer`) to avoid forcing the dep on every
 //! memory-tree consumer.
 //!
 //! `Indexer::index` is called inside the buffer-append path so a slow

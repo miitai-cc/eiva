@@ -1,9 +1,9 @@
-# RustyClaw Client Specification
+# Eiva Client Specification
 
-> Version 1.0 — defines the requirements for a feature-complete RustyClaw client.
+> Version 1.0 — defines the requirements for a feature-complete Eiva client.
 
-A **client** is any frontend that connects to a RustyClaw gateway and presents
-the AI agent experience to a user. The reference client is `rustyclaw-tui`
+A **client** is any frontend that connects to a Eiva gateway and presents
+the AI agent experience to a user. The reference client is `eiva-tui`
 (terminal UI). Other planned clients include web, mobile, and headless/bot.
 
 ---
@@ -12,18 +12,18 @@ the AI agent experience to a user. The reference client is `rustyclaw-tui`
 
 ```text
 ┌──────────────────────────────────────────────────────────────┐
-│                      rustyclaw-core                          │
+│                      eiva-core                          │
 │  config · gateway protocol · secrets · skills · providers    │
 │  commands · streaming · soul · tools · sessions · messengers │
 └──────────────┬───────────────────────────────┬───────────────┘
                │                               │
     ┌──────────┴──────────┐         ┌──────────┴──────────┐
-    │   rustyclaw-tui     │         │   future-client     │
+    │   eiva-tui     │         │   future-client     │
     │  (reference client) │         │  (web, mobile, …)   │
     └─────────────────────┘         └─────────────────────┘
 ```
 
-Clients depend on `rustyclaw-core` for all shared logic. They **never**
+Clients depend on `eiva-core` for all shared logic. They **never**
 duplicate gateway protocol handling, config parsing, secrets management,
 or tool dispatch.
 
@@ -37,7 +37,7 @@ A feature-complete client MUST implement the following capabilities.
 
 | Requirement | Description |
 | --- | --- |
-| **SSH connect** | Connect to the gateway at a configured `ssh://` URL using the binary frame protocol defined in `rustyclaw-core::gateway`. |
+| **SSH connect** | Connect to the gateway at a configured `ssh://` URL using the binary frame protocol defined in `eiva-core::gateway`. |
 | **Wire framing** | Send and receive length-prefixed bincode `WireFrame<T>` envelopes. Stream `0` is reserved for connection-level control; chat requests SHOULD use nonzero client-allocated stream IDs. |
 | **Hello handshake** | Receive and process the `Hello` server frame (provider, model, version, capabilities). |
 | **Auth challenge** | Handle `AuthChallenge` frames — prompt the user for a TOTP code and send `AuthResponse`. |
@@ -107,7 +107,7 @@ A feature-complete client MUST implement the following capabilities.
 
 ### 2.8 Slash Commands
 
-The client MUST handle these slash commands (delegating to `rustyclaw-core::commands`):
+The client MUST handle these slash commands (delegating to `eiva-core::commands`):
 
 | Command | Description |
 | --- | --- |
@@ -128,7 +128,7 @@ The client MUST handle these slash commands (delegating to `rustyclaw-core::comm
 
 | Requirement | Description |
 | --- | --- |
-| **Load config** | Load from `~/.rustyclaw/config.toml` (or `--config` override). |
+| **Load config** | Load from `~/.eiva/config.toml` (or `--config` override). |
 | **Settings dir** | Respect `--settings-dir` override. |
 | **No-color mode** | Support `--no-color` / `NO_COLOR` env var. |
 | **Gateway URL** | Accept `--url` override for gateway WebSocket address. |
@@ -146,7 +146,7 @@ The client MUST handle these slash commands (delegating to `rustyclaw-core::comm
 
 ---
 
-## 3. Core Types (from `rustyclaw-core`)
+## 3. Core Types (from `eiva-core`)
 
 Clients MUST use these types from the core library — they should **not**
 redefine protocol or domain types.
@@ -195,9 +195,9 @@ In a future version, clients will register via a manifest:
 
 ```toml
 [client]
-name = "rustyclaw-tui"
+name = "eiva-tui"
 version = "0.1.0"
-description = "Terminal UI client for RustyClaw"
+description = "Terminal UI client for Eiva"
 capabilities = ["chat", "tools", "secrets", "sessions", "skills", "onboarding"]
 ```
 
@@ -217,7 +217,7 @@ A feature-complete client SHOULD:
 
 ## 6. Reference Implementation
 
-The reference client is `crates/rustyclaw-tui/`. Study it for:
+The reference client is `crates/eiva-tui/`. Study it for:
 
 - Gateway WebSocket lifecycle (`app/app.rs`)
 - Message rendering (`panes/messages.rs`)

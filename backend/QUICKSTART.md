@@ -1,6 +1,6 @@
-# RustyClaw Quick Start Guide
+# Eiva Quick Start Guide
 
-Get up and running with RustyClaw in just a few minutes!
+Get up and running with Eiva in just a few minutes!
 
 ## Installation
 
@@ -11,39 +11,39 @@ Get up and running with RustyClaw in just a few minutes!
 
 ```bash
 # Clone the repository
-git clone https://github.com/rexlunae/RustyClaw.git
-cd RustyClaw
+git clone https://github.com/rexlunae/Eiva.git
+cd Eiva
 
 # Build the project
 cargo build --release
 
-# The binary is now available at target/release/rustyclaw
+# The binary is now available at target/release/eiva
 ```
 
 ## First Run
 
 ```bash
-# Run RustyClaw
+# Run Eiva
 cargo run
 ```
 
 Or if you built the release version:
 
 ```bash
-./target/release/rustyclaw
+./target/release/eiva
 ```
 
 ## Interface Overview
 
-When RustyClaw starts, you'll see the Terminal User Interface (TUI):
+When Eiva starts, you'll see the Terminal User Interface (TUI):
 
 ```
 ╔═══════════════════════════════════════════════════════════╗
-║ RustyClaw - Lightweight Secure Agent                     ║
+║ Eiva - Lightweight Secure Agent                     ║
 ╚═══════════════════════════════════════════════════════════╝
 ╔═══════════════════════════════════════════════════════════╗
 ║ Messages                                                  ║
-║ Welcome to RustyClaw!                                     ║
+║ Welcome to Eiva!                                     ║
 ║ Type 'help' for available commands                       ║
 ╚═══════════════════════════════════════════════════════════╝
 ╔═══════════════════════════════════════════════════════════╗
@@ -79,11 +79,11 @@ Press **F4** to view your configuration:
 
 ### 3. Create a Skill
 
-Create a skill file in `~/.rustyclaw/skills`:
+Create a skill file in `~/.eiva/skills`:
 
 ```bash
-mkdir -p ~/.rustyclaw/skills
-cat > ~/.rustyclaw/skills/example.json << EOF
+mkdir -p ~/.eiva/skills
+cat > ~/.eiva/skills/example.json << EOF
 {
   "name": "example_skill",
   "description": "An example skill",
@@ -95,7 +95,7 @@ EOF
 
 ### 4. Reload Skills
 
-In RustyClaw, type:
+In Eiva, type:
 ```
 reload-skills
 ```
@@ -121,7 +121,7 @@ disable-access
 Edit the SOUL.md file to customize the agent's personality:
 
 ```bash
-nano ~/.rustyclaw/SOUL.md
+nano ~/.eiva/SOUL.md
 ```
 
 Press **F4** to view the SOUL content preview.
@@ -130,12 +130,12 @@ Press **F4** to view the SOUL content preview.
 
 ### Location
 
-Default configuration location: `~/.rustyclaw/config.toml`
+Default configuration location: `~/.eiva/config.toml`
 
 ### Example Configuration
 
 ```toml
-settings_dir = "/home/user/.rustyclaw"
+settings_dir = "/home/user/.eiva"
 use_secrets = true
 
 [[messengers]]
@@ -151,8 +151,8 @@ You can specify a custom configuration by modifying the code or setting environm
 
 ### Adding Skills
 
-1. Create a JSON or YAML file in `~/.rustyclaw/skills/`
-2. Type `reload-skills` in RustyClaw
+1. Create a JSON or YAML file in `~/.eiva/skills/`
+2. Type `reload-skills` in Eiva
 3. Press **F2** to verify the skill is loaded
 
 ### Managing Secrets
@@ -192,17 +192,17 @@ cargo build --release
 If configuration isn't loading:
 ```bash
 # Check if directory exists
-ls -la ~/.rustyclaw/
+ls -la ~/.eiva/
 
 # Create default configuration
-mkdir -p ~/.rustyclaw
-cp config.example.toml ~/.rustyclaw/config.toml
+mkdir -p ~/.eiva
+cp config.example.toml ~/.eiva/config.toml
 ```
 
 ### Skills Not Loading
 
 1. Check file format (JSON or YAML)
-2. Verify file is in `~/.rustyclaw/skills/`
+2. Verify file is in `~/.eiva/skills/`
 3. Use `reload-skills` command
 4. Check for syntax errors in skill files
 
@@ -222,10 +222,10 @@ cp config.example.toml ~/.rustyclaw/config.toml
 ## Example Session
 
 ```
-# Start RustyClaw
+# Start Eiva
 cargo run
 
-# In RustyClaw:
+# In Eiva:
 help                    # See available commands
 reload-skills          # Load skills
 enable-access          # Enable agent access to secrets
@@ -241,4 +241,4 @@ F1                     # Return to main view
 q                      # (from Main view)
 ```
 
-Happy coding with RustyClaw! 🦞
+Happy coding with Eiva! 🦞

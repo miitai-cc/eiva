@@ -323,7 +323,7 @@ impl futures::Stream for OpenAIStreamer {
 							// multiple tool calls (or fragments for different indices) into a
 							// single `delta.tool_calls` array; only handling `.first()` silently
 							// dropped every element past index 0, leaving those tool calls with
-							// empty arguments (see RustyClaw "Missing required parameter" bug).
+							// empty arguments (see Eiva "Missing required parameter" bug).
 							let mut first_tool_call: Option<ToolCall> = None;
 							if let Some(delta_tool_calls) = delta_tool_calls.as_array() {
 								for tool_call_obj_val in delta_tool_calls {

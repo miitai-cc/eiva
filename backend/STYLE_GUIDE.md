@@ -1,9 +1,9 @@
-# RustyClaw Rust Style Guide
+# Eiva Rust Style Guide
 
 ## 1. Purpose & Scope
 
-This guide defines the coding conventions and quality standards for the RustyClaw workspace
-(`rustyclaw-core`, `rustyclaw-cli`, `rustyclaw-tui`, `rustyclaw-desktop`). Rules here align
+This guide defines the coding conventions and quality standards for the Eiva workspace
+(`eiva-core`, `eiva-cli`, `eiva-tui`, `eiva-desktop`). Rules here align
 with and expand upon the project's existing [`CONTRIBUTING.md`](CONTRIBUTING.md),
 [`PHILOSOPHY.md`](PHILOSOPHY.md), [`ARCHITECTURE.md`](ARCHITECTURE.md), and
 [`SECURITY.md`](docs/SECURITY.md). This guide is informed by the community-curated
@@ -171,14 +171,14 @@ pub use messengers::{Messenger, Message};
 
 | Crate | Rule |
 |-------|------|
-| `rustyclaw-core`, `rustyclaw-tui` | Use `thiserror` for typed errors. No `anyhow` in public API. |
-| `rustyclaw-cli`, `rustyclaw-desktop` | `anyhow::Result` is fine at the top level. |
+| `eiva-core`, `eiva-tui` | Use `thiserror` for typed errors. No `anyhow` in public API. |
+| `eiva-cli`, `eiva-desktop` | `anyhow::Result` is fine at the top level. |
 
 Typed errors are small per-module `thiserror` enums defined next to the code
 that produces them (`CronError` in `cron.rs`, `SsrfError` in
 `security/ssrf.rs`, …) — there is deliberately no crate-wide `CoreError`
 catch-all. AI-tool implementations return `ToolResult`
-(`Result<String, ToolError>`, see `rustyclaw-core/src/tools/error.rs`):
+(`Result<String, ToolError>`, see `eiva-core/src/tools/error.rs`):
 `ToolError`'s `Display` output is the payload sent back to the model,
 per-module typed errors propagate into it via `#[from]`/`?`, and context
 is added with `ToolError::context("what failed", e)` — which renders as
@@ -407,7 +407,7 @@ workspace level via `[workspace.lints.rust]`).
 ### `tracing` is the logging framework
 
 Use `tracing::{error!, warn!, info!, debug!, trace!}`. No `println!` or `eprintln!` in library
-code (`rustyclaw-core`, `rustyclaw-tui`). User-facing CLI output in `rustyclaw-cli` is the
+code (`eiva-core`, `eiva-tui`). User-facing CLI output in `eiva-cli` is the
 exception.
 
 ```rust
@@ -528,8 +528,8 @@ pub fn gateway_url(&self) -> &str { … }
 Every crate's `lib.rs` (or `main.rs`) must have a `//!` block:
 
 ```rust
-//! `rustyclaw-core` — shared configuration, gateway protocol, secrets management,
-//! tool dispatch, skills, providers, and types used by all RustyClaw clients.
+//! `eiva-core` — shared configuration, gateway protocol, secrets management,
+//! tool dispatch, skills, providers, and types used by all Eiva clients.
 ```
 
 ### Unknown behavior
@@ -593,7 +593,7 @@ impl fmt::Debug for ApiKey {
 
 ### Subprocess execution through the sandbox
 
-All shell/subprocess execution goes through the sandbox layer (`crates/rustyclaw-core/src/sandbox.rs`).
+All shell/subprocess execution goes through the sandbox layer (`crates/eiva-core/src/sandbox.rs`).
 Never call `std::process::Command` directly in tool execution paths.
 
 ### Input validation at boundaries

@@ -1,14 +1,14 @@
-# RustyClaw Configuration Example
-# Copy this to ~/.rustyclaw/config.toml and customize
+# Eiva Configuration Example
+# Copy this to ~/.eiva/config.toml and customize
 
-# Directory for RustyClaw settings and data
-settings_dir = "/home/user/.rustyclaw"
+# Directory for Eiva settings and data
+settings_dir = "/home/user/.eiva"
 
 # Path to SOUL.md file (optional)
-# soul_path = "/home/user/.rustyclaw/SOUL.md"
+# soul_path = "/home/user/.eiva/SOUL.md"
 
 # Directory containing skills (optional)
-# skills_dir = "/home/user/.rustyclaw/skills"
+# skills_dir = "/home/user/.eiva/skills"
 
 # Whether to use the secrets storage system
 use_secrets = true
@@ -27,8 +27,8 @@ use_secrets = true
 # enabled = true
 # mode = "standalone"                              # "standalone" or "subsystem"
 # bind = "0.0.0.0:2222"                            # Listen address for standalone mode
-# host_key = "/home/user/.rustyclaw/ssh_host_key"  # Auto-generated if missing
-# authorized_keys = "/home/user/.rustyclaw/authorized_clients"
+# host_key = "/home/user/.eiva/ssh_host_key"  # Auto-generated if missing
+# authorized_keys = "/home/user/.eiva/authorized_clients"
 
 # Selected model provider and default model
 # [model]
@@ -58,8 +58,8 @@ use_secrets = true
 #
 # [engines.joshua]
 # enabled = true
-# port = 8331                                   # RustyClaw's default for joshua
-# models_dir = "/home/user/.rustyclaw/models/joshua"
+# port = 8331                                   # Eiva's default for joshua
+# models_dir = "/home/user/.eiva/models/joshua"
 # default_model = "qwen3-4b-Q4_K_M"             # GGUF file stem to serve
 # auto_start = true                             # start with the gateway
 #
@@ -71,9 +71,9 @@ use_secrets = true
 # [[messengers]]
 # name = "slack"
 # enabled = false
-# config_path = "/home/user/.rustyclaw/messengers/slack.toml"
+# config_path = "/home/user/.eiva/messengers/slack.toml"
 
 # [[messengers]]
 # name = "discord"
 # enabled = false
-# config_path = "/home/user/.rustyclaw/messengers/discord.toml"
+# config_path = "/home/user/.eiva/messengers/discord.toml"

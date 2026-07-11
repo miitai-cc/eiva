@@ -20,7 +20,7 @@
           "--manifest-path",
           "${workspaceFolder}/backend/Cargo.toml",
           "-p",
-          "rustyclaw-gateway"
+          "eiva-gateway"
         ]
       },
       "args": [

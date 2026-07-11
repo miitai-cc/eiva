@@ -1,25 +1,25 @@
 //! Exit code conformance tests.
 //!
-//! Tests that RustyClaw uses appropriate exit codes matching common conventions.
+//! Tests that Eiva uses appropriate exit codes matching common conventions.
 
 use std::process::Command;
 
-/// Run rustyclaw and get exit code
+/// Run eiva and get exit code
 fn exit_code(args: &[&str]) -> i32 {
     // Try the built binary first (faster)
-    let binary_path = concat!(env!("CARGO_MANIFEST_DIR"), "/target/debug/rustyclaw");
+    let binary_path = concat!(env!("CARGO_MANIFEST_DIR"), "/target/debug/eiva");
     
     let output = if std::path::Path::new(binary_path).exists() {
         Command::new(binary_path)
             .args(args)
             .output()
-            .expect("Failed to execute rustyclaw")
+            .expect("Failed to execute eiva")
     } else {
         Command::new("cargo")
-            .args(["run", "--bin", "rustyclaw", "--quiet", "--"])
+            .args(["run", "--bin", "eiva", "--quiet", "--"])
             .args(args)
             .output()
-            .expect("Failed to execute rustyclaw")
+            .expect("Failed to execute eiva")
     };
 
     output.status.code().unwrap_or(-1)

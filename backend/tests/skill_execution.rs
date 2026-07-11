@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use tempfile::TempDir;
 
 // We need to import from the library
-// Note: These tests use the public API from rustyclaw::skills
+// Note: These tests use the public API from eiva::skills
 
 /// Create a test skill directory with SKILL.md
 fn create_test_skill(dir: &std::path::Path, name: &str, content: &str) -> PathBuf {
@@ -340,7 +340,7 @@ enabled: true
 
 mod integration {
     use super::*;
-    use rustyclaw::skills::SkillManager;
+    use eiva::skills::SkillManager;
 
     #[test]
     fn test_full_skill_lifecycle() {

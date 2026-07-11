@@ -1,0 +1,44 @@
+[package]
+name = "eiva"
+description = "CLI binary for Eiva — main entry point and gateway daemon"
+keywords = ["ai", "agent", "cli"]
+categories = ["command-line-utilities"]
+default-run = "eiva"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+default = []
+matrix = ["eiva-core/matrix"]
+
+[dependencies]
+eiva-core.workspace = true
+eiva-onboard.workspace = true
+
+anyhow.workspace = true
+clap.workspace = true
+serde_json.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+tokio-tungstenite.workspace = true
+futures-util.workspace = true
+url.workspace = true
+colored.workspace = true
+rpassword.workspace = true
+dirs.workspace = true
+qrcode.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[[bin]]
+name = "eiva"
+path = "src/main.rs"

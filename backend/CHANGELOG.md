@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to RustyClaw will be documented in this file.
+All notable changes to Eiva will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -130,7 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Joshua local inference engine.** [Joshua](https://github.com/rexlunae/joshua)
   (pure-Rust GGUF server) is now a first-class engine and provider:
   detect/install (`cargo install`), start/stop (`joshua serve --model … --addr
-  127.0.0.1:8331`), GGUF model scan of `~/.rustyclaw/models/joshua` (or the
+  127.0.0.1:8331`), GGUF model scan of `~/.eiva/models/joshua` (or the
   configured `models_dir`), Hugging Face pulls (GGUF + `tokenizer.json`), and
   load/unload by restarting the single-model server. `EngineConfig` gains a
   `default_model` field for single-model-per-process engines, and engine
@@ -222,12 +222,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/RUST_IDIOMS_AUDIT.md` follow-ups #1 and #2 are marked fixed.
 - **Provider backend migrated to the `genai` crate.** The gateway's hand-rolled
   OpenAI / Anthropic / Google HTTP clients
-  (`rustyclaw-gateway/src/providers/{openai,anthropic,google}.rs`) are replaced
+  (`eiva-gateway/src/providers/{openai,anthropic,google}.rs`) are replaced
   by a single [`genai`](https://crates.io/crates/genai)-backed dispatch in
-  **`rustyclaw-core`** (`providers/genai_backend.rs`). It lives in core so the
+  **`eiva-core`** (`providers/genai_backend.rs`). It lives in core so the
   gateway and the client crates share one genai instance. Request building, tool
   calling, and SSE streaming (including Anthropic extended-thinking deltas) are
-  now handled by genai; RustyClaw still owns provider selection, credentials /
+  now handled by genai; Eiva still owns provider selection, credentials /
   Copilot session tokens, and the binary streaming frame protocol. Each provider
   id maps onto a genai adapter; all OpenAI-compatible providers (OpenRouter,
   Ollama, LM Studio, exo, OpenCode, GitHub Copilot, custom) use the OpenAI

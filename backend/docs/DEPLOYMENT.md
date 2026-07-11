@@ -1,18 +1,18 @@
 # Deployment Guide
 
-This guide covers deploying RustyClaw in production environments.
+This guide covers deploying Eiva in production environments.
 
 ## Quick Start
 
 ```bash
 # Install via setup script
-curl -fsSL https://raw.githubusercontent.com/rexlunae/RustyClaw/main/scripts/setup.sh | bash
+curl -fsSL https://raw.githubusercontent.com/rexlunae/Eiva/main/scripts/setup.sh | bash
 
 # Or install from crates.io
-cargo install rustyclaw
+cargo install eiva
 
 # Run the interactive setup
-rustyclaw onboard
+eiva onboard
 ```
 
 ## Deployment Options
@@ -20,7 +20,7 @@ rustyclaw onboard
 ### 1. Interactive TUI (Development/Personal Use)
 
 ```bash
-rustyclaw tui
+eiva tui
 ```
 
 The TUI provides a full chat interface with model selection, secrets management, and tool approval dialogs.
@@ -31,16 +31,16 @@ The gateway runs as a background service, exposing a WebSocket API for clients:
 
 ```bash
 # Start gateway daemon
-rustyclaw gateway start
+eiva gateway start
 
 # Or run in foreground with custom options
-rustyclaw gateway run --listen 127.0.0.1:3000
+eiva gateway run --listen 127.0.0.1:3000
 
 # Check status
-rustyclaw gateway status
+eiva gateway status
 
 # Stop daemon
-rustyclaw gateway stop
+eiva gateway stop
 ```
 
 **Gateway options:**
@@ -49,23 +49,23 @@ rustyclaw gateway stop
 | `--listen` | Bind address | `127.0.0.1:3000` |
 | `--tls-cert` | TLS certificate path | None |
 | `--tls-key` | TLS private key path | None |
-| `--config` | Config file path | `~/.config/rustyclaw/config.toml` |
+| `--config` | Config file path | `~/.config/eiva/config.toml` |
 
 ### 3. Systemd Service (Linux)
 
-Create `/etc/systemd/system/rustyclaw.service`:
+Create `/etc/systemd/system/eiva.service`:
 
 ```ini
 [Unit]
-Description=RustyClaw AI Gateway
+Description=Eiva AI Gateway
 After=network.target
 
 [Service]
 Type=simple
-User=rustyclaw
-Group=rustyclaw
-WorkingDirectory=/home/rustyclaw
-ExecStart=/usr/local/bin/rustyclaw gateway run --listen 127.0.0.1:3000
+User=eiva
+Group=eiva
+WorkingDirectory=/home/eiva
+ExecStart=/usr/local/bin/eiva gateway run --listen 127.0.0.1:3000
 Restart=on-failure
 RestartSec=5
 Environment=RUST_LOG=info
@@ -75,7 +75,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=/home/rustyclaw/.config/rustyclaw /home/rustyclaw/.local/share/rustyclaw
+ReadWritePaths=/home/eiva/.config/eiva /home/eiva/.local/share/eiva
 
 [Install]
 WantedBy=multi-user.target
@@ -83,15 +83,15 @@ WantedBy=multi-user.target
 
 ```bash
 # Create service user
-sudo useradd -r -s /bin/false rustyclaw
+sudo useradd -r -s /bin/false eiva
 
 # Enable and start
 sudo systemctl daemon-reload
-sudo systemctl enable rustyclaw
-sudo systemctl start rustyclaw
+sudo systemctl enable eiva
+sudo systemctl start eiva
 
 # Check logs
-journalctl -u rustyclaw -f
+journalctl -u eiva -f
 ```
 
 ### 4. Docker Container
@@ -99,22 +99,22 @@ journalctl -u rustyclaw -f
 ```dockerfile
 FROM rust:1.85-slim as builder
 WORKDIR /app
-RUN cargo install rustyclaw
+RUN cargo install eiva
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /usr/local/cargo/bin/rustyclaw /usr/local/bin/
+COPY --from=builder /usr/local/cargo/bin/eiva /usr/local/bin/
 EXPOSE 3000
-CMD ["rustyclaw", "gateway", "run", "--listen", "0.0.0.0:3000"]
+CMD ["eiva", "gateway", "run", "--listen", "0.0.0.0:3000"]
 ```
 
 ```bash
-docker build -t rustyclaw .
-docker run -d -p 3000:3000 -v ~/.config/rustyclaw:/root/.config/rustyclaw rustyclaw
+docker build -t eiva .
+docker run -d -p 3000:3000 -v ~/.config/eiva:/root/.config/eiva eiva
 ```
 
 ## Configuration
 
-Config file location: `~/.config/rustyclaw/config.toml`
+Config file location: `~/.config/eiva/config.toml`
 
 ```toml
 # Provider configuration
@@ -124,7 +124,7 @@ model = "claude-sonnet-4-20250514"
 
 # Workspace settings
 [workspace]
-dir = "~/.rustyclaw/workspace"
+dir = "~/.eiva/workspace"
 
 # Sandbox isolation
 [sandbox]
@@ -143,24 +143,24 @@ access_token = "..."
 # TLS configuration (for production)
 [gateway]
 listen = "0.0.0.0:3000"
-tls_cert = "/etc/rustyclaw/cert.pem"
-tls_key = "/etc/rustyclaw/key.pem"
+tls_cert = "/etc/eiva/cert.pem"
+tls_key = "/etc/eiva/key.pem"
 ```
 
 ## Secrets Management
 
-RustyClaw includes an encrypted vault for API keys and credentials:
+Eiva includes an encrypted vault for API keys and credentials:
 
 ```bash
 # Store a secret (interactive prompt for value)
-rustyclaw secrets store ANTHROPIC_API_KEY
+eiva secrets store ANTHROPIC_API_KEY
 
 # List stored secrets
-rustyclaw secrets list
+eiva secrets list
 
 # Vault is encrypted with AES-256 at rest
 # Optional TOTP 2FA for vault access
-rustyclaw secrets enable-totp
+eiva secrets enable-totp
 ```
 
 **Security policies:**
@@ -191,15 +191,15 @@ curl http://localhost:3000/metrics
 Set log level via environment variable:
 
 ```bash
-RUST_LOG=debug rustyclaw gateway run
-RUST_LOG=rustyclaw=debug,tower_http=info rustyclaw gateway run
+RUST_LOG=debug eiva gateway run
+RUST_LOG=eiva=debug,tower_http=info eiva gateway run
 ```
 
 Log levels: `error`, `warn`, `info`, `debug`, `trace`
 
 ### Observability
 
-RustyClaw records events via the Observer trait:
+Eiva records events via the Observer trait:
 - `LlmRequest` / `LlmResponse` — Provider call telemetry
 - `ToolCallStart` / `ToolCall` — Tool execution metrics
 - `ChannelMessage` — Messenger activity
@@ -221,7 +221,7 @@ Events are emitted to structured logs by default.
 
 ### Single Instance
 
-For most use cases, a single RustyClaw instance handles:
+For most use cases, a single Eiva instance handles:
 - Multiple concurrent WebSocket connections
 - Messenger polling (Telegram, Matrix, etc.)
 - Background task execution
@@ -244,36 +244,36 @@ For high availability:
 ss -tlnp | grep 3000
 
 # Check config syntax
-rustyclaw config validate
+eiva config validate
 
 # Run with debug logging
-RUST_LOG=debug rustyclaw gateway run
+RUST_LOG=debug eiva gateway run
 ```
 
 ### Provider authentication fails
 
 ```bash
 # Verify secret is stored
-rustyclaw secrets list
+eiva secrets list
 
 # Re-store the API key
-rustyclaw secrets store ANTHROPIC_API_KEY
+eiva secrets store ANTHROPIC_API_KEY
 
 # Test provider connectivity
-rustyclaw chat --message "hello" --once
+eiva chat --message "hello" --once
 ```
 
 ### Sandbox blocking tools
 
 ```bash
 # Check sandbox mode
-rustyclaw config get sandbox.mode
+eiva config get sandbox.mode
 
 # Temporarily disable for debugging
-rustyclaw config set sandbox.mode none
+eiva config set sandbox.mode none
 
 # Review deny_paths
-rustyclaw config get sandbox.deny_paths
+eiva config get sandbox.deny_paths
 ```
 
 ## Platform-Specific Notes

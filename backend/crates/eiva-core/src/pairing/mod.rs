@@ -1,0 +1,72 @@
+//! SSH pairing flow for Eiva clients and gateways.
+//!
+//! This module provides the infrastructure for pairing clients with gateways
+//! using Ed25519 keypairs. The pairing flow works as follows:
+//!
+//! ## Client Side
+//!
+//! 1. Generate an Ed25519 keypair (stored in `~/.eiva/client_ed25519_key`)
+//! 2. Display the public key for copy/paste or as a QR code
+//! 3. Connect to the gateway once the key has been authorized
+//!
+//! ## Gateway Side
+//!
+//! 1. Receive the client's public key (via QR scan, paste, or protocol)
+//! 2. Display the key fingerprint for verification
+//! 3. Add approved keys to `~/.eiva/authorized_clients`
+//!
+//! ## File Formats
+//!
+//! ### Client Private Key (`~/.eiva/client_ed25519_key`)
+//!
+//! Standard OpenSSH private key format (PEM-encoded).
+//!
+//! ### Authorized Clients (`~/.eiva/authorized_clients`)
+//!
+//! Same format as OpenSSH's `authorized_keys`:
+//! ```text
+//! # Eiva authorized clients
+//! ssh-ed25519 AAAAC3NzaC1lZDI1NTE5... laptop@user
+//! ssh-ed25519 AAAAC3NzaC1lZDI1NTE5... phone@user
+//! ```
+
+mod authorized;
+mod client_keys;
+mod fingerprint;
+mod qr;
+
+pub use client_keys::{
+    ClientKeyPair, default_client_key_path, generate_client_keypair, load_client_keypair,
+    save_client_keypair,
+};
+
+pub use authorized::{
+    AuthorizedClient, AuthorizedClients, add_authorized_client, default_authorized_clients_path,
+    load_authorized_clients, remove_authorized_client,
+};
+
+pub use qr::{PairingData, generate_pairing_qr, generate_pairing_qr_ascii, parse_pairing_qr};
+
+pub use fingerprint::{format_fingerprint_art, key_fingerprint, key_fingerprint_short};
+
+/// Default directory for Eiva configuration and keys.
+pub fn eiva_dir() -> std::path::PathBuf {
+    dirs::home_dir()
+        .map(|h| h.join(".eiva"))
+        .unwrap_or_else(|| std::path::PathBuf::from(".eiva"))
+}
+
+/// Ensure the Eiva directory exists with proper permissions.
+pub fn ensure_eiva_dir() -> std::io::Result<()> {
+    let dir = eiva_dir();
+    std::fs::create_dir_all(&dir)?;
+
+    // Set directory permissions to 700 on Unix
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&dir, std::fs::Permissions::from_mode(0o700))?;
+    }
+
+    Ok(())
+}

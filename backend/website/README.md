@@ -1,6 +1,6 @@
-# RustyClaw Website
+# Eiva Website
 
-Simple static landing page for RustyClaw.
+Simple static landing page for Eiva.
 
 ## Preview Locally
 
@@ -42,7 +42,7 @@ Edit `index.html` directly. All styles are embedded in `<style>` tags.
 Key sections:
 - **Hero** — Main headline and install command
 - **Stats bar** — Memory, startup time, version numbers
-- **Comparison table** — RustyClaw vs OpenClaw
+- **Comparison table** — Eiva vs OpenClaw
 - **Features grid** — Security highlights
 - **Status section** — Project progress (update percentages here!)
 - **Code example** — Getting started commands

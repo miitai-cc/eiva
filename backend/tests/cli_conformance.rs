@@ -1,24 +1,24 @@
 //! CLI conformance tests - golden file testing for help output and behavior.
 //!
-//! These tests verify that RustyClaw's CLI matches expected behavior and that
+//! These tests verify that Eiva's CLI matches expected behavior and that
 //! help text remains stable across versions.
 
 use std::process::Command;
 
-/// Helper to run rustyclaw with args and capture output
-fn run_rustyclaw(args: &[&str]) -> (String, String, i32) {
+/// Helper to run eiva with args and capture output
+fn run_eiva(args: &[&str]) -> (String, String, i32) {
     // Try the built binary first (faster, more reliable in test context)
-    let binary_path = concat!(env!("CARGO_MANIFEST_DIR"), "/target/debug/rustyclaw");
+    let binary_path = concat!(env!("CARGO_MANIFEST_DIR"), "/target/debug/eiva");
     
     let output = if std::path::Path::new(binary_path).exists() {
         Command::new(binary_path)
             .args(args)
             .output()
-            .expect("Failed to execute rustyclaw binary")
+            .expect("Failed to execute eiva binary")
     } else {
         // Fallback to cargo run with explicit binary
         Command::new("cargo")
-            .args(["run", "--bin", "rustyclaw", "--quiet", "--"])
+            .args(["run", "--bin", "eiva", "--quiet", "--"])
             .args(args)
             .output()
             .expect("Failed to execute cargo run")
@@ -35,16 +35,16 @@ fn run_rustyclaw(args: &[&str]) -> (String, String, i32) {
 
 #[test]
 fn test_help_shows_usage() {
-    let (stdout, _, code) = run_rustyclaw(&["--help"]);
+    let (stdout, _, code) = run_eiva(&["--help"]);
     
     assert_eq!(code, 0, "Help should exit with code 0");
-    assert!(stdout.contains("RustyClaw"), "Should contain app name");
+    assert!(stdout.contains("Eiva"), "Should contain app name");
     assert!(stdout.contains("Usage:"), "Should contain usage section");
 }
 
 #[test]
 fn test_help_shows_subcommands() {
-    let (stdout, _, _) = run_rustyclaw(&["--help"]);
+    let (stdout, _, _) = run_eiva(&["--help"]);
     
     // All expected subcommands
     let expected_commands = [
@@ -69,7 +69,7 @@ fn test_help_shows_subcommands() {
 
 #[test]
 fn test_help_shows_global_options() {
-    let (stdout, _, _) = run_rustyclaw(&["--help"]);
+    let (stdout, _, _) = run_eiva(&["--help"]);
     
     // Global options matching OpenClaw
     assert!(stdout.contains("--config") || stdout.contains("-c"), "Should have --config/-c");
@@ -79,11 +79,11 @@ fn test_help_shows_global_options() {
 
 #[test]
 fn test_version_output() {
-    let (stdout, _, code) = run_rustyclaw(&["--version"]);
+    let (stdout, _, code) = run_eiva(&["--version"]);
     
     assert_eq!(code, 0, "Version should exit with code 0");
-    assert!(stdout.contains("rustyclaw") || stdout.contains("RustyClaw"), "Should contain app name");
-    // Version format: rustyclaw X.Y.Z
+    assert!(stdout.contains("eiva") || stdout.contains("Eiva"), "Should contain app name");
+    // Version format: eiva X.Y.Z
     assert!(stdout.contains('.'), "Should contain version number with dots");
 }
 
@@ -91,7 +91,7 @@ fn test_version_output() {
 
 #[test]
 fn test_setup_help() {
-    let (stdout, _, code) = run_rustyclaw(&["setup", "--help"]);
+    let (stdout, _, code) = run_eiva(&["setup", "--help"]);
     
     assert_eq!(code, 0);
     assert!(stdout.contains("workspace") || stdout.contains("wizard"), "Setup should mention workspace or wizard");
@@ -99,7 +99,7 @@ fn test_setup_help() {
 
 #[test]
 fn test_gateway_help() {
-    let (stdout, _, code) = run_rustyclaw(&["gateway", "--help"]);
+    let (stdout, _, code) = run_eiva(&["gateway", "--help"]);
     
     assert_eq!(code, 0);
     // Gateway subcommands
@@ -115,7 +115,7 @@ fn test_gateway_help() {
 
 #[test]
 fn test_skills_help() {
-    let (stdout, _, code) = run_rustyclaw(&["skills", "--help"]);
+    let (stdout, _, code) = run_eiva(&["skills", "--help"]);
     
     assert_eq!(code, 0);
     assert!(stdout.to_lowercase().contains("list") || stdout.to_lowercase().contains("skill"),
@@ -124,7 +124,7 @@ fn test_skills_help() {
 
 #[test]
 fn test_doctor_help() {
-    let (stdout, _, code) = run_rustyclaw(&["doctor", "--help"]);
+    let (stdout, _, code) = run_eiva(&["doctor", "--help"]);
     
     assert_eq!(code, 0);
     assert!(stdout.contains("repair") || stdout.contains("check") || stdout.contains("health"),
@@ -133,7 +133,7 @@ fn test_doctor_help() {
 
 #[test]
 fn test_command_help() {
-    let (stdout, _, code) = run_rustyclaw(&["command", "--help"]);
+    let (stdout, _, code) = run_eiva(&["command", "--help"]);
     
     assert_eq!(code, 0);
     assert!(stdout.contains("message") || stdout.contains("send") || stdout.contains("command"),
@@ -144,7 +144,7 @@ fn test_command_help() {
 
 #[test]
 fn test_unknown_command_exits_nonzero() {
-    let (_, stderr, code) = run_rustyclaw(&["nonexistent-command-12345"]);
+    let (_, stderr, code) = run_eiva(&["nonexistent-command-12345"]);
     
     assert_ne!(code, 0, "Unknown command should exit with non-zero code");
     assert!(
@@ -155,7 +155,7 @@ fn test_unknown_command_exits_nonzero() {
 
 #[test]
 fn test_invalid_flag_exits_nonzero() {
-    let (_, stderr, code) = run_rustyclaw(&["--nonexistent-flag-12345"]);
+    let (_, stderr, code) = run_eiva(&["--nonexistent-flag-12345"]);
     
     assert_ne!(code, 0, "Invalid flag should exit with non-zero code");
     assert!(
@@ -169,7 +169,7 @@ fn test_invalid_flag_exits_nonzero() {
 #[test]
 fn test_env_var_config_recognized() {
     // This test verifies the env var is documented in help
-    let (stdout, _, _) = run_rustyclaw(&["--help"]);
+    let (stdout, _, _) = run_eiva(&["--help"]);
     
     // The help should mention RUSTYCLAW_CONFIG or similar
     // (clap shows env vars in help when configured)
@@ -183,7 +183,7 @@ fn test_env_var_config_recognized() {
 
 #[test]
 fn test_status_runs_without_gateway() {
-    let (stdout, stderr, code) = run_rustyclaw(&["status"]);
+    let (stdout, stderr, code) = run_eiva(&["status"]);
     
     // Status should work even without a running gateway
     // It might show "not connected" or similar, but shouldn't crash
@@ -198,7 +198,7 @@ fn test_status_runs_without_gateway() {
 
 #[test]
 fn test_config_get_help() {
-    let (stdout, _, code) = run_rustyclaw(&["config", "--help"]);
+    let (stdout, _, code) = run_eiva(&["config", "--help"]);
     
     // Config should have get/set subcommands
     assert!(code == 0 || code == 2, "Config help should work");

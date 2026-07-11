@@ -1,4 +1,4 @@
-//! End-to-end test suite for RustyClaw
+//! End-to-end test suite for Eiva
 //!
 //! These tests run complete user scenarios from start to finish.
 
@@ -7,21 +7,21 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 
-/// Get the rustyclaw binary path
+/// Get the eiva binary path
 fn binary_path() -> PathBuf {
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
 
-    let debug = PathBuf::from(&manifest_dir).join("target/debug/rustyclaw");
+    let debug = PathBuf::from(&manifest_dir).join("target/debug/eiva");
     if debug.exists() {
         return debug;
     }
 
-    PathBuf::from(&manifest_dir).join("target/release/rustyclaw")
+    PathBuf::from(&manifest_dir).join("target/release/eiva")
 }
 
 /// Create a temporary workspace
 fn temp_workspace() -> PathBuf {
-    let dir = std::env::temp_dir().join(format!("rustyclaw-e2e-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("eiva-e2e-{}", std::process::id()));
     fs::create_dir_all(&dir).unwrap();
     dir
 }
@@ -60,7 +60,7 @@ fn test_e2e_help_works() {
     assert!(output.status.success(), "Help should succeed");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("rustyclaw") || stdout.contains("RustyClaw"));
+    assert!(stdout.contains("eiva") || stdout.contains("Eiva"));
     assert!(stdout.contains("gateway"));
 }
 

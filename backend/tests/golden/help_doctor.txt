@@ -1,14 +1,14 @@
 Health checks + quick fixes for gateway and configuration
 
-Usage: rustyclaw doctor [OPTIONS]
+Usage: eiva doctor [OPTIONS]
 
 Options:
   -c, --config <PATH>       Path to a config.toml file [env: RUSTYCLAW_CONFIG=]
       --yes                 Accept defaults without prompting
       --repair              Apply recommended repairs without prompting
-      --settings-dir <DIR>  Settings directory (default: ~/.rustyclaw) [env: RUSTYCLAW_SETTINGS_DIR=]
+      --settings-dir <DIR>  Settings directory (default: ~/.eiva) [env: RUSTYCLAW_SETTINGS_DIR=]
       --non-interactive     Run without prompts (safe migrations only)
-      --profile <PROFILE>   Isolate state under ~/.rustyclaw-<PROFILE> [env: RUSTYCLAW_PROFILE=]
+      --profile <PROFILE>   Isolate state under ~/.eiva-<PROFILE> [env: RUSTYCLAW_PROFILE=]
       --json                Output JSON
       --no-color            Disable coloured terminal output [env: NO_COLOR=]
       --soul <PATH>         Path to SOUL.md [env: RUSTYCLAW_SOUL=]

@@ -1,6 +1,6 @@
 # PromptGuard for nanobot
 
-A prompt injection defense layer ported from [RustyClaw](https://github.com/rexlunae/RustyClaw) (MIT License).
+A prompt injection defense layer ported from [Eiva](https://github.com/rexlunae/Eiva) (MIT License).
 
 ## What it detects
 
@@ -84,13 +84,13 @@ Each category contributes to the total score (max 1.0 per category, normalized b
 
 ## License
 
-MIT License - Ported from RustyClaw by Persei Labs
+MIT License - Ported from Eiva by Persei Labs
 
 ## Attribution
 
 If you use this in your project, please credit:
 
 ```
-Prompt injection detection ported from RustyClaw
-https://github.com/rexlunae/RustyClaw
+Prompt injection detection ported from Eiva
+https://github.com/rexlunae/Eiva
 ```

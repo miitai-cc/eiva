@@ -1,8 +1,8 @@
-# RustyClaw Install Script for Windows
-# Installs prerequisites and RustyClaw via PowerShell
+# Eiva Install Script for Windows
+# Installs prerequisites and Eiva via PowerShell
 #
 # Usage (PowerShell as Admin):
-#   irm https://rexlunae.github.io/RustyClaw/install.ps1 | iex
+#   irm https://rexlunae.github.io/Eiva/install.ps1 | iex
 #
 # Or save and run:
 #   .\install.ps1 [-Features "matrix,browser"] [-Full]
@@ -21,7 +21,7 @@ function Write-Warn { param($msg) Write-Host "[WARN] " -ForegroundColor Yellow -
 function Write-Err { param($msg) Write-Host "[ERROR] " -ForegroundColor Red -NoNewline; Write-Host $msg; exit 1 }
 
 Write-Host ""
-Write-Host "🦀🦞 RustyClaw Installer for Windows" -ForegroundColor Cyan
+Write-Host "🦀🦞 Eiva Installer for Windows" -ForegroundColor Cyan
 Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -127,7 +127,7 @@ if ($vsInstalled) {
 } else {
     Write-Warn "Visual Studio Build Tools not found."
     Write-Host ""
-    Write-Host "RustyClaw requires the MSVC C++ build tools." -ForegroundColor Yellow
+    Write-Host "Eiva requires the MSVC C++ build tools." -ForegroundColor Yellow
     Write-Host ""
     Write-Host "Option 1: Install Visual Studio Build Tools (recommended)" -ForegroundColor White
     Write-Host "  Download from: https://visualstudio.microsoft.com/visual-cpp-build-tools/" -ForegroundColor Gray
@@ -147,22 +147,22 @@ if ($vsInstalled) {
     }
 }
 
-# Install RustyClaw
+# Install Eiva
 Write-Host ""
-Write-Info "Installing RustyClaw with features: $Features"
+Write-Info "Installing Eiva with features: $Features"
 
 if ($Features -eq "default") {
-    cargo install rustyclaw
+    cargo install eiva
 } else {
-    cargo install rustyclaw --features $Features
+    cargo install eiva --features $Features
 }
 
-Write-OK "RustyClaw installed!"
+Write-OK "Eiva installed!"
 
 # Verify
 Write-Host ""
 try {
-    $version = rustyclaw --version
+    $version = eiva --version
     Write-OK "Installation complete: $version"
 } catch {
     Write-OK "Installation complete!"
@@ -171,7 +171,7 @@ try {
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Cyan
 Write-Host "  1. Open a new terminal (to refresh PATH)"
-Write-Host "  2. Run: rustyclaw onboard"
-Write-Host "  3. Then: rustyclaw tui"
+Write-Host "  2. Run: eiva onboard"
+Write-Host "  3. Then: eiva tui"
 Write-Host ""
-Write-Host "Documentation: https://github.com/rexlunae/RustyClaw#readme" -ForegroundColor Gray
+Write-Host "Documentation: https://github.com/rexlunae/Eiva#readme" -ForegroundColor Gray

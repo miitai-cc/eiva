@@ -1,6 +1,6 @@
 # EIVA 系統通訊埠與 API 規格 (SPEC)
 
-本文件定義了 EIVA (Enterprise Intelligent Virtual Assistant) 系統整合 RustyClaw 作為底層引擎後，對外開放的通訊埠配置、靜態檔案目錄映射與 REST API 規範。
+本文件定義了 EIVA (Enterprise Intelligent Virtual Assistant) 系統整合 Eiva 作為底層引擎後，對外開放的通訊埠配置、靜態檔案目錄映射與 REST API 規範。
 
 ## 1. 系統通訊埠配置 (Ports Configuration)
 
@@ -8,7 +8,7 @@
 
 | 通訊埠 | 協定 / 用途 | 說明 |
 | --- | --- | --- |
-| **`3000`** | SSH / WebSocket Gateway | 這是原 RustyClaw 的原生 Gateway 通訊埠 (原預設為 2222 / 9001)。供底層 Agent 協定通訊、終端機連線或安全隧道使用。 |
+| **`3000`** | SSH / WebSocket Gateway | 這是原 Eiva 的原生 Gateway 通訊埠 (原預設為 2222 / 9001)。供底層 Agent 協定通訊、終端機連線或安全隧道使用。 |
 | **`39999`** | HTTP / WS (Salvo Framework) | 取代舊有 Node.js Server，以 Rust 實作的 Web API Server。負責提供前端靜態資源與前端所需的業務邏輯 REST API，並提供基於 Protobuf 的即時雙向 WebSocket 連線。 |
 | **`38999`** | React 開發伺服器 | 本機開發 (Local Dev) 時使用的前端 Vite 開發伺服器 (Frontend Dev Port)。 |
 
@@ -26,7 +26,7 @@
 所有的後端業務邏輯 API 都採用以下前綴：
 **`[GET/POST] http://localhost:39999/eiva/backend/api/ver-0.95/`**
 
-此 API 層會橋接 RustyClaw 內建的 `TaskManager` 與 `ThreadManager` 來統一管理任務，捨棄舊有的 JSON 檔案資料庫。
+此 API 層會橋接 Eiva 內建的 `TaskManager` 與 `ThreadManager` 來統一管理任務，捨棄舊有的 JSON 檔案資料庫。
 
 ### 3.1. 系統健康檢查
 - **端點**: `GET /health`
@@ -102,7 +102,7 @@
 
 | Dockerfile | 用途 | 內容 |
 | --- | --- | --- |
-| `Dockerfile` | 最小化正式部署 | `rustyclaw-gateway` binary (musl 靜態連結) + `ca-certificates` + `curl` |
+| `Dockerfile` | 最小化正式部署 | `eiva-gateway` binary (musl 靜態連結) + `ca-certificates` + `curl` |
 | `Dockerfile-SelfService` | 含 Node.js/Python 環境 | 同上 + `nodejs`、`npm`、`python3`、`py3-pip`、`poppler-utils` |
 
 建置腳本 `build-docker.sh`：
@@ -124,11 +124,11 @@ IMAGE_NAME=eiva ./build-docker.sh Dockerfile v1.0
 
 | 主機路徑 | 容器路徑 | 用途 |
 | --- | --- | --- |
-| `rustyclaw-data` (named volume) | `/home/rustyclaw/.config/rustyclaw` | 設定檔、credentials、workspace 根目錄 |
+| `eiva-data` (named volume) | `/home/eiva/.config/eiva` | 設定檔、credentials、workspace 根目錄 |
 | `./vol/skills/` | `<workspace_dir>/skills` | 自訂 AI Skills（`.md` 檔案） |
 | `./vol/prompts/` | `<workspace_dir>/prompts` | 提示詞範本、系統提示 |
 | `./vol/files/` | `<workspace_dir>/files` | 工作區檔案 (Agent 讀寫) |
-| `./vol/assets/` | `/home/rustyclaw/assets` | 靜態資源，由 Salvo API 提供 (`/eiva/frontend/view/*`, `/eiva/frontend/static/*`) |
+| `./vol/assets/` | `/home/eiva/assets` | 靜態資源，由 Salvo API 提供 (`/eiva/frontend/view/*`, `/eiva/frontend/static/*`) |
 
 ### 5.3. Docker Compose 啟動
 
@@ -147,7 +147,7 @@ docker compose down
 
 | 變數 | 預設值 | 說明 |
 | --- | --- | --- |
-| `RUSTYCLAW_LOG` | `rustyclaw=info` | Rust 後端的日誌層級過濾 (格式同 `RUST_LOG`) |
+| `RUSTYCLAW_LOG` | `eiva=info` | Rust 後端的日誌層級過濾 (格式同 `RUST_LOG`) |
 | `OPENAI_API_KEY` | — | OpenAI API 金鑰 |
 | `ANTHROPIC_API_KEY` | — | Anthropic API 金鑰 |
 | `GOOGLE_API_KEY` | — | Google AI API 金鑰 |
@@ -169,7 +169,7 @@ docker compose down
 啟動流程：
 1. **preLaunchTask** `Kill Port 39999`：自動清理殘留的 API Server process
 2. **preLaunchTask** `Start Frontend (Vite)`：啟動 Vite 開發伺服器
-3. **CodeLLDB**：編譯 `rustyclaw-gateway` 並以 LLDB 附加，SSH listen 於 `0.0.0.0:3000`
+3. **CodeLLDB**：編譯 `eiva-gateway` 並以 LLDB 附加，SSH listen 於 `0.0.0.0:3000`
 
 ### 5.6. 通訊埠一覽
 
@@ -193,7 +193,7 @@ eiva/
 │   ├── files/
 │   └── assets/
 ├── backend/
-│   ├── crates/rustyclaw-gateway/src/    # Gateway 後端原始碼
+│   ├── crates/eiva-gateway/src/    # Gateway 後端原始碼
 │   └── ...
 ├── frontend/
 │   └── app/                              # React SPA 原始碼

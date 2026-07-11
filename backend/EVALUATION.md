@@ -1,8 +1,8 @@
-# RustyClaw Evaluation — February 2026
+# Eiva Evaluation — February 2026
 
 ## Executive Summary
 
-RustyClaw is in excellent shape. The architecture is clean, the crate split (core/cli/tui) is correct, and the iocraft TUI rewrite is a significant improvement. The project is approximately **85-90% feature-complete** compared to OpenClaw, with clear gaps documented in PARITY_PLAN.md.
+Eiva is in excellent shape. The architecture is clean, the crate split (core/cli/tui) is correct, and the iocraft TUI rewrite is a significant improvement. The project is approximately **85-90% feature-complete** compared to OpenClaw, with clear gaps documented in PARITY_PLAN.md.
 
 **Bottom line:** Ready for beta users. Production-ready for single-user deployments.
 
@@ -14,9 +14,9 @@ RustyClaw is in excellent shape. The architecture is clean, the crate split (cor
 
 1. **Clean Crate Structure**
    ```
-   rustyclaw-core    — shared logic, tools, providers, config
-   rustyclaw-cli     — CLI binary
-   rustyclaw-tui     — terminal UI (now iocraft-based)
+   eiva-core    — shared logic, tools, providers, config
+   eiva-cli     — CLI binary
+   eiva-tui     — terminal UI (now iocraft-based)
    ```
    This separation is better than OpenClaw's monolithic structure.
 
@@ -57,7 +57,7 @@ RustyClaw is in excellent shape. The architecture is clean, the crate split (cor
 
 ### ✅ TUI Rewrite Complete
 
-The iocraft TUI rewrite is **complete and compiling**. Located in `crates/rustyclaw-tui/`:
+The iocraft TUI rewrite is **complete and compiling**. Located in `crates/eiva-tui/`:
 
 ```
 Module              | Lines  | Description
@@ -87,10 +87,10 @@ types.rs            | 1,798  | Shared types
 - `tool_perms_dialog.rs` — Tool permissions
 - `user_prompt_dialog.rs` — User prompts
 
-**Build verified:** `cargo check -p rustyclaw-tui` passes.
+**Build verified:** `cargo check -p eiva-tui` passes.
 
 2. **Messengers**
-   | Backend | RustyClaw | OpenClaw |
+   | Backend | Eiva | OpenClaw |
    |---------|-----------|----------|
    | Console | ✅ | ✅ |
    | Discord | ✅ | ✅ |
@@ -115,7 +115,7 @@ types.rs            | 1,798  | Shared types
 
 ## Comparison with OpenClaw 2026.2.23
 
-### OpenClaw Recent Features (Not Yet in RustyClaw)
+### OpenClaw Recent Features (Not Yet in Eiva)
 
 From OpenClaw changelog:
 
@@ -135,9 +135,9 @@ OpenClaw has had extensive security work:
 - Multiplexer/wrapper analysis
 - `safeBins` long-option validation
 
-**RustyClaw status:** Has SSRF module, prompt guard, safety layer — but hasn't undergone the same security audit intensity.
+**Eiva status:** Has SSRF module, prompt guard, safety layer — but hasn't undergone the same security audit intensity.
 
-### What RustyClaw Does Better
+### What Eiva Does Better
 
 1. **Memory Footprint** — ~15MB vs OpenClaw's Node.js overhead
 2. **Startup Time** — <50ms vs ~500ms
@@ -167,7 +167,7 @@ OpenClaw has had extensive security work:
 1. **iMessage/IRC/Google Chat** — Niche but requested
 2. **Kilo/Vercel Providers** — New provider integrations
 3. **Video Understanding** — Moonshot video support
-4. **Migration Guide** — OpenClaw → RustyClaw docs
+4. **Migration Guide** — OpenClaw → Eiva docs
 
 ### Low Priority
 
@@ -207,14 +207,14 @@ OpenClaw has had extensive security work:
 
 ## Verdict
 
-**RustyClaw is impressive.** The core architecture is sound, the tool coverage is comprehensive, and the sandbox implementation is actually MORE sophisticated than OpenClaw's.
+**Eiva is impressive.** The core architecture is sound, the tool coverage is comprehensive, and the sandbox implementation is actually MORE sophisticated than OpenClaw's.
 
 The main gaps are:
 1. Messenger coverage (WhatsApp, Slack, etc.)
 2. TUI completion (iocraft rewrite in progress)
 3. Security audit (needs OpenClaw-level scrutiny)
 
-For single-user deployments with Telegram/Discord/Signal, RustyClaw is ready now. For production multi-channel deployments, wait for WhatsApp/Slack.
+For single-user deployments with Telegram/Discord/Signal, Eiva is ready now. For production multi-channel deployments, wait for WhatsApp/Slack.
 
 **Recommendation:** Ship a beta release targeting developers who want the Rust performance benefits and are okay with fewer messenger options.
 
@@ -223,4 +223,4 @@ For single-user deployments with Telegram/Discord/Signal, RustyClaw is ready now
 *Evaluation Date: 2026-02-24*
 *Evaluator: Luthen (AI Assistant)*
 *OpenClaw Version: 2026.2.23*
-*RustyClaw Version: 0.2.0*
+*Eiva Version: 0.2.0*

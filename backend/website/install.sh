@@ -1,8 +1,8 @@
 #!/bin/bash
-# RustyClaw Install Script
-# Installs prerequisites and RustyClaw on Linux/macOS
+# Eiva Install Script
+# Installs prerequisites and Eiva on Linux/macOS
 #
-# Usage: curl -fsSL https://rexlunae.github.io/RustyClaw/install.sh | bash
+# Usage: curl -fsSL https://rexlunae.github.io/Eiva/install.sh | bash
 #    or: ./install.sh [--features <features>]
 
 set -e
@@ -20,7 +20,7 @@ warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
 
 echo ""
-echo "🦀🦞 RustyClaw Installer"
+echo "🦀🦞 Eiva Installer"
 echo "========================"
 echo ""
 
@@ -159,28 +159,28 @@ case $OS in
         ;;
 esac
 
-# Install RustyClaw
-info "Installing RustyClaw with features: $FEATURES"
+# Install Eiva
+info "Installing Eiva with features: $FEATURES"
 
 if [ "$FEATURES" = "default" ]; then
-    cargo install rustyclaw
+    cargo install eiva
 else
-    cargo install rustyclaw --features "$FEATURES"
+    cargo install eiva --features "$FEATURES"
 fi
 
-success "RustyClaw installed!"
+success "Eiva installed!"
 
 # Verify installation
-if command -v rustyclaw &> /dev/null; then
-    VERSION=$(rustyclaw --version 2>/dev/null || echo "unknown")
+if command -v eiva &> /dev/null; then
+    VERSION=$(eiva --version 2>/dev/null || echo "unknown")
     echo ""
     success "Installation complete: $VERSION"
     echo ""
     echo "Next steps:"
-    echo "  1. Run: rustyclaw onboard"
-    echo "  2. Then: rustyclaw tui"
+    echo "  1. Run: eiva onboard"
+    echo "  2. Then: eiva tui"
     echo ""
-    echo "Documentation: https://github.com/rexlunae/RustyClaw#readme"
+    echo "Documentation: https://github.com/rexlunae/Eiva#readme"
 else
-    error "Installation failed - rustyclaw not in PATH"
+    error "Installation failed - eiva not in PATH"
 fi

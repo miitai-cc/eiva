@@ -112,14 +112,14 @@ jobs:
         run: |
           if [ "${{ matrix.use_cross }}" = "true" ]; then
             # Cross-compilation: build only core packages (exclude desktop client)
-            cross check --target ${{ matrix.target }} ${{ matrix.features }} --package rustyclaw-core --package rustyclaw --package rustyclaw-tui
+            cross check --target ${{ matrix.target }} ${{ matrix.features }} --package eiva-core --package eiva --package eiva-tui
           elif [ "${{ matrix.target }}" = "x86_64-apple-darwin" ]; then
             # ort ships no prebuilt ONNX Runtime binaries for x86_64 macOS,
             # so the gateway's default `semantic-memory` feature cannot build
             # on this target. Check the gateway without it; everything else
             # gets a normal default-features check.
-            cargo check --target ${{ matrix.target }} ${{ matrix.features }} --workspace --exclude rustyclaw-gateway
-            cargo check --target ${{ matrix.target }} -p rustyclaw-gateway --no-default-features
+            cargo check --target ${{ matrix.target }} ${{ matrix.features }} --workspace --exclude eiva-gateway
+            cargo check --target ${{ matrix.target }} -p eiva-gateway --no-default-features
           else
             cargo check --target ${{ matrix.target }} ${{ matrix.features }}
           fi
@@ -142,10 +142,10 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       
       - name: Run unit tests (default features)
-        run: cargo test --lib --bins --package rustyclaw-core --package rustyclaw --package rustyclaw-tui
+        run: cargo test --lib --bins --package eiva-core --package eiva --package eiva-tui
       
       - name: Run unit tests (no default features)
-        run: cargo test --lib --bins --no-default-features --package rustyclaw-core --package rustyclaw --package rustyclaw-tui
+        run: cargo test --lib --bins --no-default-features --package eiva-core --package eiva --package eiva-tui
       
       - name: Run doc tests
         run: cargo test --doc
@@ -191,9 +191,9 @@ jobs:
       - name: Run E2E tests (basic)
         run: |
           # Run basic CLI E2E tests
-          ./target/release/rustyclaw --version
-          ./target/release/rustyclaw --help
-          ./target/release/rustyclaw gateway --help
+          ./target/release/eiva --version
+          ./target/release/eiva --help
+          ./target/release/eiva gateway --help
       
       - name: Run E2E test suite
         run: cargo test --test e2e -- --ignored --test-threads=1
@@ -302,18 +302,18 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           mkdir -p dist
-          cp target/${{ matrix.target }}/release/rustyclaw dist/rustyclaw-${{ matrix.target }} 2>/dev/null || true
-          cp target/${{ matrix.target }}/release/rustyclaw-gateway dist/rustyclaw-gateway-${{ matrix.target }} 2>/dev/null || true
+          cp target/${{ matrix.target }}/release/eiva dist/eiva-${{ matrix.target }} 2>/dev/null || true
+          cp target/${{ matrix.target }}/release/eiva-gateway dist/eiva-gateway-${{ matrix.target }} 2>/dev/null || true
 
       - name: Package binaries (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist
-          Copy-Item "target/${{ matrix.target }}/release/rustyclaw.exe" "dist/rustyclaw-${{ matrix.target }}.exe" -ErrorAction SilentlyContinue
-          Copy-Item "target/${{ matrix.target }}/release/rustyclaw-gateway.exe" "dist/rustyclaw-gateway-${{ matrix.target }}.exe" -ErrorAction SilentlyContinue
+          Copy-Item "target/${{ matrix.target }}/release/eiva.exe" "dist/eiva-${{ matrix.target }}.exe" -ErrorAction SilentlyContinue
+          Copy-Item "target/${{ matrix.target }}/release/eiva-gateway.exe" "dist/eiva-gateway-${{ matrix.target }}.exe" -ErrorAction SilentlyContinue
 
       - uses: actions/upload-artifact@v4
         with:
-          name: rustyclaw-${{ matrix.target }}
+          name: eiva-${{ matrix.target }}
           path: dist/

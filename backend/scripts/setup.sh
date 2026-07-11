@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# ── RustyClaw Full Setup ─────────────────────────────────────────────────────
+# ── Eiva Full Setup ─────────────────────────────────────────────────────
 #
-# Installs RustyClaw and optionally supporting tools:
+# Installs Eiva and optionally supporting tools:
 #   • Rust toolchain (1.85+)
-#   • RustyClaw (from local workspace or crates.io)
+#   • Eiva (from local workspace or crates.io)
 #   • uv (Python environment manager)
 #   • Ollama (local model server)
 #   • Node.js + npm (for exo dashboard)
@@ -14,11 +14,11 @@
 #   ./scripts/setup.sh              # interactive mode — choose what to install
 #   ./scripts/setup.sh --all        # install everything (no prompts)
 #   ./scripts/setup.sh --skip exo   # skip exo
-#   ./scripts/setup.sh --only rust rustyclaw  # only Rust + RustyClaw
+#   ./scripts/setup.sh --only rust eiva  # only Rust + Eiva
 #   ./scripts/setup.sh --help
 #
 # Can also be piped (non-interactive installs core only):
-#   curl -fsSL https://raw.githubusercontent.com/rexlunae/RustyClaw/main/scripts/setup.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/rexlunae/Eiva/main/scripts/setup.sh | bash
 # ─────────────────────────────────────────────────────────────────────────────
 
 set -euo pipefail
@@ -40,8 +40,8 @@ err()     { echo -e "${RED}[FAIL]${NC}  $1"; }
 step()    { echo -e "\n${CYAN}${BOLD}── $1 ──${NC}"; }
 
 # ── Argument parsing ─────────────────────────────────────────────────────────
-ALL_COMPONENTS="rust rustyclaw uv ollama node exo llamacpp"
-CORE_COMPONENTS="rust rustyclaw"
+ALL_COMPONENTS="rust eiva uv ollama node exo llamacpp"
+CORE_COMPONENTS="rust eiva"
 OPTIONAL_COMPONENTS="uv ollama node exo llamacpp"
 SKIP=""
 ONLY=""
@@ -59,7 +59,7 @@ fi
 
 print_help() {
     cat <<'EOF'
-🦀🦞 RustyClaw Full Setup
+🦀🦞 Eiva Full Setup
 
 Usage: ./scripts/setup.sh [OPTIONS]
 
@@ -68,18 +68,18 @@ Options:
   --skip <component...>     Skip listed components
   --only <component...>     Install only listed components
   --exo-dir <path>          Where to clone exo (default: ~/exo)
-  --features <features>     Extra cargo features for RustyClaw (e.g. "rustyclaw-core/matrix")
-  --from-source             Build RustyClaw from local workspace instead of crates.io
-  --force                   Overwrite existing RustyClaw binaries
+  --features <features>     Extra cargo features for Eiva (e.g. "eiva-core/matrix")
+  --from-source             Build Eiva from local workspace instead of crates.io
+  --force                   Overwrite existing Eiva binaries
   --help                    Show this help
 
-Components: rust, rustyclaw, uv, ollama, node, exo
+Components: rust, eiva, uv, ollama, node, exo
 
 Examples:
   ./scripts/setup.sh                          # interactive — choose components
   ./scripts/setup.sh --all                    # install everything
   ./scripts/setup.sh --skip exo ollama        # skip exo and ollama
-  ./scripts/setup.sh --only rust rustyclaw    # just Rust + RustyClaw
+  ./scripts/setup.sh --only rust eiva    # just Rust + Eiva
   ./scripts/setup.sh --from-source            # build from local checkout
 EOF
     exit 0
@@ -130,7 +130,7 @@ has() { command -v "$1" &>/dev/null; }
 # ── Detect installed components ─────────────────────────────────────────────
 # Using simple variables instead of associative arrays for bash 3.x compatibility
 STATUS_rust="missing"; VERSION_rust=""
-STATUS_rustyclaw="missing"; VERSION_rustyclaw=""
+STATUS_eiva="missing"; VERSION_eiva=""
 STATUS_uv="missing"; VERSION_uv=""
 STATUS_ollama="missing"; VERSION_ollama=""
 STATUS_node="missing"; VERSION_node=""
@@ -138,7 +138,7 @@ STATUS_exo="missing"; VERSION_exo=""
 STATUS_llamacpp="missing"; VERSION_llamacpp=""
 
 # Selection state (1=selected, 0=not selected)
-SEL_rust=1; SEL_rustyclaw=1  # Core: selected by default
+SEL_rust=1; SEL_eiva=1  # Core: selected by default
 SEL_uv=0; SEL_ollama=0; SEL_node=0; SEL_exo=0; SEL_llamacpp=0  # Optional: not selected
 
 detect_components() {
@@ -146,9 +146,9 @@ detect_components() {
         STATUS_rust="installed"
         VERSION_rust="$(rustc --version 2>/dev/null | cut -d' ' -f2)"
     fi
-    if has rustyclaw; then
-        STATUS_rustyclaw="installed"
-        VERSION_rustyclaw="$(rustyclaw --version 2>/dev/null || echo 'unknown')"
+    if has eiva; then
+        STATUS_eiva="installed"
+        VERSION_eiva="$(eiva --version 2>/dev/null || echo 'unknown')"
     fi
     if has uv; then
         STATUS_uv="installed"
@@ -207,7 +207,7 @@ toggle_selected() {
 }
 
 show_menu() {
-    echo -e "${BOLD}🦀🦞 RustyClaw Setup${NC}"
+    echo -e "${BOLD}🦀🦞 Eiva Setup${NC}"
     echo -e "${DIM}   OS: $OS ($ARCH)${NC}"
     echo ""
     echo -e "${BOLD}Select components to install:${NC}"
@@ -236,7 +236,7 @@ show_menu() {
         local desc=""
         case "$comp" in
             rust)      desc="Rust toolchain (required)" ;;
-            rustyclaw) desc="RustyClaw CLI + TUI" ;;
+            eiva) desc="Eiva CLI + TUI" ;;
             uv)        desc="Python environment manager (for exo)" ;;
             ollama)    desc="Local model server" ;;
             node)      desc="Node.js + npm (for exo dashboard)" ;;
@@ -264,7 +264,7 @@ if [[ "$INTERACTIVE" == true ]]; then
         
         case "$key" in
             1) toggle_selected rust ;;
-            2) toggle_selected rustyclaw ;;
+            2) toggle_selected eiva ;;
             3) toggle_selected uv ;;
             4) toggle_selected ollama ;;
             5) toggle_selected node ;;
@@ -336,7 +336,7 @@ should_install() {
 }
 
 echo ""
-echo -e "${BOLD}🦀🦞 RustyClaw Full Setup${NC}"
+echo -e "${BOLD}🦀🦞 Eiva Full Setup${NC}"
 echo -e "${DIM}   OS: $OS ($ARCH)${NC}"
 echo ""
 
@@ -379,7 +379,7 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 # 2. OS build dependencies
 # ─────────────────────────────────────────────────────────────────────────────
-if should_install rustyclaw; then
+if should_install eiva; then
     step "Build dependencies"
 
     case "$PLATFORM" in
@@ -452,10 +452,10 @@ if should_install rustyclaw; then
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 3. RustyClaw
+# 3. Eiva
 # ─────────────────────────────────────────────────────────────────────────────
-if should_install rustyclaw; then
-    step "RustyClaw"
+if should_install eiva; then
+    step "Eiva"
 
     # Detect if we're inside the repo checkout
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -468,9 +468,9 @@ if should_install rustyclaw; then
     FORCE_FLAG=""
     [[ "$FORCE" == true ]] && FORCE_FLAG="--force"
 
-    # The gateway daemon (`rustyclaw-gateway`) is a separate binary crate that
-    # the `rustyclaw` CLI spawns. It must be installed alongside the CLI or
-    # `gateway start/restart` fails with "Could not find the rustyclaw-gateway
+    # The gateway daemon (`eiva-gateway`) is a separate binary crate that
+    # the `eiva` CLI spawns. It must be installed alongside the CLI or
+    # `gateway start/restart` fails with "Could not find the eiva-gateway
     # binary". It shares the messenger features but NOT the CLI-only tui/desktop
     # features, so filter those out before installing it.
     GATEWAY_FEATURES=""
@@ -485,77 +485,77 @@ if should_install rustyclaw; then
     if [[ "$FROM_SOURCE" == true || "$IN_REPO" == true ]]; then
         if [[ "$IN_REPO" == true ]]; then
             info "Building from local workspace: $REPO_ROOT"
-            INSTALL_PATH="$REPO_ROOT/crates/rustyclaw-cli"
+            INSTALL_PATH="$REPO_ROOT/crates/eiva-cli"
         else
-            info "Cloning RustyClaw..."
-            git clone https://github.com/rexlunae/RustyClaw.git /tmp/rustyclaw-build
-            INSTALL_PATH="/tmp/rustyclaw-build/crates/rustyclaw-cli"
+            info "Cloning Eiva..."
+            git clone https://github.com/rexlunae/Eiva.git /tmp/eiva-build
+            INSTALL_PATH="/tmp/eiva-build/crates/eiva-cli"
         fi
-        CRATES_DIR="${INSTALL_PATH%/rustyclaw-cli}"
-        GATEWAY_PATH="$CRATES_DIR/rustyclaw-gateway"
-        TUI_PATH="$CRATES_DIR/rustyclaw-tui"
-        DESKTOP_PATH="$CRATES_DIR/rustyclaw-desktop"
+        CRATES_DIR="${INSTALL_PATH%/eiva-cli}"
+        GATEWAY_PATH="$CRATES_DIR/eiva-gateway"
+        TUI_PATH="$CRATES_DIR/eiva-tui"
+        DESKTOP_PATH="$CRATES_DIR/eiva-desktop"
 
         if [[ -n "$RUSTYCLAW_FEATURES" ]]; then
             cargo install --path "$INSTALL_PATH" --features "$RUSTYCLAW_FEATURES" $FORCE_FLAG
         else
             cargo install --path "$INSTALL_PATH" $FORCE_FLAG
         fi
-        info "Installing gateway daemon (rustyclaw-gateway)..."
+        info "Installing gateway daemon (eiva-gateway)..."
         if [[ -n "$GATEWAY_FEATURES" ]]; then
             cargo install --path "$GATEWAY_PATH" --features "$GATEWAY_FEATURES" $FORCE_FLAG
         else
             cargo install --path "$GATEWAY_PATH" $FORCE_FLAG
         fi
         # The TUI and desktop clients are standalone binaries (no extra
-        # features); the `rustyclaw tui`/`desktop` subcommands spawn them.
-        info "Installing terminal UI client (rustyclaw-tui)..."
+        # features); the `eiva tui`/`desktop` subcommands spawn them.
+        info "Installing terminal UI client (eiva-tui)..."
         cargo install --path "$TUI_PATH" $FORCE_FLAG
-        info "Installing desktop GUI client (rustyclaw-desktop)..."
+        info "Installing desktop GUI client (eiva-desktop)..."
         cargo install --path "$DESKTOP_PATH" $FORCE_FLAG
     else
         info "Installing from crates.io..."
         if [[ -n "$RUSTYCLAW_FEATURES" ]]; then
-            cargo install rustyclaw --features "$RUSTYCLAW_FEATURES" $FORCE_FLAG
+            cargo install eiva --features "$RUSTYCLAW_FEATURES" $FORCE_FLAG
         else
-            cargo install rustyclaw $FORCE_FLAG
+            cargo install eiva $FORCE_FLAG
         fi
-        info "Installing gateway daemon (rustyclaw-gateway)..."
+        info "Installing gateway daemon (eiva-gateway)..."
         if [[ -n "$GATEWAY_FEATURES" ]]; then
-            cargo install rustyclaw-gateway --features "$GATEWAY_FEATURES" $FORCE_FLAG
+            cargo install eiva-gateway --features "$GATEWAY_FEATURES" $FORCE_FLAG
         else
-            cargo install rustyclaw-gateway $FORCE_FLAG
+            cargo install eiva-gateway $FORCE_FLAG
         fi
-        info "Installing terminal UI client (rustyclaw-tui)..."
-        cargo install rustyclaw-tui $FORCE_FLAG
-        info "Installing desktop GUI client (rustyclaw-desktop)..."
-        cargo install rustyclaw-desktop $FORCE_FLAG
+        info "Installing terminal UI client (eiva-tui)..."
+        cargo install eiva-tui $FORCE_FLAG
+        info "Installing desktop GUI client (eiva-desktop)..."
+        cargo install eiva-desktop $FORCE_FLAG
     fi
 
-    if has rustyclaw; then
-        success "RustyClaw $(rustyclaw --version 2>/dev/null || echo 'installed')"
-        INSTALLED="$INSTALLED rustyclaw"
+    if has eiva; then
+        success "Eiva $(eiva --version 2>/dev/null || echo 'installed')"
+        INSTALLED="$INSTALLED eiva"
     else
-        err "RustyClaw binary not found in PATH after install"
-        FAILED="$FAILED rustyclaw"
+        err "Eiva binary not found in PATH after install"
+        FAILED="$FAILED eiva"
     fi
-    if has rustyclaw-gateway; then
-        success "RustyClaw gateway daemon installed"
+    if has eiva-gateway; then
+        success "Eiva gateway daemon installed"
     else
-        warn "rustyclaw-gateway not found in PATH after install — 'gateway start/restart' will fail until it is installed"
+        warn "eiva-gateway not found in PATH after install — 'gateway start/restart' will fail until it is installed"
     fi
-    if has rustyclaw-tui; then
-        success "RustyClaw terminal UI client installed"
+    if has eiva-tui; then
+        success "Eiva terminal UI client installed"
     else
-        warn "rustyclaw-tui not found in PATH after install — 'rustyclaw tui' will fail until it is installed"
+        warn "eiva-tui not found in PATH after install — 'eiva tui' will fail until it is installed"
     fi
-    if has rustyclaw-desktop; then
-        success "RustyClaw desktop client installed"
+    if has eiva-desktop; then
+        success "Eiva desktop client installed"
     else
-        warn "rustyclaw-desktop not found in PATH after install — 'rustyclaw desktop' will fail (desktop also needs GTK/WebKit dev libs on Linux)"
+        warn "eiva-desktop not found in PATH after install — 'eiva desktop' will fail (desktop also needs GTK/WebKit dev libs on Linux)"
     fi
 else
-    SKIPPED="$SKIPPED rustyclaw"
+    SKIPPED="$SKIPPED eiva"
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -824,8 +824,8 @@ fi
 
 echo ""
 echo -e "  ${BOLD}Next steps:${NC}"
-echo "    1. rustyclaw onboard     # configure provider + vault"
-echo "    2. rustyclaw tui         # launch the terminal UI"
+echo "    1. eiva onboard     # configure provider + vault"
+echo "    2. eiva tui         # launch the terminal UI"
 
 # Show ollama hint if it was installed or available
 if should_install ollama 2>/dev/null || has ollama; then

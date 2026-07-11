@@ -1,14 +1,14 @@
 Launch the terminal UI
 
-Usage: rustyclaw tui [OPTIONS]
+Usage: eiva tui [OPTIONS]
 
 Options:
   -c, --config <PATH>        Path to a config.toml file [env: RUSTYCLAW_CONFIG=]
       --url <URL>            Gateway WebSocket URL (overrides config)
-      --settings-dir <DIR>   Settings directory (default: ~/.rustyclaw) [env: RUSTYCLAW_SETTINGS_DIR=]
+      --settings-dir <DIR>   Settings directory (default: ~/.eiva) [env: RUSTYCLAW_SETTINGS_DIR=]
       --token <TOKEN>        Gateway token
       --password <PASSWORD>  Gateway password
-      --profile <PROFILE>    Isolate state under ~/.rustyclaw-<PROFILE> [env: RUSTYCLAW_PROFILE=]
+      --profile <PROFILE>    Isolate state under ~/.eiva-<PROFILE> [env: RUSTYCLAW_PROFILE=]
       --no-color             Disable coloured terminal output [env: NO_COLOR=]
       --session <KEY>        Session key to resume
       --message <TEXT>       Send an initial message instead of entering interactive mode

@@ -1,12 +1,12 @@
-# Building RustyClaw
+# Building Eiva
 
 ## Quick Install (crates.io)
 
 ```bash
-cargo install rustyclaw
+cargo install eiva
 ```
 
-This installs RustyClaw with default features (TUI + web tools, no messengers).
+This installs Eiva with default features (TUI + web tools, no messengers).
 
 ## Feature Flags
 
@@ -23,19 +23,19 @@ This installs RustyClaw with default features (TUI + web tools, no messengers).
 
 ```bash
 # Default (TUI + web tools)
-cargo install rustyclaw
+cargo install eiva
 
 # With Matrix support
-cargo install rustyclaw --features matrix
+cargo install eiva --features matrix
 
 # With browser automation
-cargo install rustyclaw --features browser
+cargo install eiva --features browser
 
 # Full (TUI + web tools + Matrix + Browser)
-cargo install rustyclaw --features full
+cargo install eiva --features full
 
 # Headless gateway only (no TUI)
-cargo install rustyclaw --no-default-features --features web-tools
+cargo install eiva --no-default-features --features web-tools
 ```
 
 ## Building from Source
@@ -43,8 +43,8 @@ cargo install rustyclaw --no-default-features --features web-tools
 ### Basic Build
 
 ```bash
-git clone https://github.com/rexlunae/RustyClaw.git
-cd RustyClaw
+git clone https://github.com/rexlunae/Eiva.git
+cd Eiva
 cargo build --release
 ```
 
@@ -54,7 +54,7 @@ cargo build --release
 cargo build --release
 ```
 
-Binary at `target/release/rustyclaw` (~11 MB with LTO).
+Binary at `target/release/eiva` (~11 MB with LTO).
 
 ## Signal Messenger Support
 
@@ -71,8 +71,8 @@ so Signal support requires building from the git repository.
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/rexlunae/RustyClaw.git
-   cd RustyClaw
+   git clone https://github.com/rexlunae/Eiva.git
+   cd Eiva
    ```
 
 2. **Enable Signal in Cargo.toml:**
@@ -99,7 +99,7 @@ so Signal support requires building from the git repository.
 
 4. **Link your Signal account:**
    ```bash
-   rustyclaw signal link
+   eiva signal link
    ```
    This generates a QR code to scan with your Signal app.
 
@@ -130,7 +130,7 @@ cross build --release --target armv7-unknown-linux-gnueabihf --no-default-featur
 ```
 
 The `--no-default-features` flag disables the TUI, producing a smaller binary
-suitable for running `rustyclaw-gateway` as a headless service.
+suitable for running `eiva-gateway` as a headless service.
 
 ## Cross-Compilation
 

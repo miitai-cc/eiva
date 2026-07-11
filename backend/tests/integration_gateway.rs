@@ -21,21 +21,21 @@ fn find_port() -> u16 {
         .port()
 }
 
-/// Find the rustyclaw binary
+/// Find the eiva binary
 fn find_binary() -> Option<PathBuf> {
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
 
-    let debug = PathBuf::from(&manifest_dir).join("target/debug/rustyclaw");
+    let debug = PathBuf::from(&manifest_dir).join("target/debug/eiva");
     if debug.exists() {
         return Some(debug);
     }
 
-    let release = PathBuf::from(&manifest_dir).join("target/release/rustyclaw");
+    let release = PathBuf::from(&manifest_dir).join("target/release/eiva");
     if release.exists() {
         return Some(release);
     }
 
-    which::which("rustyclaw").ok()
+    which::which("eiva").ok()
 }
 
 /// Test gateway process wrapper
@@ -49,7 +49,7 @@ impl TestGateway {
     async fn start() -> Option<Self> {
         let binary = find_binary()?;
         let port = find_port();
-        let workspace = std::env::temp_dir().join(format!("rustyclaw-test-{}-{}", std::process::id(), port));
+        let workspace = std::env::temp_dir().join(format!("eiva-test-{}-{}", std::process::id(), port));
 
         std::fs::create_dir_all(&workspace).ok()?;
 

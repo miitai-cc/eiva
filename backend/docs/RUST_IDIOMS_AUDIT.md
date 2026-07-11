@@ -17,7 +17,7 @@ the rest are recorded here as prioritized follow-ups.
 
 ## 1. Error handling
 
-The codebase has two documented error strategies (`rustyclaw-core/src/error.rs`):
+The codebase has two documented error strategies (`eiva-core/src/error.rs`):
 typed errors for internal logic, and `Result<String, String>` at the AI-tool
 boundary, where the error string is the payload sent back to the model. The
 tool boundary is a legitimate display boundary — flattening a typed error with
@@ -108,15 +108,15 @@ Verdicts from the audit of the ~16 largest files:
   payload enums, a ~20-struct DTO catalog, and the bincode codec. Split into
   `frames/dto.rs` and `frames/codec.rs` with re-exports, keeping external
   paths stable.
-- **`rustyclaw-gateway/src/server.rs`** — `handle_connection` is a single
+- **`eiva-gateway/src/server.rs`** — `handle_connection` is a single
   ~830-line function mixing TOTP auth + rate limiting, session exchange,
   bootstrap, reader-task spawning, and the dispatch loop. Proposed split:
   `server/{auth,bootstrap,session,reader}.rs`; all internal, low risk. Largest
   remaining win.
-- **`rustyclaw-gateway/src/dispatch.rs`** — one topic (the agent loop) but
+- **`eiva-gateway/src/dispatch.rs`** — one topic (the agent loop) but
   `dispatch_text_message` is ~800 lines; extract phase helpers
   (`refresh_bearer`, `maybe_flush_memory`, `run_tool_round`).
-- **`rustyclaw-desktop/src/app/mod.rs`** — gateway auto-connect and the event
+- **`eiva-desktop/src/app/mod.rs`** — gateway auto-connect and the event
   pump coroutine (network IO) live inside the `App()` UI component; extract
   into hooks (`app/effects.rs`).
 - **TUI `events.rs` / `keyboard_normal.rs`** — single giant matches over a
@@ -151,7 +151,7 @@ Verdicts from the audit of the ~16 largest files:
    in `sessions.rs`, `streaming.rs`, `protocol/types.rs`, `view/memory.rs`,
    `memory-tree`; compared as literals across ~23 files. The single
    highest-value enum conversion (`MessageRole`), but also the widest blast
-   radius — do it as a dedicated change. Note `rustyclaw-view` already has a
+   radius — do it as a dedicated change. Note `eiva-view` already has a
    `MessageRole` enum that the wire layer bypasses.
 2. **`SecretsSetPolicy` policy vocabulary** — three string vocabularies exist
    for one concept: UI badges (`"OPEN"`), wire strings (`"ask"`,
@@ -164,7 +164,7 @@ Verdicts from the audit of the ~16 largest files:
 4. **`messenger_type`** — two big matches in `messenger_handler/builders.rs`
    over a closed set of ~10 messenger names.
 5. **Status DTOs** — `McpServerDto.status`, `ServiceInfoDto.status`,
-   swarm agent status/role in `rustyclaw-view` (each matched in 2–3 places,
+   swarm agent status/role in `eiva-view` (each matched in 2–3 places,
    capitalization-sensitive).
 6. **`provider: String`** — the value set is open (`custom` + arbitrary
    base URLs) so the field stays a string, but the scattered
@@ -183,14 +183,14 @@ the client/view side hand-rolled the mirror-image conversions.
 
 ### Fixed
 
-- **[fixed]** The `rustyclaw-view` `from_dto` cluster (~12 single-argument
+- **[fixed]** The `eiva-view` `from_dto` cluster (~12 single-argument
   constructors in `analytics`, `media`, `tools_config`, `memory`, `channels`,
   `approvals`, `mcp`, `cron`) replaced with `impl From<&Dto>`.
 - **[fixed]** `SecretInfoData::{from_entry_info, from_dto}` duplicated the
   same five-field map from two sources — now one `From<&SecretEntryInfo>`
   plus delegation through the existing `From<SecretEntryDto>`.
-- **[fixed]** `dto_to_service_info` (a free function in `rustyclaw-desktop`,
-  an orphan-rule workaround) moved into `rustyclaw-view` as
+- **[fixed]** `dto_to_service_info` (a free function in `eiva-desktop`,
+  an orphan-rule workaround) moved into `eiva-view` as
   `From<ServiceInfoDto> for ServiceInfoData`, completing the round-trip with
   the existing `From<ServiceInfo> for ServiceInfoDto`.
 - **[fixed]** `DisplayMessageData::from_chat_message` →

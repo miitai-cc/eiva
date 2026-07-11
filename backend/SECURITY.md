@@ -1,8 +1,8 @@
-# Security Summary for RustyClaw
+# Security Summary for Eiva
 
 ## Overview
 
-This document summarizes the security considerations and implementations in RustyClaw.
+This document summarizes the security considerations and implementations in Eiva.
 
 ## Security Features Implemented
 
@@ -101,7 +101,7 @@ All dependencies are pinned to specific versions in Cargo.lock.
 
 ## Conclusion
 
-RustyClaw implements a solid security foundation with:
+Eiva implements a solid security foundation with:
 - Secure secrets storage using system keyring
 - User-controlled access model
 - Type-safe Rust implementation

@@ -1,6 +1,6 @@
-# RustyClaw ↔ OpenClaw Parity Plan
+# Eiva ↔ OpenClaw Parity Plan
 
-## Current State (RustyClaw)
+## Current State (Eiva)
 
 ### ✅ Implemented Tools (30 total)
 1. `read_file` — read file contents with line ranges; auto-extracts text from .docx/.doc/.rtf/.pdf via textutil
@@ -65,7 +65,7 @@
 | Capture OpenClaw messenger integrations and config requirements | ✅ Done | Trait + 5 backends (Webhook, Console, Discord, Telegram, Signal) |
 | Capture OpenClaw TUI screens, commands, and shortcuts | ✅ Done | 12+ slash-commands, tab-completion, pane navigation |
 | Capture OpenClaw secrets approval/permissions flow | ✅ Done | Full policy enforcement (Always/WithAuth/SkillOnly), TOTP, lockout |
-| Build a parity matrix mapping features to RustyClaw coverage | ✅ Done | This document |
+| Build a parity matrix mapping features to Eiva coverage | ✅ Done | This document |
 
 ## Phase 1 — CLI Parity
 
@@ -101,7 +101,7 @@
 | Implement required messenger interfaces and config fields | ✅ Done | Full trait + 5 backends |
 | Match connection lifecycle, retries, and message formatting | ✅ Done | Webhook, Console, Discord, Telegram, Signal backends |
 | Match inbound/outbound event handling | ✅ Done | send_message + receive_messages trait methods |
-| Add WhatsApp and Slack messenger backends | ⚠️ Missing | OpenClaw supports WhatsApp and Slack; RustyClaw does not |
+| Add WhatsApp and Slack messenger backends | ⚠️ Missing | OpenClaw supports WhatsApp and Slack; Eiva does not |
 
 ## Phase 5 — TUI Parity
 
@@ -144,7 +144,7 @@
 
 1. **CLI env var precedence audit** — env var override behavior not fully audited against OpenClaw (Phase 1)
 2. **Dedicated TUI log view** — messages pane exists but no separate log/debug view (Phase 5)
-3. **Cross-tool secret import** — legacy migration works but OpenClaw→RustyClaw secret import not tested (Phase 6)
+3. **Cross-tool secret import** — legacy migration works but OpenClaw→Eiva secret import not tested (Phase 6)
 4. **Doctor command edge cases** — `--repair` exists but doesn't cover all invalid config states (Phase 7)
 5. **Dedicated migration guide** — only config.example.toml exists; no step-by-step migration doc (Phase 7)
 
@@ -157,8 +157,8 @@
 
 ### ⚠️ Missing OpenClaw Features
 
-10. **WhatsApp messenger backend** — OpenClaw supports WhatsApp; RustyClaw does not
-11. **Slack messenger backend** — OpenClaw supports Slack; RustyClaw does not
+10. **WhatsApp messenger backend** — OpenClaw supports WhatsApp; Eiva does not
+11. **Slack messenger backend** — OpenClaw supports Slack; Eiva does not
 12. **SECURITY.md accuracy** — document references wrong crate (`keyring` instead of `securestore`) and lists outdated dependency versions
 
 ### ✅ Previously Missing, Now Implemented

@@ -6,7 +6,7 @@
 //! documents — keyed by `(source, source_id)`, with a leaf lifecycle
 //! (`pending_extraction → admitted → buffered → sealed`). It is *not* a
 //! conversation memory; for the agent's own chat history use the
-//! `steel_memory` integration in `rustyclaw-core`.
+//! `steel_memory` integration in `eiva-core`.
 //!
 //! The [`Summarizer`] trait is owned by this crate; implementations can be
 //! deterministic (see [`ConcatSummarizer`]) or call an LLM. Steel Memory is

@@ -12,7 +12,7 @@ const GOLDEN_DIR: &str = "tests/golden";
 /// Get help output for a command
 fn get_help(args: &[&str]) -> String {
     // Try the built binary first
-    let binary_path = concat!(env!("CARGO_MANIFEST_DIR"), "/target/debug/rustyclaw");
+    let binary_path = concat!(env!("CARGO_MANIFEST_DIR"), "/target/debug/eiva");
 
     let mut all_args: Vec<&str> = args.to_vec();
     all_args.push("--help");
@@ -21,9 +21,9 @@ fn get_help(args: &[&str]) -> String {
         Command::new(binary_path)
             .args(&all_args)
             .output()
-            .expect("Failed to execute rustyclaw")
+            .expect("Failed to execute eiva")
     } else {
-        let mut cmd_args = vec!["run", "--bin", "rustyclaw", "--quiet", "--"];
+        let mut cmd_args = vec!["run", "--bin", "eiva", "--quiet", "--"];
         cmd_args.extend(&all_args);
         Command::new("cargo")
             .args(&cmd_args)
@@ -182,25 +182,25 @@ fn test_golden_skills_list_help() {
 
 #[test]
 fn test_golden_version() {
-    let binary_path = concat!(env!("CARGO_MANIFEST_DIR"), "/target/debug/rustyclaw");
+    let binary_path = concat!(env!("CARGO_MANIFEST_DIR"), "/target/debug/eiva");
 
     let output = if std::path::Path::new(binary_path).exists() {
         Command::new(binary_path)
             .args(["--version"])
             .output()
-            .expect("Failed to execute rustyclaw")
+            .expect("Failed to execute eiva")
     } else {
         Command::new("cargo")
-            .args(["run", "--bin", "rustyclaw", "--quiet", "--", "--version"])
+            .args(["run", "--bin", "eiva", "--quiet", "--", "--version"])
             .output()
-            .expect("Failed to execute rustyclaw")
+            .expect("Failed to execute eiva")
     };
 
     let version = String::from_utf8_lossy(&output.stdout).to_string();
 
     // Version changes frequently, so just verify format
     assert!(
-        version.contains("rustyclaw") || version.contains("RustyClaw"),
+        version.contains("eiva") || version.contains("Eiva"),
         "Version should contain app name"
     );
     assert!(

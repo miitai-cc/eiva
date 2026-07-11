@@ -1,12 +1,12 @@
 Show gateway status
 
-Usage: rustyclaw gateway status [OPTIONS]
+Usage: eiva gateway status [OPTIONS]
 
 Options:
   -c, --config <PATH>       Path to a config.toml file [env: RUSTYCLAW_CONFIG=]
       --json                Output JSON
-      --settings-dir <DIR>  Settings directory (default: ~/.rustyclaw) [env: RUSTYCLAW_SETTINGS_DIR=]
-      --profile <PROFILE>   Isolate state under ~/.rustyclaw-<PROFILE> [env: RUSTYCLAW_PROFILE=]
+      --settings-dir <DIR>  Settings directory (default: ~/.eiva) [env: RUSTYCLAW_SETTINGS_DIR=]
+      --profile <PROFILE>   Isolate state under ~/.eiva-<PROFILE> [env: RUSTYCLAW_PROFILE=]
       --no-color            Disable coloured terminal output [env: NO_COLOR=]
       --soul <PATH>         Path to SOUL.md [env: RUSTYCLAW_SOUL=]
       --skills <DIR>        Skills directory [env: RUSTYCLAW_SKILLS=]

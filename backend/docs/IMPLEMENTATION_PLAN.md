@@ -1,6 +1,6 @@
 # Implementation Plan: Learning & Evolution Features
 
-This plan implements the features identified in `LEARNING_ANALYSIS.md` to bring RustyClaw's learning and personality capabilities to parity with OpenClaw.
+This plan implements the features identified in `LEARNING_ANALYSIS.md` to bring Eiva's learning and personality capabilities to parity with OpenClaw.
 
 ---
 
@@ -417,7 +417,7 @@ mod tests {
         fs::create_dir(dir.path().join("memory")).unwrap();
         fs::write(
             dir.path().join("memory/2026-02-20.md"),
-            "# Today\nWorked on RustyClaw."
+            "# Today\nWorked on Eiva."
         ).unwrap();
         dir
     }
@@ -1311,7 +1311,7 @@ inject_tools = true
 
 ## Migration Guide
 
-For existing RustyClaw users:
+For existing Eiva users:
 
 1. **Workspace files** — Create `SOUL.md`, `MEMORY.md`, `memory/` directory
 2. **Config update** — Add new sections to config.toml

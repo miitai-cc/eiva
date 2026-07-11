@@ -1,16 +1,16 @@
 <p align="center">
-  <img src="logo.svg" alt="RustyClaw" width="200"/>
+  <img src="logo.svg" alt="Eiva" width="200"/>
 </p>
 
-<h1 align="center">RustyClaw 🦀🦞</h1>
+<h1 align="center">Eiva 🦀🦞</h1>
 
 <p align="center">
   <strong>The secure, open-source operating system for AI agents</strong>
 </p>
 
 <p align="center">
-  <a href="https://crates.io/crates/rustyclaw"><img src="https://img.shields.io/crates/v/rustyclaw.svg" alt="crates.io"></a>
-  <a href="https://github.com/rexlunae/RustyClaw/actions"><img src="https://github.com/rexlunae/RustyClaw/workflows/CI/badge.svg" alt="CI"></a>
+  <a href="https://crates.io/crates/eiva"><img src="https://img.shields.io/crates/v/eiva.svg" alt="crates.io"></a>
+  <a href="https://github.com/rexlunae/Eiva/actions"><img src="https://github.com/rexlunae/Eiva/workflows/CI/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/core-~16K_lines-orange" alt="Core: ~16K lines">
   <a href="https://discord.com/invite/clawd"><img src="https://img.shields.io/badge/Discord-Community-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
@@ -19,15 +19,15 @@
 <p align="center">
   <a href="#quick-start">Quick Start</a> •
   <a href="#building-from-source">Building</a> •
-  <a href="#why-rustyclaw">Why RustyClaw</a> •
+  <a href="#why-eiva">Why Eiva</a> •
   <a href="#features">Features</a> •
   <a href="#security">Security</a> •
   <a href="#architecture">Architecture</a>
 </p>
 
-## What is RustyClaw?
+## What is Eiva?
 
-RustyClaw is an **agentic AI operating system** — a complete runtime for deploying, orchestrating, and securing AI agents. It provides everything agents need: tools, memory, isolation, scheduling, multi-agent coordination, and secure credential management.
+Eiva is an **agentic AI operating system** — a complete runtime for deploying, orchestrating, and securing AI agents. It provides everything agents need: tools, memory, isolation, scheduling, multi-agent coordination, and secure credential management.
 
 Think of it as **Linux for AI agents**: a stable, secure foundation that handles the hard infrastructure problems so you can focus on what your agents actually do.
 
@@ -47,11 +47,11 @@ Think of it as **Linux for AI agents**: a stable, secure foundation that handles
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-## Why RustyClaw?
+## Why Eiva?
 
 ### 🔒 Security-First Design
 
-AI agents are powerful but risky. They can be tricked into leaking secrets, executing malicious commands, or exfiltrating data. RustyClaw is built with the assumption that **agents can't always be trusted**.
+AI agents are powerful but risky. They can be tricked into leaking secrets, executing malicious commands, or exfiltrating data. Eiva is built with the assumption that **agents can't always be trusted**.
 
 | Defense Layer | What It Does |
 |---------------|--------------|
@@ -66,7 +66,7 @@ No other agent framework in the ecosystem has this level of built-in security. M
 
 ### ⚡ Lightweight & Fast
 
-| Metric | RustyClaw | OpenClaw (Node.js) | Python Agents |
+| Metric | Eiva | OpenClaw (Node.js) | Python Agents |
 |--------|-----------|-------------------|---------------|
 | **Memory** | ~15 MB | ~150 MB | ~100+ MB |
 | **Startup** | <50 ms | ~500 ms | ~1s+ |
@@ -114,30 +114,30 @@ research.steer("Focus specifically on Constitutional AI approaches");
 
 ### One-Line Setup (Everything)
 
-Install RustyClaw plus all supporting tools (uv, Ollama, Node.js, Exo):
+Install Eiva plus all supporting tools (uv, Ollama, Node.js, Exo):
 
 ```bash
 # From a clone
-git clone https://github.com/rexlunae/RustyClaw.git && cd RustyClaw
+git clone https://github.com/rexlunae/Eiva.git && cd Eiva
 ./scripts/setup.sh
 
 # Or pick components
 ./scripts/setup.sh --skip exo          # skip exo
-./scripts/setup.sh --only rust rustyclaw  # just Rust + RustyClaw
+./scripts/setup.sh --only rust eiva  # just Rust + Eiva
 ```
 
-### Install RustyClaw Only
+### Install Eiva Only
 
 ```bash
-cargo install rustyclaw
+cargo install eiva
 ```
 
-Or download a pre-built binary from [Releases](https://github.com/rexlunae/RustyClaw/releases).
+Or download a pre-built binary from [Releases](https://github.com/rexlunae/Eiva/releases).
 
 ### Configure
 
 ```bash
-rustyclaw onboard
+eiva onboard
 ```
 
 This interactive wizard sets up:
@@ -151,28 +151,28 @@ This interactive wizard sets up:
 
 ```bash
 # Interactive terminal UI
-rustyclaw tui
+eiva tui
 
 # Desktop UI
-rustyclaw desktop
+eiva desktop
 
 # Or run as a daemon for integrations
-rustyclaw gateway start
+eiva gateway start
 ```
 
-The desktop client uses the same configured gateway as `rustyclaw tui`. You can
+The desktop client uses the same configured gateway as `eiva tui`. You can
 override it at launch time with:
 
 ```bash
-rustyclaw desktop --url ssh://127.0.0.1:2222
+eiva desktop --url ssh://127.0.0.1:2222
 ```
 
-By default, both `rustyclaw tui` and `rustyclaw desktop` connect to the SSH-based
+By default, both `eiva tui` and `eiva desktop` connect to the SSH-based
 gateway transport at `ssh://127.0.0.1:2222` unless your config overrides it.
 
 ## Messaging
 
-RustyClaw uses **skills** for messaging rather than compiled-in integrations. This means:
+Eiva uses **skills** for messaging rather than compiled-in integrations. This means:
 - ✅ No recompilation to add new platforms
 - ✅ Single skill handles 15+ platforms
 - ✅ Privacy-preserving local API
@@ -188,18 +188,18 @@ clawhub install claw-me-maybe
 
 **Supported platforms:** WhatsApp, Telegram, Signal, Discord, Slack, iMessage, Instagram, LinkedIn, Facebook Messenger, Google Messages, Google Chat, X (Twitter) DMs
 
-The `rustyclaw onboard` wizard walks you through this setup step-by-step.
+The `eiva onboard` wizard walks you through this setup step-by-step.
 
 ## Building from Source
 
-RustyClaw is organized as a **Cargo workspace** with four crates:
+Eiva is organized as a **Cargo workspace** with four crates:
 
 | Crate | Path | Description |
 |-------|------|-------------|
-| **rustyclaw-core** | `crates/rustyclaw-core/` | Core library — config, gateway, tools, secrets, providers |
-| **rustyclaw-cli** | `crates/rustyclaw-cli/` | CLI binaries (`rustyclaw` and `rustyclaw-gateway`) |
-| **rustyclaw-tui** | `crates/rustyclaw-tui/` | Terminal UI client (ratatui) |
-| **rustyclaw-desktop** | `crates/rustyclaw-desktop/` | Desktop UI client (Dioxus) |
+| **eiva-core** | `crates/eiva-core/` | Core library — config, gateway, tools, secrets, providers |
+| **eiva-cli** | `crates/eiva-cli/` | CLI binaries (`eiva` and `eiva-gateway`) |
+| **eiva-tui** | `crates/eiva-tui/` | Terminal UI client (ratatui) |
+| **eiva-desktop** | `crates/eiva-desktop/` | Desktop UI client (Dioxus) |
 
 ### Prerequisites
 
@@ -229,8 +229,8 @@ sudo dnf install gtk3-devel webkit2gtk4.1-devel
 ### Build the Workspace
 
 ```bash
-git clone https://github.com/rexlunae/RustyClaw.git
-cd RustyClaw
+git clone https://github.com/rexlunae/Eiva.git
+cd Eiva
 
 # Debug build (fast compile, all crates)
 cargo build --workspace
@@ -240,32 +240,32 @@ cargo build --release
 ```
 
 Binaries are produced at:
-- `target/release/rustyclaw` — main CLI + TUI
-- `target/release/rustyclaw-gateway` — standalone gateway daemon
-- `target/release/rustyclaw-desktop` — desktop GUI client
+- `target/release/eiva` — main CLI + TUI
+- `target/release/eiva-gateway` — standalone gateway daemon
+- `target/release/eiva-desktop` — desktop GUI client
 
 You can launch the desktop client either directly or through the unified CLI:
 
 ```bash
 # Direct desktop binary
-cargo run -p rustyclaw-desktop
+cargo run -p eiva-desktop
 
 # Unified CLI entrypoint (uses the same SSH gateway default as the TUI)
-cargo run -p rustyclaw -- desktop
+cargo run -p eiva -- desktop
 ```
 
 ### Feature Flags
 
 Features are split across the workspace crates:
 
-**rustyclaw-cli** (binary crate):
+**eiva-cli** (binary crate):
 
 | Feature | Description | Default |
 |---------|-------------|---------|
 | `tui` | Terminal UI (ratatui + crossterm) | ✅ |
-| `desktop` | Desktop UI launcher (`rustyclaw desktop`) | ✅ |
+| `desktop` | Desktop UI launcher (`eiva desktop`) | ✅ |
 
-**rustyclaw-core** (library crate):
+**eiva-core** (library crate):
 
 | Feature | Description | Default |
 |---------|-------------|---------|
@@ -280,22 +280,22 @@ Features are split across the workspace crates:
 cargo build --release
 
 # Headless gateway only (no TUI)
-cargo build --release -p rustyclaw-cli --no-default-features
+cargo build --release -p eiva-cli --no-default-features
 
 # With Matrix support
-cargo build --release --features rustyclaw-core/matrix
+cargo build --release --features eiva-core/matrix
 
 # Everything enabled
-cargo build --release --features rustyclaw-core/full
+cargo build --release --features eiva-core/full
 
 # Build only the core library
-cargo check -p rustyclaw-core
+cargo check -p eiva-core
 
 # Build only the TUI client
-cargo check -p rustyclaw-tui
+cargo check -p eiva-tui
 
 # Build only the desktop client
-cargo check -p rustyclaw-desktop
+cargo check -p eiva-desktop
 ```
 
 ### Running Tests
@@ -305,10 +305,10 @@ cargo check -p rustyclaw-desktop
 cargo test --workspace
 
 # Core library tests only
-cargo test -p rustyclaw-core
+cargo test -p eiva-core
 
 # TUI client tests only
-cargo test -p rustyclaw-tui
+cargo test -p eiva-tui
 ```
 
 ### Cross-Compilation (Raspberry Pi)
@@ -320,11 +320,11 @@ cargo install cross --git https://github.com/cross-rs/cross
 
 # 64-bit (Pi 3/4/5)
 cross build --release --target aarch64-unknown-linux-gnu \
-  -p rustyclaw-cli --no-default-features
+  -p eiva-cli --no-default-features
 
 # 32-bit (Pi 2/3)
 cross build --release --target armv7-unknown-linux-gnueabihf \
-  -p rustyclaw-cli --no-default-features
+  -p eiva-cli --no-default-features
 ```
 
 ### Signal Messenger (Source Only)
@@ -409,7 +409,7 @@ Heartbeat system for proactive monitoring without explicit schedules.
 
 ## Security
 
-RustyClaw's security model is documented in detail:
+Eiva's security model is documented in detail:
 
 - **[SECURITY.md](docs/SECURITY.md)** — Full security architecture
 - **[DEPLOYMENT.md](docs/DEPLOYMENT.md)** — Production deployment guide
@@ -458,7 +458,7 @@ API keys, tokens, and credentials are stored encrypted:
 
 ## Architecture
 
-RustyClaw follows a **trait-driven architecture** — core systems are pluggable:
+Eiva follows a **trait-driven architecture** — core systems are pluggable:
 
 ```rust
 // Swap providers without changing agent code
@@ -481,12 +481,12 @@ trait RuntimeAdapter {
 ### Workspace Layout
 
 ```
-RustyClaw/
+Eiva/
 ├── Cargo.toml              # Workspace root
 ├── crates/
-│   ├── rustyclaw-core/     # Core library (config, gateway, tools, secrets, providers)
-│   ├── rustyclaw-cli/      # CLI binaries (rustyclaw + rustyclaw-gateway)
-│   └── rustyclaw-tui/      # Terminal UI client (ratatui)
+│   ├── eiva-core/     # Core library (config, gateway, tools, secrets, providers)
+│   ├── eiva-cli/      # CLI binaries (eiva + eiva-gateway)
+│   └── eiva-tui/      # Terminal UI client (ratatui)
 ├── docs/                   # Architecture, security, and client spec docs
 ├── tests/                  # Integration and E2E tests
 └── website/                # Project website and install scripts
@@ -507,7 +507,7 @@ RustyClaw/
 
 ## Comparison
 
-| Feature | RustyClaw | OpenClaw | ZeroClaw | nanobot |
+| Feature | Eiva | OpenClaw | ZeroClaw | nanobot |
 |---------|-----------|----------|----------|---------|
 | **Language** | Rust | TypeScript | Rust | Python |
 | **Memory** | ~15 MB | ~150 MB | <5 MB | ~100 MB |
@@ -535,7 +535,7 @@ MIT License. See [LICENSE](LICENSE).
 
 ## Acknowledgments
 
-RustyClaw builds on ideas from:
+Eiva builds on ideas from:
 
 - [OpenClaw](https://github.com/openclaw/openclaw) — The original agentic AI assistant
 - [IronClaw](https://github.com/nearai/ironclaw) — Security patterns and HTTP scanning
@@ -545,5 +545,5 @@ RustyClaw builds on ideas from:
 ---
 
 <p align="center">
-  <strong>Built with 🦀 by the RustyClaw community</strong>
+  <strong>Built with 🦀 by the Eiva community</strong>
 </p>

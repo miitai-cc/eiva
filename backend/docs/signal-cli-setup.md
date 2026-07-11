@@ -1,6 +1,6 @@
 # Signal CLI Messenger Configuration
 
-This guide explains how to configure RustyClaw to work with Signal Private Messenger using the signal-cli tool.
+This guide explains how to configure Eiva to work with Signal Private Messenger using the signal-cli tool.
 
 ## Prerequisites
 
@@ -33,7 +33,7 @@ This guide explains how to configure RustyClaw to work with Signal Private Messe
 
 ## Configuration
 
-Add the following to your RustyClaw configuration file (`~/.config/rustyclaw/config.toml`):
+Add the following to your Eiva configuration file (`~/.config/eiva/config.toml`):
 
 ```toml
 [messengers.signal]
@@ -45,7 +45,7 @@ enabled = true
 
 ## Building with Signal Support
 
-Build RustyClaw with Signal CLI support enabled:
+Build Eiva with Signal CLI support enabled:
 
 ```bash
 cargo build --features signal-cli
@@ -60,10 +60,10 @@ default = ["signal-cli"]
 
 ## Usage
 
-Once configured, you can send Signal messages through RustyClaw:
+Once configured, you can send Signal messages through Eiva:
 
 ```rust
-use rustyclaw_core::messengers::{SignalCliMessenger, Messenger};
+use eiva_core::messengers::{SignalCliMessenger, Messenger};
 
 let mut messenger = SignalCliMessenger::new(
     "my_signal".to_string(),
@@ -71,7 +71,7 @@ let mut messenger = SignalCliMessenger::new(
 );
 
 messenger.initialize().await?;
-let message_id = messenger.send_message("+19876543210", "Hello from RustyClaw!").await?;
+let message_id = messenger.send_message("+19876543210", "Hello from Eiva!").await?;
 ```
 
 ## Limitations

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useI18n } from './i18n/index.jsx';
 
 export default function McpConfigPage() {
+  const { t } = useI18n();
   const [items, setItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [formData, setFormData] = useState('');
@@ -33,7 +35,7 @@ export default function McpConfigPage() {
     try {
       const parsed = JSON.parse(formData);
       if (!parsed.id) {
-        alert('ID 欄位不可為空！');
+        alert(t('mcp.idRequired'));
         return;
       }
       fetch(`http://localhost:39999/eiva/backend/api/ver-0.95/mcp-server/${parsed.id}`, {
@@ -44,21 +46,21 @@ export default function McpConfigPage() {
       .then(res => res.json())
       .then(resData => {
         if (resData.status === 'success') {
-          alert('儲存成功！');
+          alert(t('mcp.saveSuccess'));
           fetchItems();
           setSelectedItem(parsed);
         } else {
-          alert('儲存失敗：' + resData.error);
+          alert(t('mcp.saveFailed') + resData.error);
         }
       })
-      .catch(err => alert('發生錯誤：' + err.message));
+      .catch(err => alert(t('mcp.error') + err.message));
     } catch (e) {
-      alert('JSON 格式錯誤：' + e.message);
+      alert(t('mcp.jsonError') + e.message);
     }
   };
 
   const handleDelete = (id) => {
-    if (!confirm('確定要刪除嗎？')) return;
+    if (!confirm(t('mcp.confirmDelete'))) return;
     fetch(`http://localhost:39999/eiva/backend/api/ver-0.95/mcp-server/${id}`, { method: 'DELETE' })
       .then(res => res.json())
       .then(resData => {
@@ -67,59 +69,57 @@ export default function McpConfigPage() {
           setFormData('');
           fetchItems();
         } else {
-          alert('刪除失敗：' + resData.error);
+          alert(t('mcp.deleteFailed') + resData.error);
         }
       })
-      .catch(err => alert('發生錯誤：' + err.message));
+      .catch(err => alert(t('mcp.error') + err.message));
   };
 
   return (
-    <div style={{ display: 'flex', height: '100%', overflow: 'hidden', backgroundColor: '#111', color: '#eee' }}>
-      {/* Left Sidebar: List */}
-      <div style={{ width: '300px', borderRight: '1px solid #333', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '16px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ margin: 0, fontSize: '16px' }}>MCP 伺服器</h2>
-          <button onClick={handleAddNew} style={{ padding: '4px 8px', backgroundColor: '#0066cc', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>➕ 新增</button>
+    <div className="config-page">
+      <div className="config-sidebar">
+        <div className="config-sidebar-header">
+          <h2>{t('mcp.title')}</h2>
+          <button className="config-add-btn" onClick={handleAddNew}>+ {t('mcp.add')}</button>
         </div>
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div className="config-sidebar-list">
           {items.map(item => (
-            <div 
-              key={item.id} 
+            <div
+              key={item.id}
+              className={`config-sidebar-item ${selectedItem?.id === item.id ? 'active' : ''}`}
               onClick={() => handleSelect(item)}
-              style={{ padding: '12px 16px', borderBottom: '1px solid #222', cursor: 'pointer', backgroundColor: selectedItem?.id === item.id ? '#2a2a2a' : 'transparent' }}
             >
-              <div style={{ fontWeight: 'bold' }}>{item.name || item.id}</div>
-              <div style={{ fontSize: '12px', color: '#888' }}>{item.id}</div>
+              <div className="config-sidebar-item-name">{item.name || item.id}</div>
+              <div className="config-sidebar-item-id">{item.id}</div>
             </div>
           ))}
-          {items.length === 0 && <div style={{ padding: '16px', color: '#666', textAlign: 'center' }}>尚無資料</div>}
+          {items.length === 0 && <div className="config-empty">{t('mcp.noData')}</div>}
         </div>
       </div>
 
-      {/* Right Content: Editor */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '24px', overflowY: 'auto' }}>
+      <div className="config-editor">
         {selectedItem ? (
-          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h2 style={{ margin: 0 }}>編輯 MCP 伺服器設定</h2>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button onClick={() => handleDelete(selectedItem.id)} style={{ padding: '8px 16px', backgroundColor: 'transparent', color: '#ff4444', border: '1px solid #ff4444', borderRadius: '4px', cursor: 'pointer' }}>🗑️ 刪除</button>
-                <button onClick={handleSave} style={{ padding: '8px 16px', backgroundColor: '#2e7d32', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>💾 儲存</button>
+          <div className="config-editor-inner">
+            <div className="config-editor-header">
+              <h2>{t('mcp.editTitle')}</h2>
+              <div className="config-editor-actions">
+                <button className="config-delete-btn" onClick={() => handleDelete(selectedItem.id)}>{t('mcp.delete')}</button>
+                <button className="config-save-btn" onClick={handleSave}>{t('mcp.save')}</button>
               </div>
             </div>
-            <div style={{ marginBottom: '8px', color: '#aaa', fontSize: '13px' }}>
-              請使用 JSON 格式設定 MCP 伺服器（必須包含 "id" 欄位）。
+            <div className="config-hint">
+              {t('mcp.hint')}
             </div>
-            <textarea 
-              value={formData} 
+            <textarea
+              className="config-textarea"
+              value={formData}
               onChange={e => setFormData(e.target.value)}
-              style={{ flex: 1, width: '100%', backgroundColor: '#1e1e1e', color: '#d4d4d4', border: '1px solid #333', borderRadius: '4px', padding: '16px', fontFamily: 'monospace', fontSize: '14px', resize: 'none', outline: 'none' }}
               spellCheck="false"
             />
           </div>
         ) : (
-          <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', color: '#555' }}>
-            請從左側選擇或新增一個 MCP 伺服器
+          <div className="config-empty-state">
+            {t('mcp.emptyState')}
           </div>
         )}
       </div>

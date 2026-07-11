@@ -2,7 +2,7 @@
 
 _Date: 2026-05-30_
 
-Audit of RustyClaw code quality plus implementation of the priority fixes.
+Audit of Eiva code quality plus implementation of the priority fixes.
 
 ---
 
@@ -39,23 +39,23 @@ crate boundaries; good security posture.
   are excluded (see §3).
 - **Fixed every clippy error this surfaced** across the workspace:
   - **tokenjuice**: `redundant_closure`, `if_same_then_else`, `single_match`/`collapsible_if`.
-  - **rustyclaw-core** (13 errors, only visible under `--features full`):
+  - **eiva-core** (13 errors, only visible under `--features full`):
     `field_reassign_with_default` (×2), unstable `floor_char_boundary` past MSRV 1.86,
     `io::Error::other` (×4), empty-line-after-doc, `if let Err…return Err` → `?` (×2),
     `redundant_closure`, `len_without_is_empty`, `needless_range_loop`,
     `if_same_then_else`, derivable `Default`, `needless_option_as_deref`.
-  - **rustyclaw-view**: `clone_on_copy`, `single_match`, and a broken integration test
+  - **eiva-view**: `clone_on_copy`, `single_match`, and a broken integration test
     (`MessageBubbleData` literal missing the `collapsed` field — E0063 compile error).
-  - **rustyclaw-desktop** (~12): `collapsible_if` (×6), `redundant_closure` (×2),
+  - **eiva-desktop** (~12): `collapsible_if` (×6), `redundant_closure` (×2),
     doc-list overindent (×2), `manual_contains`, `suspicious_else_formatting` (rsx macro
     interaction, fixed by hoisting the `if/else` out of the macro), and a dead
     `SecretsCommand::Store` variant (marked `#[allow(dead_code)]` with a note that it's
     reserved for the not-yet-wired add-secret flow).
 
 ### 2b. Dead code / dependency removal (item #2) — ✅ DONE
-- Deleted `crates/rustyclaw-core/src/provider_registry.rs` (975 lines).
+- Deleted `crates/eiva-core/src/provider_registry.rs` (975 lines).
 - Removed `pub mod provider_registry;` from `lib.rs`.
-- Removed the `genai = "0.5.3"` dependency from `rustyclaw-core/Cargo.toml`.
+- Removed the `genai = "0.5.3"` dependency from `eiva-core/Cargo.toml`.
   (`genai` may still linger in the gitignored `Cargo.lock` until a regen; cosmetic.)
 
 ### 2c. Swallowed write errors (item #4) — ✅ the high-value sites
@@ -73,7 +73,7 @@ required for the new `fmt --check` gate).
 
 ## 3. Known limitation: `--all-features` cannot compile (pre-existing, upstream)
 
-Two optional features of `rustyclaw-core` do not build, independent of lint work, so the
+Two optional features of `eiva-core` do not build, independent of lint work, so the
 CI gate deliberately targets default features:
 - **`qr`** (`pairing/qr.rs`): `qrcode 0.14` provides no `qrcode::render::Pixel` impl for
   `image 0.25`'s `Luma<u8>`. (`qr` ∉ `full`; only `--all-features` hits it.)
@@ -90,12 +90,12 @@ File issues to track these so broader feature coverage can be restored later.
 | `cargo fmt --all -- --check` | ✅ PASS (0 diffs) — exit 0 |
 | `cargo clippy --workspace --all-targets -- -D warnings` (the CI gate) | ✅ PASS (0 errors, 0 warnings) — exit 0 |
 | `cargo build --workspace` | ✅ PASS — exit 0 |
-| `cargo clippy -p rustyclaw-core --features full --all-targets` | ✅ PASS |
+| `cargo clippy -p eiva-core --features full --all-targets` | ✅ PASS |
 | `cargo test -p tokenjuice` | ✅ PASS (8/8) |
 | `cargo clippy --all-targets --all-features` | ❌ cannot build — `qr`+`browser` broken upstream (§3) |
-| `rustyclaw-core` lib unit tests | ⚠️ 4 pre-existing env-dependent failures (below), not caused by this pass |
+| `eiva-core` lib unit tests | ⚠️ 4 pre-existing env-dependent failures (below), not caused by this pass |
 
-Pre-existing flaky tests in `crates/rustyclaw-core/src/tools/mod.rs`
+Pre-existing flaky tests in `crates/eiva-core/src/tools/mod.rs`
 (`test_tts_returns_media_path`, `test_image_url_detection`, `test_browser_status`,
 `tools::browser::tests::test_browser_stub_status`) fail on a clean checkout too
 (confirmed via `git stash`). Out of scope; worth a separate fix.

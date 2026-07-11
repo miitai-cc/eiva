@@ -1,19 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import { eiva } from './eiva_api.js';
 import './style.css';
 import WorkflowEditor from './WorkflowEditor.jsx';
 import McpConfigPage from './McpConfigPage.jsx';
 import SkillConfigPage from './SkillConfigPage.jsx';
-
-const statusText = {
-  idle: '尚未送出',
-  queued: '已建立任務',
-  running: '執行中',
-  completed: '已完成',
-  failed: '失敗',
-  interrupted: '未完成'
-};
+import { I18nProvider, useI18n, locales } from './i18n/index.jsx';
 
 const statusTone = {
   idle: 'neutral',
@@ -24,62 +16,75 @@ const statusTone = {
   interrupted: 'neutral'
 };
 
-const systemSettingFields = [
-  {
-    key: 'prefixPrompt',
-    label: '前置提示詞',
-    description: '送出需求時會放在使用者需求之前，作為任務開始前的補充指令。'
-  },
-  {
-    key: 'suffixPrompt',
-    label: '後置提示詞',
-    description: '送出需求時會放在使用者需求之後，作為任務結尾的補充指令。'
-  },
-  {
-    key: 'roleDefinition',
-    label: '角色定義',
-    description: '定義此模式下的專業知識和個性。此描述將會形塑展現自我及處理工作的方式。'
-  },
-  {
-    key: 'shortDescription',
-    label: '簡短描述',
-    description: '在模式選擇下拉選單中顯示的簡短描述。'
-  },
-  {
-    key: 'usageTiming',
-    label: '使用時機',
-    description: '提供何時應使用此模式的指引。這有助於為任務選擇正確的模式。'
-  }
-];
+function getSystemSettingFields(t) {
+  return [
+    {
+      key: 'prefixPrompt',
+      label: t('prompts.pre'),
+      description: t('prompts.preDesc')
+    },
+    {
+      key: 'suffixPrompt',
+      label: t('prompts.post'),
+      description: t('prompts.postDesc')
+    },
+    {
+      key: 'roleDefinition',
+      label: t('prompts.role'),
+      description: t('prompts.roleDesc')
+    },
+    {
+      key: 'shortDescription',
+      label: t('prompts.shortDesc'),
+      description: t('prompts.shortDescDesc')
+    },
+    {
+      key: 'usageTiming',
+      label: t('prompts.useWhen'),
+      description: t('prompts.useWhenDesc')
+    }
+  ];
+}
 
-const emptySystemSettings = Object.fromEntries(
-  systemSettingFields.map((field) => [field.key, ''])
-);
+function getEmptySystemSettings(systemSettingFields) {
+  return Object.fromEntries(
+    systemSettingFields.map((field) => [field.key, ''])
+  );
+}
 
-const intervalUnits = [
-  { value: 'minutes', label: '分鐘' },
-  { value: 'hours', label: '小時' }
-];
-const fixedFrequencyOptions = [
-  { value: 'daily', label: '每日' },
-  { value: 'weekly', label: '每星期' },
-  { value: 'monthly', label: '每月' }
-];
-const weekdayOptions = [
-  { value: '0', label: '星期日' },
-  { value: '1', label: '星期一' },
-  { value: '2', label: '星期二' },
-  { value: '3', label: '星期三' },
-  { value: '4', label: '星期四' },
-  { value: '5', label: '星期五' },
-  { value: '6', label: '星期六' }
-];
+function getIntervalUnits(t) {
+  return [
+    { value: 'minutes', label: t('time.minutes') },
+    { value: 'hours', label: t('time.hours') }
+  ];
+}
+function getFixedFrequencyOptions(t) {
+  return [
+    { value: 'daily', label: t('time.daily') },
+    { value: 'weekly', label: t('time.weekly') },
+    { value: 'monthly', label: t('time.monthly') }
+  ];
+}
+function getWeekdayOptions(t) {
+  return [
+    { value: '0', label: t('time.sunday') },
+    { value: '1', label: t('time.monday') },
+    { value: '2', label: t('time.tuesday') },
+    { value: '3', label: t('time.wednesday') },
+    { value: '4', label: t('time.thursday') },
+    { value: '5', label: t('time.friday') },
+    { value: '6', label: t('time.saturday') }
+  ];
+}
+
+const validIntervalUnitValues = ['minutes', 'hours'];
+const validFixedFrequencyValues = ['daily', 'weekly', 'monthly'];
 const localScheduleIdPrefix = 'local-schedule-';
 const scheduleRefreshIntervalMs = 10000;
 
 function RobotIcon() {
   return (
-    <svg className="robot-icon" viewBox="0 0 24 24" role="img" aria-label="機器人">
+    <svg className="robot-icon" viewBox="0 0 24 24" role="img" aria-label={t('misc.robot')}>
       <path className="robot-antenna" d="M12 5V3" />
       <circle className="robot-antenna-dot" cx="12" cy="2.5" r="1" />
       <rect className="robot-face" x="5" y="7" width="14" height="12" rx="4" />
@@ -147,7 +152,7 @@ function loadSchedulePrompts() {
 }
 
 function normalizeSchedulePrompt(item) {
-  const intervalUnit = intervalUnits.some((unit) => unit.value === item.intervalUnit)
+  const intervalUnit = validIntervalUnitValues.includes(item.intervalUnit)
     ? item.intervalUnit
     : 'minutes';
   const intervalValue = typeof item.intervalValue === 'number'
@@ -157,7 +162,7 @@ function normalizeSchedulePrompt(item) {
     ? String(item.repeatCount)
     : item.repeatCount;
   const scheduleKind = item.scheduleKind === 'fixed' ? 'fixed' : 'one_time';
-  const fixedFrequency = fixedFrequencyOptions.some((option) => option.value === item.fixedFrequency)
+  const fixedFrequency = validFixedFrequencyValues.includes(item.fixedFrequency)
     ? item.fixedFrequency
     : 'daily';
 
@@ -323,15 +328,17 @@ function saveSchedulePrompts(prompts) {
   }
 }
 
+const systemSettingKeys = ['prefixPrompt', 'suffixPrompt', 'roleDefinition', 'shortDescription', 'usageTiming'];
+
 function loadSystemSettings() {
   try {
     const parsed = JSON.parse(localStorage.getItem('Eiva-system-settings') || '{}');
-    return systemSettingFields.reduce((settings, field) => ({
+    return systemSettingKeys.reduce((settings, key) => ({
       ...settings,
-      [field.key]: typeof parsed[field.key] === 'string' ? parsed[field.key] : ''
-    }), { ...emptySystemSettings });
+      [key]: typeof parsed[key] === 'string' ? parsed[key] : ''
+    }), Object.fromEntries(systemSettingKeys.map((key) => [key, ''])));
   } catch {
-    return { ...emptySystemSettings };
+    return Object.fromEntries(systemSettingKeys.map((key) => [key, '']));
   }
 }
 
@@ -348,6 +355,20 @@ function isHiddenLogMessage(message = '') {
 }
 
 function App() {
+  const { t, locale, setLocale } = useI18n();
+  const systemSettingFields = useMemo(() => getSystemSettingFields(t), [t]);
+  const emptySystemSettings = useMemo(() => getEmptySystemSettings(systemSettingFields), [systemSettingFields]);
+  const intervalUnits = useMemo(() => getIntervalUnits(t), [t]);
+  const fixedFrequencyOptions = useMemo(() => getFixedFrequencyOptions(t), [t]);
+  const weekdayOptions = useMemo(() => getWeekdayOptions(t), [t]);
+  const statusText = useMemo(() => ({
+    idle: t('status.idle'),
+    queued: t('status.queued'),
+    running: t('status.running'),
+    completed: t('status.completed'),
+    failed: t('status.failed'),
+    interrupted: t('status.interrupted')
+  }), [t]);
   const [requirement, setRequirement] = useState('');
   const [submittedRequirement, setSubmittedRequirement] = useState('');
   const [taskId, setTaskId] = useState('');
@@ -431,7 +452,7 @@ function App() {
 
     const processLogs = item.processLogs || [];
     const alreadyRecorded = processLogs.some((log) => (
-      log.message === entry.message && (log.at === entry.at || entry.message === '任務已建立')
+      log.message === entry.message && (log.at === entry.at || entry.message === t('chat.taskCreated'))
     ));
 
     return alreadyRecorded
@@ -568,11 +589,11 @@ function App() {
 
     if (patch.enabled === true) {
       if (!nextCandidate.requirement.trim()) {
-        window.alert('請先輸入並儲存排程需求。');
+        window.alert(t('chat.scheduleAlert'));
         return;
       }
       if (nextCandidate.scheduleKind !== 'fixed' && !isFutureScheduleTime(nextCandidate.sendAt)) {
-        window.alert('發送時間日期必須晚於目前時間，請重新設定後再啟用。');
+        window.alert(t('chat.timeAlert'));
         return;
       }
     }
@@ -688,12 +709,12 @@ function App() {
     };
 
     socket.onopen = () => {
-      appendLog({ message: 'WebSocket 已連線' });
+      appendLog({ message: t('chat.wsConnected') });
       const pingMsg = eiva.ClientMessage.create({ ping: {} });
       socket.send(eiva.ClientMessage.encode(pingMsg).finish());
     };
 
-    socket.onclose = () => appendLog({ message: 'WebSocket 已中斷' });
+    socket.onclose = () => appendLog({ message: t('chat.wsDisconnected') });
 
     socket.onmessage = (event) => {
       try {
@@ -706,7 +727,7 @@ function App() {
           setTaskId(ev.taskId);
           updateLatestHistory({ taskId: ev.taskId });
           setRequirement('');
-          setLogs([{ at: new Date().toISOString(), message: '任務已建立' }]);
+          setLogs([{ at: new Date().toISOString(), message: t('chat.taskCreated') }]);
           setStatus('queued');
           setIsSubmitting(false);
         } else if (payloadType === 'taskStatus') {
@@ -715,7 +736,7 @@ function App() {
           else if (ev.status === 'running') {
             setIsStopping(false);
             setStatus('running');
-            appendLog({ taskId: ev.taskId, message: '任務已開始', at: new Date().toISOString() }, { addToHistory: true });
+            appendLog({ taskId: ev.taskId, message: t('chat.taskStarted'), at: new Date().toISOString() }, { addToHistory: true });
           }
         } else if (payloadType === 'taskLog') {
           const ev = serverMsg.taskLog;
@@ -727,21 +748,21 @@ function App() {
           setStatus('completed');
           setResult(ev.result);
           updateHistoryByTaskId(ev.taskId, { result: ev.result, completedAt: ev.at });
-          appendLog({ taskId: ev.taskId, message: '任務完成', at: ev.at }, { addToHistory: true });
+          appendLog({ taskId: ev.taskId, message: t('chat.taskCompleted'), at: ev.at }, { addToHistory: true });
         } else if (payloadType === 'taskFailed') {
           const ev = serverMsg.taskFailed;
           setIsStopping(false);
           setStatus('failed');
-          setError(ev.error || '任務處理失敗');
-          updateHistoryByTaskId(ev.taskId, { error: ev.error || '任務處理失敗', completedAt: ev.at });
-          appendLog({ taskId: ev.taskId, message: ev.error || '任務處理失敗', at: ev.at }, { addToHistory: true });
+          setError(ev.error || t('chat.taskFailed'));
+          updateHistoryByTaskId(ev.taskId, { error: ev.error || t('chat.taskFailed'), completedAt: ev.at });
+          appendLog({ taskId: ev.taskId, message: ev.error || t('chat.taskFailed'), at: ev.at }, { addToHistory: true });
         } else if (payloadType === 'taskInterrupted') {
           const ev = serverMsg.taskInterrupted;
           setIsStopping(false);
           setStatus('interrupted');
-          setError(ev.error || '任務已停止');
-          updateHistoryByTaskId(ev.taskId, { error: ev.error || '任務已停止', completedAt: ev.at });
-          appendLog({ taskId: ev.taskId, message: ev.error || '任務已停止', at: ev.at }, { addToHistory: true });
+          setError(ev.error || t('chat.taskStopped'));
+          updateHistoryByTaskId(ev.taskId, { error: ev.error || t('chat.taskStopped'), completedAt: ev.at });
+          appendLog({ taskId: ev.taskId, message: ev.error || t('chat.taskStopped'), at: ev.at }, { addToHistory: true });
         } else if (payloadType === 'error') {
           setIsSubmitting(false);
           setStatus('failed');
@@ -839,7 +860,7 @@ function App() {
             return {
               taskId: item.taskId,
               patch: {
-                error: '任務紀錄已不存在，可能是伺服器重啟或連線中斷。'
+                error: t('chat.taskRecordGone')
               }
             };
           }
@@ -901,6 +922,10 @@ function App() {
     composerRef.current.style.height = `${Math.min(composerRef.current.scrollHeight, 220)}px`;
   }, [requirement]);
 
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
+
   async function submitTask() {
     const trimmed = requirement.trim();
     if (!canUseComposer || !trimmed || isSubmitting || isTaskRunning) return;
@@ -921,7 +946,7 @@ function App() {
           id: crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
           requirement: trimmed,
           taskId: '',
-          processLogs: [{ at: now, message: '任務已送出，等待後端建立...' }],
+          processLogs: [{ at: now, message: t('chat.taskWaiting') }],
           createdAt: now
         },
         ...current
@@ -942,8 +967,8 @@ function App() {
     } else {
       setIsSubmitting(false);
       setStatus('failed');
-      setError('WebSocket 未連線');
-      updateLatestHistory({ error: 'WebSocket 未連線' });
+      setError(t('chat.wsNotConnected'));
+      updateLatestHistory({ error: t('chat.wsNotConnected') });
     }
   }
 
@@ -951,7 +976,7 @@ function App() {
     if (!canStopTask || isStopping) return;
 
     setIsStopping(true);
-    const entry = { at: new Date().toISOString(), message: '正在要求停止任務' };
+    const entry = { at: new Date().toISOString(), message: t('chat.stoppingTask') };
     setLogs((current) => [...current, entry]);
     appendProcessLogToHistory(taskId, entry);
 
@@ -964,7 +989,7 @@ function App() {
       socketRef.current.send(eiva.ClientMessage.encode(req).finish());
     } else {
       setIsStopping(false);
-      const errorEntry = { at: new Date().toISOString(), message: 'WebSocket 未連線' };
+      const errorEntry = { at: new Date().toISOString(), message: t('chat.wsNotConnected') };
       setLogs((current) => [...current, errorEntry]);
       appendProcessLogToHistory(taskId, errorEntry);
     }
@@ -1000,8 +1025,8 @@ function App() {
               value={editingSchedulePromptValue}
               onChange={(event) => updateEditingSchedulePromptDraft(event.target.value)}
               rows={4}
-              placeholder="輸入排程需求"
-              aria-label="編輯排程提示詞"
+              placeholder={t('chat.enterScheduleRequirement')}
+              aria-label={t('chat.editSchedule')}
             />
             <div className="schedule-prompt-actions">
               <button
@@ -1010,34 +1035,34 @@ function App() {
                 onClick={saveEditingSchedulePrompt}
                 disabled={!editingSchedulePromptValue.trim()}
               >
-                儲存
+                {t('chat.save')}
               </button>
               <button
                 className="schedule-text-button"
                 type="button"
                 onClick={cancelEditingSchedulePrompt}
               >
-                取消
+                {t('chat.cancel')}
               </button>
             </div>
           </>
         ) : (
           <>
-            <p>{item.requirement || '尚未輸入排程需求'}</p>
+            <p>{item.requirement || t('chat.noRequirement')}</p>
             <div className="schedule-prompt-actions">
               <button
                 className="schedule-text-button"
                 type="button"
                 onClick={() => startEditingSchedulePrompt(item)}
               >
-                編輯
+                {t('chat.edit')}
               </button>
               <button
                 className="schedule-text-button danger"
                 type="button"
                 onClick={() => deleteSchedulePrompt(item.id)}
               >
-                刪除
+                {t('chat.delete')}
               </button>
             </div>
           </>
@@ -1046,7 +1071,7 @@ function App() {
           {isFixedSchedule ? (
             <>
               <label className="schedule-field">
-                <span>固定頻率</span>
+                <span>{t('chat.fixedFrequency')}</span>
                 <select
                   value={item.fixedFrequency}
                   onChange={(event) => updateSchedulePromptTiming(item.id, { fixedFrequency: event.target.value })}
@@ -1060,7 +1085,7 @@ function App() {
               </label>
               {item.fixedFrequency === 'weekly' && (
                 <label className="schedule-field">
-                  <span>星期</span>
+                  <span>{t('chat.dayOfWeek')}</span>
                   <select
                     value={item.fixedDayOfWeek}
                     onChange={(event) => updateSchedulePromptTiming(item.id, { fixedDayOfWeek: event.target.value })}
@@ -1075,7 +1100,7 @@ function App() {
               )}
               {item.fixedFrequency === 'monthly' && (
                 <label className="schedule-field">
-                  <span>日期</span>
+                  <span>{t('chat.dayOfMonth')}</span>
                   <input
                     type="number"
                     min="1"
@@ -1089,7 +1114,7 @@ function App() {
                 </label>
               )}
               <label className="schedule-field">
-                <span>發送時間</span>
+                <span>{t('chat.sendTime')}</span>
                 <input
                   type="time"
                   value={item.fixedTime}
@@ -1100,7 +1125,7 @@ function App() {
           ) : (
             <>
               <label className="schedule-field">
-                <span>發送時間日期</span>
+                <span>{t('chat.sendDateTime')}</span>
                 <input
                   type="datetime-local"
                   value={item.sendAt}
@@ -1109,7 +1134,7 @@ function App() {
                 />
               </label>
               <label className="schedule-switch-field">
-                <span>持續發送</span>
+                <span>{t('chat.continuous')}</span>
                 <button
                   className={`switch-control ${item.continuous ? 'is-on' : ''}`}
                   type="button"
@@ -1123,7 +1148,7 @@ function App() {
               {item.continuous && (
                 <>
                   <label className="schedule-field schedule-interval-field">
-                    <span>間隔時間</span>
+                    <span>{t('chat.interval')}</span>
                     <input
                       type="number"
                       min="1"
@@ -1137,7 +1162,7 @@ function App() {
                     <select
                       value={item.intervalUnit}
                       onChange={(event) => updateSchedulePromptTiming(item.id, { intervalUnit: event.target.value })}
-                      aria-label="間隔單位"
+                      aria-label={t('chat.intervalUnit')}
                     >
                       {intervalUnits.map((unit) => (
                         <option key={unit.value} value={unit.value}>
@@ -1147,7 +1172,7 @@ function App() {
                     </select>
                   </label>
                   <label className="schedule-field">
-                    <span>次數</span>
+                    <span>{t('chat.repeatCount')}</span>
                     <input
                       type="number"
                       min="1"
@@ -1164,14 +1189,14 @@ function App() {
             </>
           )}
           <label className="schedule-switch-field schedule-enable-field">
-            <span>啟用排程</span>
+            <span>{t('chat.enableScheduleLabel')}</span>
             <button
               className={`switch-control ${item.enabled ? 'is-on' : ''}`}
               type="button"
               role="switch"
               aria-checked={item.enabled}
               disabled={(!isFixedSchedule && !item.sendAt) || isSavingSchedule}
-              title={isFixedSchedule || item.sendAt ? '啟用後會在指定時間發送' : '請先設定發送時間日期'}
+              title={isFixedSchedule || item.sendAt ? t('chat.enableSchedule') : t('chat.setScheduleFirst')}
               onClick={() => updateSchedulePromptTiming(item.id, { enabled: !item.enabled })}
             >
               <span />
@@ -1186,83 +1211,96 @@ function App() {
   const standardSchedulePrompts = schedulePrompts.filter((item) => item.scheduleKind !== 'fixed');
 
   return (
-    <main className="app-shell" style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>
-      <div style={{ display: 'flex', height: '100%' }}>
+    <main className="app-shell">
+      <div className="sidebar-container">
         {systemSidebarOpen && (
-          <aside className="sidebar" aria-label="工作區" style={{ width: '220px', overflowY: 'auto' }}>
+          <aside className="sidebar" aria-label={t('chat.workspaceLabel')}>
             <div className="brand">
               <span className="brand-mark">
                 <RobotIcon />
               </span>
               <span>Eiva</span>
             </div>
-            <nav className="sidebar-nav" aria-label="任務狀態">
+            <nav className="sidebar-nav" aria-label={t('chat.taskStatusLabel')}>
               <button
                 className={`nav-item ${activeView === 'current' ? 'active' : ''}`}
                 type="button"
                 onClick={() => setActiveView('current')}
               >
-                AI 功能維護
+                {t('sidebar.aiMaintenance')}
               </button>
               <button
                 className={`nav-item ${activeView === 'history' ? 'active' : ''}`}
                 type="button"
                 onClick={() => setActiveView('history')}
               >
-                歷史紀錄
+                {t('sidebar.history')}
               </button>
               <button
                 className={`nav-item ${activeView === 'schedule' ? 'active' : ''}`}
                 type="button"
                 onClick={() => setActiveView('schedule')}
               >
-                排程設定
+                {t('sidebar.schedule')}
               </button>
               <button
                 className={`nav-item ${activeView === 'settings' ? 'active' : ''}`}
                 type="button"
                 onClick={() => setActiveView('settings')}
               >
-                系統設定
+                {t('sidebar.systemSettings')}
               </button>
               <button
                 className={`nav-item ${activeView === 'workflow' ? 'active' : ''}`}
                 type="button"
                 onClick={() => setActiveView('workflow')}
               >
-                工作流程 編輯器
+                {t('sidebar.workflowEditor')}
               </button>
               <button
                 className={`nav-item ${activeView === 'mcp' ? 'active' : ''}`}
                 type="button"
                 onClick={() => setActiveView('mcp')}
               >
-                MCP 伺服器維護
+                {t('sidebar.mcpServer')}
               </button>
               <button
                 className={`nav-item ${activeView === 'skill' ? 'active' : ''}`}
                 type="button"
                 onClick={() => setActiveView('skill')}
               >
-                AI Skill 維護
+                {t('sidebar.aiSkill')}
               </button>
+              <div className="sidebar-lang-switcher" style={{ marginTop: '16px', borderTop: '1px solid #e2e8f0', paddingTop: '12px' }}>
+                {locales.map((loc) => (
+                  <button
+                    key={loc.code}
+                    className={`lang-btn ${locale === loc.code ? 'active' : ''}`}
+                    onClick={() => setLocale(loc.code)}
+                    title={loc.label}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 12px', borderRadius: '6px', border: 'none', background: 'none', cursor: 'pointer', fontSize: '13px', color: locale === loc.code ? '#2563eb' : '#475569', fontWeight: locale === loc.code ? '600' : '400' }}
+                  >
+                    {loc.flag} {loc.label}
+                  </button>
+                ))}
+              </div>
             </nav>
           </aside>
         )}
         <div
-          style={{ width: '20px', backgroundColor: '#222', borderRight: '1px solid #333', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#888', fontSize: '10px' }}
+          className="sidebar-toggle"
           onClick={() => setSystemSidebarOpen(!systemSidebarOpen)}
-          title={systemSidebarOpen ? '收合側邊欄' : '展開側邊欄'}
+          title={systemSidebarOpen ? t('sidebar.collapse') : t('sidebar.expand')}
         >
           {systemSidebarOpen ? '◀' : '▶'}
         </div>
       </div>
 
-      <section className="chat-panel" style={{ flex: 1, overflow: 'hidden' }}>
+      <section className="chat-panel">
         <header className="chat-header">
           <div>
-            <h1>需求派工工具</h1>
-            <p>把想修改的畫面或功能輸入給 Codex。</p>
+            <h1>{t('chat.title')}</h1>
+            <p>{t('chat.subtitle')}</p>
           </div>
           {taskId && <span className="task-chip">Task ID: {taskId}</span>}
         </header>
@@ -1275,7 +1313,7 @@ function App() {
                   <RobotIcon />
                 </div>
                 <div className="message-body">
-                  <p>請描述你想修改的畫面、功能或限制。我會在允許的專案目錄內執行。</p>
+                  <p>{t('chat.describeHint')}</p>
                 </div>
               </article>
 
@@ -1294,7 +1332,7 @@ function App() {
                   </div>
                   <div className="message-body">
                     <div className="message-title">
-                      <span>執行狀態</span>
+                      <span>{t('chat.executionStatus')}</span>
                     </div>
                     <div
                       className="log-window status-window"
@@ -1321,7 +1359,7 @@ function App() {
                   </div>
                   <div className="message-body">
                     <div className="message-title">
-                      <span>{error ? '任務失敗' : '任務結果'}</span>
+                      <span>{error ? t('chat.failed') : t('chat.result')}</span>
                     </div>
                     {result ? <pre>{result}</pre> : <p>{error}</p>}
                   </div>
@@ -1329,15 +1367,15 @@ function App() {
               )}
 
               {logs.length === 0 && !taskId && (
-                <div className="suggestions" aria-label="範例需求">
-                  <button type="button" onClick={() => setRequirement('將首頁改成更像 ChatGPT 的聊天介面')}>
-                    將首頁改成聊天介面
+                <div className="suggestions" aria-label={t('chat.suggestionHint')}>
+                  <button type="button" onClick={() => setRequirement(t('chat.requirementPlaceholder1'))}>
+                    {t('chat.changeToChat')}
                   </button>
-                  <button type="button" onClick={() => setRequirement('幫我增加左側選單與任務狀態')}>
-                    增加左側選單
+                  <button type="button" onClick={() => setRequirement(t('chat.requirementPlaceholder2'))}>
+                    {t('chat.addSidebar')}
                   </button>
-                  <button type="button" onClick={() => setRequirement('優化手機版排版，避免文字重疊')}>
-                    優化手機版排版
+                  <button type="button" onClick={() => setRequirement(t('chat.requirementPlaceholder3'))}>
+                    {t('chat.optimizeMobile')}
                   </button>
                 </div>
               )}
@@ -1349,7 +1387,7 @@ function App() {
               </div>
               <div className="message-body">
                 <div className="message-title">
-                  <span>歷史紀錄</span>
+                  <span>{t('chat.historyTitle')}</span>
                 </div>
                 {history.length > 0 ? (
                   <div className="history-list">
@@ -1372,18 +1410,18 @@ function App() {
                             type="button"
                             onClick={() => addHistoryRequirementToSchedule(item)}
                           >
-                            加入排程
+                            {t('chat.addToSchedule')}
                           </button>
                         </div>
 
                         {selectedHistoryId === item.id && (
                           <div className="history-detail">
                             <div>
-                              <h2>當初需求</h2>
+                              <h2>{t('chat.originalRequirement')}</h2>
                               <p>{item.requirement}</p>
                             </div>
                             <div>
-                              <h2>執行過程</h2>
+                              <h2>{t('chat.executionProcess')}</h2>
                               {item.processLogs?.length > 0 ? (
                                 <div className="history-process" role="log">
                                   {item.processLogs.map((log, index) => (
@@ -1394,15 +1432,15 @@ function App() {
                                   ))}
                                 </div>
                               ) : (
-                                <p>目前沒有可顯示的執行過程。</p>
+                                <p>{t('chat.noProcessLogs')}</p>
                               )}
                             </div>
                             <div>
-                              <h2>{item.error ? '失敗原因' : '執行結果'}</h2>
+                              <h2>{item.error ? t('chat.failureReason') : t('chat.executionResult')}</h2>
                               {item.result ? (
                                 <pre>{item.result}</pre>
                               ) : (
-                                <p>{item.error || '目前沒有可顯示的結果。'}</p>
+                                <p>{item.error || t('chat.noResult')}</p>
                               )}
                             </div>
                           </div>
@@ -1411,7 +1449,7 @@ function App() {
                     ))}
                   </div>
                 ) : (
-                  <p className="empty-state">尚無歷史問題。</p>
+                  <p className="empty-state">{t('chat.emptyHistory')}</p>
                 )}
               </div>
             </article>
@@ -1422,21 +1460,21 @@ function App() {
               </div>
               <div className="message-body">
                 <div className="message-title">
-                  <span>排程設定</span>
+                  <span>{t('chat.scheduleTitle')}</span>
                   <div className="schedule-title-actions">
                     <button
                       className="schedule-text-button primary"
                       type="button"
                       onClick={addManualSchedulePrompt}
                     >
-                      新增排程
+                      {t('chat.addSchedule')}
                     </button>
                     <button
                       className="schedule-text-button primary"
                       type="button"
                       onClick={addManualFixedSchedulePrompt}
                     >
-                      新增固定排程
+                      {t('chat.addFixedSchedule')}
                     </button>
                   </div>
                 </div>
@@ -1444,23 +1482,23 @@ function App() {
                   <div className="schedule-prompt-area">
                     {standardSchedulePrompts.length > 0 && (
                       <section className="schedule-group">
-                        <h2>一般排程</h2>
-                        <div className="schedule-prompt-list" aria-label="一般排程清單">
+                        <h2>{t('chat.generalSchedule')}</h2>
+                        <div className="schedule-prompt-list" aria-label={t('chat.generalScheduleList')}>
                           {standardSchedulePrompts.map(renderSchedulePromptItem)}
                         </div>
                       </section>
                     )}
                     {fixedSchedulePrompts.length > 0 && (
                       <section className="schedule-group">
-                        <h2>固定排程</h2>
-                        <div className="schedule-prompt-list" aria-label="固定排程清單">
+                        <h2>{t('chat.fixedSchedule')}</h2>
+                        <div className="schedule-prompt-list" aria-label={t('chat.fixedScheduleList')}>
                           {fixedSchedulePrompts.map(renderSchedulePromptItem)}
                         </div>
                       </section>
                     )}
                   </div>
                 ) : (
-                  <p className="empty-state">目前尚無可調整的排程設定。可從歷史紀錄將需求提示詞加入排程。</p>
+                  <p className="empty-state">{t('chat.emptySchedule')}</p>
                 )}
               </div>
             </article>
@@ -1477,7 +1515,7 @@ function App() {
               </div>
               <div className="message-body">
                 <div className="message-title">
-                  <span>系統設定</span>
+                  <span>{t('chat.systemSettingsTitle')}</span>
                 </div>
                 <div className="settings-form">
                   {systemSettingFields.map((field) => (
@@ -1493,7 +1531,11 @@ function App() {
                           id={`system-setting-${field.key}`}
                           value={systemSettings[field.key]}
                           onChange={(event) => updateSystemSetting(field.key, event.target.value)}
-                          placeholder={`輸入${field.label}`}
+                          placeholder={field.key === 'prefixPrompt' ? t('prompts.enterPrefix') :
+                                       field.key === 'suffixPrompt' ? t('prompts.enterSuffix') :
+                                       field.key === 'roleDefinition' ? t('prompts.enterRole') :
+                                       field.key === 'shortDescription' ? t('prompts.enterShortDesc') :
+                                       t('prompts.enterUsageTiming')}
                           rows={field.key === 'shortDescription' ? 2 : 4}
                         />
                         <button
@@ -1501,7 +1543,7 @@ function App() {
                           type="button"
                           onClick={() => clearSystemSetting(field.key)}
                         >
-                          清空內容
+                          {t('prompts.clearContent')}
                         </button>
                       </div>
                     </div>
@@ -1537,16 +1579,16 @@ function App() {
                   value={requirement}
                   onChange={(event) => setRequirement(event.target.value)}
                   onKeyDown={handleRequirementKeyDown}
-                  placeholder="訊息 Codex"
+                  placeholder={t('chat.placeholder')}
                   rows={1}
                 />
                 <button
                   className={`send-button ${canStopTask ? 'stop-button' : ''}`}
                   type="submit"
                   disabled={canStopTask ? isStopping : (!requirement.trim() || isSubmitting || isTaskRunning)}
-                  aria-label={canStopTask ? '停止目前任務' : '送出需求'}
+                  aria-label={canStopTask ? t('chat.stopTaskLabel') : t('chat.sendLabel')}
                   aria-keyshortcuts="Meta+Enter Alt+Enter"
-                  title={canStopTask ? `停止目前任務 (${shortcutLabel})` : `送出需求 (${shortcutLabel})`}
+                  title={canStopTask ? `${t('chat.stopTaskLabel')} (${shortcutLabel})` : `${t('chat.sendLabel')} (${shortcutLabel})`}
                 >
                   {isSubmitting || isStopping ? (
                     <span className="button-spinner" aria-hidden="true" />
@@ -1559,7 +1601,7 @@ function App() {
               </div>
             </div>
             <p className="composer-hint">
-              使用 {shortcutLabel} {canStopTask ? '停止目前任務' : '送出'}。Codex 可能會修改專案檔案，送出前請確認需求明確。
+              {t('chat.composerHint', { shortcut: shortcutLabel, action: canStopTask ? t('chat.stopTaskLabel') : t('chat.send') })}
             </p>
           </form>
         )}
@@ -1568,4 +1610,4 @@ function App() {
   );
 }
 
-createRoot(document.getElementById('root')).render(<App />);
+createRoot(document.getElementById('root')).render(<I18nProvider><App /></I18nProvider>);

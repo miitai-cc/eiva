@@ -1,11 +1,11 @@
-# Contributing to RustyClaw
+# Contributing to Eiva
 
-Thanks for your interest in contributing to RustyClaw! 🦀🦞
+Thanks for your interest in contributing to Eiva! 🦀🦞
 
 ## Getting Started
 
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/RustyClaw.git`
+2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/Eiva.git`
 3. Create a branch: `git checkout -b my-feature`
 4. Make your changes
 5. Run tests: `cargo test`
@@ -106,7 +106,7 @@ We use [Conventional Commits](https://www.conventionalcommits.org/):
 
 ## Questions?
 
-- Open a [Discussion](https://github.com/rexlunae/RustyClaw/discussions)
+- Open a [Discussion](https://github.com/rexlunae/Eiva/discussions)
 - Join the [Discord](https://discord.com/invite/clawd)
 
 ## License

@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -e
 
-IMAGE_NAME="${IMAGE_NAME:-rustyclaw}"
+IMAGE_NAME="${IMAGE_NAME:-eiva}"
 DOCKERFILE="${1:-Dockerfile}"
 TAG="${2:-latest}"
 

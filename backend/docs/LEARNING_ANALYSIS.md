@@ -1,12 +1,12 @@
-# RustyClaw Learning & Evolution: Analysis and Recommendations
+# Eiva Learning & Evolution: Analysis and Recommendations
 
-Based on examining both OpenClaw's implementation and RustyClaw's current state.
+Based on examining both OpenClaw's implementation and Eiva's current state.
 
 ---
 
 ## Executive Summary
 
-RustyClaw has solid foundations but is missing several key mechanisms that make OpenClaw effective at learning, task management, and personality evolution. The biggest gaps are:
+Eiva has solid foundations but is missing several key mechanisms that make OpenClaw effective at learning, task management, and personality evolution. The biggest gaps are:
 
 1. **No pre-compaction memory flush** — memories can be lost during context compaction
 2. **No heartbeat system** — no periodic self-check capability
@@ -36,7 +36,7 @@ compaction: {
 }
 ```
 
-#### RustyClaw Has:
+#### Eiva Has:
 - Context compaction at 75% of window ✓
 - No pre-flush mechanism ✗
 
@@ -83,7 +83,7 @@ heartbeat: {
 }
 ```
 
-#### RustyClaw Has:
+#### Eiva Has:
 - Cron jobs ✓ (can achieve similar results)
 - No native heartbeat ✗
 - No `HEARTBEAT.md` convention ✗
@@ -116,7 +116,7 @@ impl Heartbeat {
 
 Alternatively, document how to achieve this with cron:
 ```bash
-rustyclaw cron add --name "Heartbeat" --every "30m" --session main \
+eiva cron add --name "Heartbeat" --every "30m" --session main \
   --system-event "Read HEARTBEAT.md and check on things. Reply HEARTBEAT_OK if nothing needs attention."
 ```
 
@@ -134,7 +134,7 @@ rustyclaw cron add --name "Heartbeat" --every "30m" --session main \
 - Session transcript indexing
 - sqlite-vec acceleration
 
-#### RustyClaw Has:
+#### Eiva Has:
 - BM25 keyword search only ✓
 - Basic chunking ✓
 - No embeddings ✗
@@ -210,7 +210,7 @@ Combine both signals with configurable weights (default 0.7 vector, 0.3 keyword)
 - Configurable injection order and scope
 - Security: `MEMORY.md` only in direct/main session (not group chats)
 
-#### RustyClaw Has:
+#### Eiva Has:
 - `SoulManager` loads `SOUL.md` ✓
 - No automatic prompt injection ✗
 - No support for other workspace files ✗
@@ -265,7 +265,7 @@ impl WorkspaceContext {
 - `memory_search` can query past conversations
 - Privacy scoping (per-session control)
 
-#### RustyClaw Has:
+#### Eiva Has:
 - Conversation persistence ✓
 - No transcript indexing for search ✗
 
@@ -297,7 +297,7 @@ Then index these alongside memory files for `memory_search`.
 - `AGENTS.md` tells agent: "When you make a mistake → document it so future-you doesn't repeat it"
 - Memory files are the learning substrate
 
-#### RustyClaw Has:
+#### Eiva Has:
 - No explicit guidance on self-improvement
 
 #### Recommendation:
@@ -324,7 +324,7 @@ When you make mistakes:
 - Post-compaction audit to reload files
 - `WORKFLOW_AUTO.md` for automated behaviors
 
-#### RustyClaw Has:
+#### Eiva Has:
 - No automatic memory file loading at startup ✗
 
 #### Recommendation:
@@ -407,7 +407,7 @@ impl Session {
 
 ## Summary
 
-RustyClaw has the foundations but needs **memory flush before compaction** and **workspace file injection** to truly learn and maintain personality. These should be P0.
+Eiva has the foundations but needs **memory flush before compaction** and **workspace file injection** to truly learn and maintain personality. These should be P0.
 
 Adding **semantic search** (Phase 2-3) will significantly improve memory retrieval quality, especially as memory files grow.
 

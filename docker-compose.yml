@@ -1,4 +1,4 @@
-# RustyClaw Docker Compose
+# Eiva Docker Compose
 #
 # Usage:
 #   docker compose up -d          # Start all services
@@ -6,27 +6,27 @@
 #   docker compose down           # Stop and remove containers
 #
 # Configuration:
-#   Mount your config.toml at /home/rustyclaw/.config/rustyclaw/config.toml
+#   Mount your config.toml at /home/eiva/.config/eiva/config.toml
 #   or set environment variables for provider keys.
 
 services:
-  rustyclaw:
+  eiva:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: rustyclaw
+    container_name: eiva
     restart: unless-stopped
     ports:
       # - "3000:3000"   # SSH transport
       - "39999:39999" # HTTP API (health, tasks, static files)
     volumes:
-      - rustyclaw-data:/home/rustyclaw/.config/rustyclaw  # settings / config / workspace root
-      - ./vol/skills:/home/rustyclaw/.config/rustyclaw/workspace/skills
-      - ./vol/prompts:/home/rustyclaw/.config/rustyclaw/workspace/prompts
-      - ./vol/files:/home/rustyclaw/.config/rustyclaw/workspace/files
-      - ./vol/assets:/home/rustyclaw/assets                   # served by Salvo API
+      - eiva-data:/home/eiva/.config/eiva  # settings / config / workspace root
+      - ./vol/skills:/home/eiva/.config/eiva/workspace/skills
+      - ./vol/prompts:/home/eiva/.config/eiva/workspace/prompts
+      - ./vol/files:/home/eiva/.config/eiva/workspace/files
+      - ./vol/assets:/home/eiva/assets                   # served by Salvo API
     environment:
-      - RUSTYCLAW_LOG=rustyclaw=info
+      - RUSTYCLAW_LOG=eiva=info
       # Provider API keys (set in .env or pass via environment):
       # - OPENAI_API_KEY=
       # - ANTHROPIC_API_KEY=
@@ -44,4 +44,4 @@ services:
       retries: 3
 
 volumes:
-  rustyclaw-data:
+  eiva-data:

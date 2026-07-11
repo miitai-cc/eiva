@@ -9,8 +9,8 @@ A defense layer that detects and blocks/warns about potential prompt injection a
 - Command injection patterns in tool arguments
 - Jailbreak attempts
 
-Ported from RustyClaw (MIT License)
-https://github.com/rexlunae/RustyClaw
+Ported from Eiva (MIT License)
+https://github.com/rexlunae/Eiva
 
 Usage:
     from nanobot.safety.prompt_guard import PromptGuard, GuardAction

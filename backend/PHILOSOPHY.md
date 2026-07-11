@@ -1,10 +1,10 @@
 # Philosophy
 
-## Why RustyClaw Exists
+## Why Eiva Exists
 
 Most "AI platforms" are wrappers that lock you into someone else's billing. We've seen too many businesses trapped in vendor ecosystems where prices rise, APIs change, and migration is impossible.
 
-RustyClaw is the opposite: AI infrastructure you control.
+Eiva is the opposite: AI infrastructure you control.
 
 ## Core Principles
 
@@ -16,7 +16,7 @@ Anything a business relies on that can only run on a proprietary cloud is inhere
 - **If a vendor gets acquired or enshittified** → you migrate  
 - **If regulations change** → you relocate
 
-RustyClaw runs on a Raspberry Pi, a $5/month VPS, or enterprise infrastructure. Same binary, same config.
+Eiva runs on a Raspberry Pi, a $5/month VPS, or enterprise infrastructure. Same binary, same config.
 
 ### 💰 No Rent-Seeking
 
@@ -74,5 +74,5 @@ If something creates lock-in, find another way.
 
 ## See Also
 
-- [Persei Labs Values](https://perseilabs.com/#philosophy) — the company behind RustyClaw
+- [Persei Labs Values](https://perseilabs.com/#philosophy) — the company behind Eiva
 - [README.md](README.md) — project overview and quick start

@@ -4,14 +4,14 @@ Fixes #115
 
 ## Summary
 
-This PR implements Signal Private Messenger integration for RustyClaw using the `signal-cli` external tool. This follows the CLI-based messenger approach outlined in the issue, providing a clean integration without requiring complex native Signal protocol libraries.
+This PR implements Signal Private Messenger integration for Eiva using the `signal-cli` external tool. This follows the CLI-based messenger approach outlined in the issue, providing a clean integration without requiring complex native Signal protocol libraries.
 
 ## Changes Made
 
 ### Core Implementation
-- **`crates/rustyclaw-core/src/messengers/signal_cli.rs`**: Complete SignalCliMessenger implementation
-- **`crates/rustyclaw-core/Cargo.toml`**: Added `signal-cli` feature flag
-- **`crates/rustyclaw-core/src/messengers/mod.rs`**: Exported SignalCliMessenger with feature gating
+- **`crates/eiva-core/src/messengers/signal_cli.rs`**: Complete SignalCliMessenger implementation
+- **`crates/eiva-core/Cargo.toml`**: Added `signal-cli` feature flag
+- **`crates/eiva-core/src/messengers/mod.rs`**: Exported SignalCliMessenger with feature gating
 
 ### Documentation
 - **`docs/signal-cli-setup.md`**: Comprehensive setup and configuration guide
@@ -33,7 +33,7 @@ This implementation requires:
 
 1. **signal-cli**: Must be installed separately from https://github.com/AsamK/signal-cli
 2. **Signal registration**: Phone number must be registered with Signal
-3. **Configuration**: Proper setup in RustyClaw config.toml
+3. **Configuration**: Proper setup in Eiva config.toml
 
 ## Configuration Example
 
@@ -48,7 +48,7 @@ enabled = true
 ## Usage Example
 
 ```rust
-use rustyclaw_core::messengers::{SignalCliMessenger, Messenger};
+use eiva_core::messengers::{SignalCliMessenger, Messenger};
 
 let mut messenger = SignalCliMessenger::new(
     "my_signal".to_string(),
@@ -73,7 +73,7 @@ cargo test signal_cli --features signal-cli
 
 ## Architecture
 
-This implementation follows the existing RustyClaw messenger pattern:
+This implementation follows the existing Eiva messenger pattern:
 - Implements the `Messenger` trait
 - Uses external process execution via `tokio::process::Command`
 - Provides proper async/await support
@@ -111,4 +111,4 @@ Potential enhancements for follow-up PRs:
 
 ---
 
-**Review Notes**: This implementation provides a solid foundation for Signal messaging in RustyClaw while maintaining the project's architectural principles. The CLI-based approach ensures reliability and easier maintenance compared to native protocol implementations.
+**Review Notes**: This implementation provides a solid foundation for Signal messaging in Eiva while maintaining the project's architectural principles. The CLI-based approach ensures reliability and easier maintenance compared to native protocol implementations.

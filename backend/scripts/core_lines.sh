@@ -8,7 +8,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
-echo "RustyClaw Core Line Count"
+echo "Eiva Core Line Count"
 echo "========================="
 echo ""
 
@@ -30,16 +30,16 @@ count_lines() {
 total=0
 
 modules=(
-    "Security (prompt guard, leak detection)|crates/rustyclaw-core/src/security"
-    "Secrets vault (AES-256, TOTP)|crates/rustyclaw-core/src/secrets"
-    "Sandbox (bubblewrap, landlock)|crates/rustyclaw-core/src/sandbox.rs"
-    "Memory (semantic search)|crates/rustyclaw-core/src/memory.rs"
-    "Memory flush (compaction)|crates/rustyclaw-core/src/memory_flush.rs"
-    "Sessions (multi-agent)|crates/rustyclaw-core/src/sessions.rs"
-    "Skills (loading, availability)|crates/rustyclaw-core/src/skills.rs"
-    "Cron (scheduling, heartbeats)|crates/rustyclaw-core/src/cron.rs"
-    "Gateway (agent loop, WebSocket)|crates/rustyclaw-core/src/gateway"
-    "Runtime (process, async)|crates/rustyclaw-core/src/runtime"
+    "Security (prompt guard, leak detection)|crates/eiva-core/src/security"
+    "Secrets vault (AES-256, TOTP)|crates/eiva-core/src/secrets"
+    "Sandbox (bubblewrap, landlock)|crates/eiva-core/src/sandbox.rs"
+    "Memory (semantic search)|crates/eiva-core/src/memory.rs"
+    "Memory flush (compaction)|crates/eiva-core/src/memory_flush.rs"
+    "Sessions (multi-agent)|crates/eiva-core/src/sessions.rs"
+    "Skills (loading, availability)|crates/eiva-core/src/skills.rs"
+    "Cron (scheduling, heartbeats)|crates/eiva-core/src/cron.rs"
+    "Gateway (agent loop, WebSocket)|crates/eiva-core/src/gateway"
+    "Runtime (process, async)|crates/eiva-core/src/runtime"
 )
 
 for entry in "${modules[@]}"; do
@@ -57,11 +57,11 @@ echo ""
 
 # Show what's excluded
 echo "Excluded from core count:"
-tools=$(count_lines "crates/rustyclaw-core/src/tools")
-providers=$(wc -l < "$ROOT_DIR/crates/rustyclaw-core/src/providers.rs" 2>/dev/null | tr -d ' ')
-messengers=$(count_lines "crates/rustyclaw-core/src/messengers")
-cli=$(count_lines "crates/rustyclaw-cli")
-tui=$(count_lines "crates/rustyclaw-tui")
+tools=$(count_lines "crates/eiva-core/src/tools")
+providers=$(wc -l < "$ROOT_DIR/crates/eiva-core/src/providers.rs" 2>/dev/null | tr -d ' ')
+messengers=$(count_lines "crates/eiva-core/src/messengers")
+cli=$(count_lines "crates/eiva-cli")
+tui=$(count_lines "crates/eiva-tui")
 
 printf "  %-48s %8s\n" "Tools (integrations)" "$tools"
 printf "  %-48s %8s\n" "Providers (LLM adapters)" "$providers"

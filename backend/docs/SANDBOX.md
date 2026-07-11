@@ -1,6 +1,6 @@
 # Sandbox Security Guide
 
-RustyClaw implements multiple layers of sandbox isolation to protect your system from potentially harmful commands executed by the AI agent. This guide covers sandbox modes, configuration, and security best practices.
+Eiva implements multiple layers of sandbox isolation to protect your system from potentially harmful commands executed by the AI agent. This guide covers sandbox modes, configuration, and security best practices.
 
 ## Overview
 
@@ -11,7 +11,7 @@ AI agents execute shell commands on your behalf. While powerful, this poses secu
 - Execution of malicious code
 - System-wide damage from bugs
 
-**RustyClaw's Defense:**
+**Eiva's Defense:**
 - 🛡️ Multiple sandbox modes (Landlock, Bubblewrap, macOS Sandbox)
 - 🚫 Path-based access control
 - 🔒 Credential directory protection (automatic)
@@ -22,7 +22,7 @@ AI agents execute shell commands on your behalf. While powerful, this poses secu
 
 ## Sandbox Modes
 
-RustyClaw supports 4 sandbox modes, auto-selected based on platform:
+Eiva supports 4 sandbox modes, auto-selected based on platform:
 
 ### 1. Landlock (Linux - Recommended)
 
@@ -44,7 +44,7 @@ RustyClaw supports 4 sandbox modes, auto-selected based on platform:
 **Denied by default:**
 - Everything not in the allowlist
 - Home directory (except workspace)
-- Credentials directory (`~/.rustyclaw/credentials/`)
+- Credentials directory (`~/.eiva/credentials/`)
 - SSH keys (`~/.ssh/`)
 
 **Strengths:**
@@ -61,7 +61,7 @@ RustyClaw supports 4 sandbox modes, auto-selected based on platform:
 **Example denial:**
 ```rust
 // Agent cannot:
-cat ~/.rustyclaw/credentials/secrets.json  // ❌ Blocked by Landlock (not in allowlist)
+cat ~/.eiva/credentials/secrets.json  // ❌ Blocked by Landlock (not in allowlist)
 cd ~/.ssh && cat id_rsa                     // ❌ Blocked by Landlock (not in allowlist)
 ```
 
@@ -163,7 +163,7 @@ sandbox-exec -p "(deny file-read* ...)" command
 
 ### Enable Sandbox
 
-Edit `~/.rustyclaw/config.toml`:
+Edit `~/.eiva/config.toml`:
 
 ```toml
 [sandbox]
@@ -207,8 +207,8 @@ mode = "none"  # ⚠️ NO PROTECTION - use only for debugging
 
 ### Protected Paths (Automatic)
 
-RustyClaw automatically protects:
-- `~/.rustyclaw/credentials/` - Secrets vault
+Eiva automatically protects:
+- `~/.eiva/credentials/` - Secrets vault
 - Paths in `sandbox.deny_paths` config
 - SSH keys (if detected)
 - GPG keys (if detected)
@@ -283,7 +283,7 @@ Gateway receives command
 [LANDLOCK MODE]
        ↓
 Apply Landlock restrictions:
-  - Deny: ~/.rustyclaw/credentials/
+  - Deny: ~/.eiva/credentials/
   - Deny: ~/.ssh/
   - Deny: /root/
        ↓
@@ -297,7 +297,7 @@ Execute: rm /var/log/old.log
        ↓
 User: "Show me API keys"
        ↓
-Command: cat ~/.rustyclaw/credentials/secrets.json
+Command: cat ~/.eiva/credentials/secrets.json
        ↓
 Landlock blocks read access
        ↓
@@ -311,7 +311,7 @@ Agent receives error, cannot access secrets
 ```bash
 # Agent executes: cat ~/project/file.txt
 
-# RustyClaw wraps with bwrap:
+# Eiva wraps with bwrap:
 bwrap \
   --ro-bind /usr /usr \              # Read-only system files
   --ro-bind /lib /lib \              # Read-only libraries
@@ -326,7 +326,7 @@ bwrap \
 
 # Inside bubble:
 # - Only sees: /usr, /lib, ~/workspace, /tmp, /dev, /proc
-# - Cannot see: ~/.ssh, ~/.gnupg, ~/.rustyclaw/credentials
+# - Cannot see: ~/.ssh, ~/.gnupg, ~/.eiva/credentials
 ```
 
 ---
@@ -336,13 +336,13 @@ bwrap \
 ### Check Active Mode
 
 ```bash
-rustyclaw doctor sandbox
+eiva doctor sandbox
 
 # Output:
 # Sandbox Status:
 #   Mode: Landlock (kernel 5.15.0)
 #   Protected paths: 3
-#   - /home/user/.rustyclaw/credentials
+#   - /home/user/.eiva/credentials
 #   - /home/user/.ssh
 #   - /home/user/.gnupg
 ```
@@ -352,11 +352,11 @@ rustyclaw doctor sandbox
 **Method 1: Safe test**
 ```bash
 # Create dummy secret
-mkdir -p ~/.rustyclaw/credentials
-echo "SECRET=test123" > ~/.rustyclaw/credentials/test.txt
+mkdir -p ~/.eiva/credentials
+echo "SECRET=test123" > ~/.eiva/credentials/test.txt
 
 # Try to read (should fail)
-rustyclaw command "cat ~/.rustyclaw/credentials/test.txt"
+eiva command "cat ~/.eiva/credentials/test.txt"
 
 # Expected:
 # Error: Permission denied (blocked by Landlock/bwrap)
@@ -366,14 +366,14 @@ rustyclaw command "cat ~/.rustyclaw/credentials/test.txt"
 ```bash
 # Add test deny path
 echo '[sandbox]
-deny_paths = ["/tmp/blocked"]' >> ~/.rustyclaw/config.toml
+deny_paths = ["/tmp/blocked"]' >> ~/.eiva/config.toml
 
 # Create test file
 mkdir /tmp/blocked
 echo "sensitive" > /tmp/blocked/data.txt
 
 # Try to access
-rustyclaw command "cat /tmp/blocked/data.txt"
+eiva command "cat /tmp/blocked/data.txt"
 
 # Expected: Blocked by sandbox
 ```
@@ -382,7 +382,7 @@ rustyclaw command "cat /tmp/blocked/data.txt"
 
 ```bash
 # Check what's available on your system
-rustyclaw doctor capabilities
+eiva doctor capabilities
 
 # Example output:
 # Sandbox Capabilities:
@@ -396,7 +396,7 @@ rustyclaw doctor capabilities
 
 ## Elevated Mode
 
-Sometimes you need to run privileged commands (sudo). RustyClaw supports per-session elevated mode:
+Sometimes you need to run privileged commands (sudo). Eiva supports per-session elevated mode:
 
 ### Enable Elevated Mode
 
@@ -504,7 +504,7 @@ deny_paths = []  # CI already sandboxed by Docker
 ### 1. Always Use Auto Mode
 ```toml
 [sandbox]
-mode = "auto"  # Let RustyClaw pick the strongest available
+mode = "auto"  # Let Eiva pick the strongest available
 ```
 
 ### 2. Deny Sensitive Directories
@@ -524,7 +524,7 @@ deny_paths = [
 ```bash
 # Configure workspace
 cd ~/projects/work
-rustyclaw chat
+eiva chat
 
 # Agent operates in ~/projects/work
 # Cannot access parent directories
@@ -539,10 +539,10 @@ totp_enabled = true  # Require 2FA for gateway access
 
 ### 5. Review Credentials Regularly
 ```bash
-rustyclaw secrets list
+eiva secrets list
 
 # Remove unused secrets
-rustyclaw secrets delete OLD_API_KEY
+eiva secrets delete OLD_API_KEY
 ```
 
 ### 6. Monitor Agent Activity
@@ -550,10 +550,10 @@ rustyclaw secrets delete OLD_API_KEY
 # Enable audit logging
 [hooks]
 audit_log_hook = true
-audit_log_path = "~/.rustyclaw/logs/audit.log"
+audit_log_path = "~/.eiva/logs/audit.log"
 
 # Review commands
-tail -f ~/.rustyclaw/logs/audit.log
+tail -f ~/.eiva/logs/audit.log
 ```
 
 ---
@@ -613,10 +613,10 @@ Error: Permission denied
 **Debug:**
 ```bash
 # 1. Check sandbox mode
-rustyclaw doctor sandbox
+eiva doctor sandbox
 
 # 2. Check deny_paths
-grep -A 10 '\[sandbox\]' ~/.rustyclaw/config.toml
+grep -A 10 '\[sandbox\]' ~/.eiva/config.toml
 
 # 3. Check if parent dir is denied
 ls -la ~/  # Is ~/project denied?
@@ -639,14 +639,14 @@ mode = "path"  # Temporarily for debugging
 mode = "auto"  # Should auto-detect
 
 # 2. Verify capabilities
-rustyclaw doctor capabilities
+eiva doctor capabilities
 
 # 3. Test manually
 bwrap --help  # Should show help
 cat /sys/kernel/security/landlock/abi  # Should show number
 
 # 4. Check logs
-grep sandbox ~/.rustyclaw/logs/gateway.log
+grep sandbox ~/.eiva/logs/gateway.log
 ```
 
 **If still not working:**
@@ -801,14 +801,14 @@ allow_elevated = true
 - [Landlock Documentation](https://landlock.io/)
 - [Bubblewrap GitHub](https://github.com/containers/bubblewrap)
 - [macOS Sandbox Guide](https://developer.apple.com/documentation/security/app_sandbox)
-- [RustyClaw Security Guide](./SECURITY.md)
-- [RustyClaw Configuration](./CONFIGURATION.md)
+- [Eiva Security Guide](./SECURITY.md)
+- [Eiva Configuration](./CONFIGURATION.md)
 
 ---
 
 ## Summary
 
-**RustyClaw Sandbox Provides:**
+**Eiva Sandbox Provides:**
 - ✅ Multiple sandbox modes (auto-selected)
 - ✅ Kernel-enforced restrictions (Landlock/bwrap/macOS)
 - ✅ Automatic credential protection

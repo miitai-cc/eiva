@@ -10,7 +10,7 @@ use tempfile::TempDir;
 /// Test that PathValidation mode blocks access to deny_read paths
 #[test]
 fn test_path_validation_blocks_deny_read() {
-    use rustyclaw::sandbox::{run_sandboxed, SandboxMode, SandboxPolicy};
+    use eiva::sandbox::{run_sandboxed, SandboxMode, SandboxPolicy};
 
     let temp_workspace = TempDir::new().unwrap();
     let temp_credentials = TempDir::new().unwrap();
@@ -46,7 +46,7 @@ fn test_path_validation_blocks_deny_read() {
 /// Test that PathValidation mode allows access to workspace
 #[test]
 fn test_path_validation_allows_workspace() {
-    use rustyclaw::sandbox::{run_sandboxed, SandboxMode, SandboxPolicy};
+    use eiva::sandbox::{run_sandboxed, SandboxMode, SandboxPolicy};
 
     let temp_workspace = TempDir::new().unwrap();
     let temp_credentials = TempDir::new().unwrap();
@@ -78,7 +78,7 @@ fn test_path_validation_allows_workspace() {
 /// Test that deny_exec prevents execution from protected paths
 #[test]
 fn test_path_validation_blocks_deny_exec() {
-    use rustyclaw::sandbox::{run_sandboxed, SandboxMode, SandboxPolicy};
+    use eiva::sandbox::{run_sandboxed, SandboxMode, SandboxPolicy};
 
     let temp_workspace = TempDir::new().unwrap();
     let temp_scripts = TempDir::new().unwrap();
@@ -123,7 +123,7 @@ fn test_path_validation_blocks_deny_exec() {
 /// Test that extract_paths_from_command correctly identifies paths
 #[test]
 fn test_extract_paths_basic() {
-    use rustyclaw::sandbox::extract_paths_from_command;
+    use eiva::sandbox::extract_paths_from_command;
 
     // Test absolute paths
     let paths = extract_paths_from_command("cat /etc/passwd");
@@ -148,7 +148,7 @@ fn test_extract_paths_basic() {
 #[cfg(target_os = "linux")]
 #[test]
 fn test_bubblewrap_respects_deny_read() {
-    use rustyclaw::sandbox::{wrap_with_bwrap, SandboxPolicy};
+    use eiva::sandbox::{wrap_with_bwrap, SandboxPolicy};
 
     let temp_workspace = TempDir::new().unwrap();
     let credentials_path = PathBuf::from("/credentials");
@@ -183,7 +183,7 @@ fn test_bubblewrap_respects_deny_read() {
 #[cfg(target_os = "linux")]
 #[test]
 fn test_bubblewrap_respects_deny_write() {
-    use rustyclaw::sandbox::{wrap_with_bwrap, SandboxPolicy};
+    use eiva::sandbox::{wrap_with_bwrap, SandboxPolicy};
 
     let temp_workspace = TempDir::new().unwrap();
 
@@ -218,7 +218,7 @@ fn test_bubblewrap_respects_deny_write() {
 #[cfg(target_os = "linux")]
 #[test]
 fn test_bubblewrap_respects_deny_exec() {
-    use rustyclaw::sandbox::{wrap_with_bwrap, SandboxPolicy};
+    use eiva::sandbox::{wrap_with_bwrap, SandboxPolicy};
 
     let temp_workspace = TempDir::new().unwrap();
 
@@ -245,7 +245,7 @@ fn test_bubblewrap_respects_deny_exec() {
 #[cfg(target_os = "macos")]
 #[test]
 fn test_macos_sandbox_deny_exec() {
-    use rustyclaw::sandbox::{wrap_with_macos_sandbox, SandboxPolicy};
+    use eiva::sandbox::{wrap_with_macos_sandbox, SandboxPolicy};
 
     let temp_workspace = TempDir::new().unwrap();
 
@@ -279,7 +279,7 @@ fn test_macos_sandbox_deny_exec() {
 /// Test fail-closed behavior: sandbox setup failure prevents execution
 #[test]
 fn test_fail_closed_behavior() {
-    use rustyclaw::sandbox::{validate_path, SandboxPolicy};
+    use eiva::sandbox::{validate_path, SandboxPolicy};
 
     // Create temporary directories
     let temp_protected = TempDir::new().unwrap();
@@ -307,10 +307,10 @@ fn test_fail_closed_behavior() {
 /// Test that sandbox modes gracefully degrade
 #[test]
 fn test_sandbox_mode_detection() {
-    use rustyclaw::sandbox::{Sandbox, SandboxMode};
+    use eiva::sandbox::{Sandbox, SandboxMode};
 
     // Test that Auto mode can be created
-    let policy = rustyclaw::sandbox::SandboxPolicy::default();
+    let policy = eiva::sandbox::SandboxPolicy::default();
     let sandbox = Sandbox::with_mode(SandboxMode::Auto, policy);
 
     // Effective mode should be one of the supported modes
@@ -328,7 +328,7 @@ fn test_sandbox_mode_detection() {
 #[cfg(target_os = "linux")]
 #[test]
 fn test_command_wrapping_preserves_args() {
-    use rustyclaw::sandbox::{wrap_with_bwrap, SandboxPolicy};
+    use eiva::sandbox::{wrap_with_bwrap, SandboxPolicy};
 
     let temp_workspace = TempDir::new().unwrap();
 
@@ -360,7 +360,7 @@ fn test_command_wrapping_preserves_args() {
 /// Benchmark: Verify sandbox overhead is reasonable
 #[test]
 fn test_sandbox_performance() {
-    use rustyclaw::sandbox::{run_sandboxed, SandboxMode, SandboxPolicy};
+    use eiva::sandbox::{run_sandboxed, SandboxMode, SandboxPolicy};
     use std::time::Instant;
 
     let temp_workspace = TempDir::new().unwrap();
