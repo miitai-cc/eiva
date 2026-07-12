@@ -494,27 +494,25 @@ export default function WorkflowEditor() {
   const changeNodeZIndex = useCallback((direction) => {
     if (!menu) return;
     setNodes((nds) => {
-      const allZIndexes = nds.map(n => n.zIndex ?? (n.type === 'swimlaneNode' ? 0 : 1));
-      const maxZ = Math.max(...allZIndexes, 0);
-      const minZ = Math.min(...allZIndexes, 1);
+      const nodeIndex = nds.findIndex(n => n.id === menu.id);
+      if (nodeIndex === -1) return nds;
 
-      let nextNodes = nds.map(node => {
-        let currentZ = node.zIndex ?? (node.type === 'swimlaneNode' ? 0 : 1);
-        if (node.id === menu.id) {
-          if (direction === 'up') currentZ += 1;
-          else if (direction === 'down') currentZ -= 1;
-          else if (direction === 'front') currentZ = maxZ + 1;
-          else if (direction === 'back') currentZ = minZ - 1;
-        }
-        return { ...node, zIndex: currentZ };
-      });
+      const nextNodes = [...nds];
+      const [nodeToMove] = nextNodes.splice(nodeIndex, 1);
 
-      const newMinZ = Math.min(...nextNodes.map(n => n.zIndex));
-      if (newMinZ < 0) {
-        const offset = Math.abs(newMinZ);
-        nextNodes = nextNodes.map(n => ({ ...n, zIndex: n.zIndex + offset }));
+      if (direction === 'back') {
+        nextNodes.unshift(nodeToMove);
+      } else if (direction === 'front') {
+        nextNodes.push(nodeToMove);
+      } else if (direction === 'up') {
+        const newIndex = Math.min(nextNodes.length, nodeIndex + 1);
+        nextNodes.splice(newIndex, 0, nodeToMove);
+      } else if (direction === 'down') {
+        const newIndex = Math.max(0, nodeIndex - 1);
+        nextNodes.splice(newIndex, 0, nodeToMove);
       }
-      return nextNodes;
+
+      return nextNodes.map((node, index) => ({ ...node, zIndex: index }));
     });
     setMenu(null);
   }, [menu, setNodes]);
