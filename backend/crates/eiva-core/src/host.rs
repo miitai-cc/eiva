@@ -6,7 +6,6 @@
 //! which locally-managed models the host can run.
 
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 use sysinfo::System;
 use tracing::debug;
 

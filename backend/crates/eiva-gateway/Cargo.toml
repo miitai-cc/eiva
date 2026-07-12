@@ -57,6 +57,7 @@ dirs.workspace = true
 directories.workspace = true
 prost.workspace = true
 prost-types.workspace = true
+dotenvy.workspace = true
 
 # SSH transport
 ssh-key.workspace = true

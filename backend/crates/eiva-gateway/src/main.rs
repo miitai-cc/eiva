@@ -6,6 +6,7 @@
 
 mod admin;
 mod api;
+mod workspace;
 mod auth;
 mod canvas_handler;
 mod chat;
@@ -98,9 +99,44 @@ pub(crate) const COMPACTION_THRESHOLD: f64 = 0.75;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Load .env file if present (before any env var reads).
+    // dotenvy::dotenv() searches upward from cwd for `.env` and sets each
+    // key into the process environment, without overwriting existing vars.
+    let env_path = dotenvy::dotenv().ok();
+
     let cli = GatewayCli::parse();
     t::init_color(cli.common.no_color);
     logging::init_from_env();
+
+    // Debug: report .env loading result
+    match &env_path {
+        Some(path) => {
+            let path_display = path.display();
+            tracing::debug!(path = %path_display, "Loaded .env file");
+            println!("  ✅ .env loaded: {}", path_display);
+            // Re-read and log every key=value pair
+            if let Ok(content) = std::fs::read_to_string(path) {
+                for (i, line) in content.lines().enumerate() {
+                    let trimmed = line.trim();
+                    if trimmed.is_empty() || trimmed.starts_with('#') {
+                        continue;
+                    }
+                    if let Some((key, value)) = trimmed.split_once('=') {
+                        tracing::debug!(
+                            line = i + 1,
+                            key = %key.trim(),
+                            value = %value.trim(),
+                            ".env entry"
+                        );
+                        println!("     {}={}", key.trim(), value.trim());
+                    }
+                }
+            }
+        }
+        None => {
+            tracing::debug!("No .env file found");
+        }
+    }
     let config_path = cli.common.config_path();
     let mut config = Config::load(config_path)?;
     cli.common.apply_overrides(&mut config);
@@ -120,6 +156,21 @@ async fn main() -> Result<()> {
                     "  {}",
                     t::muted("(detailed status probe not yet implemented)")
                 );
+            }
+            return Ok(());
+        }
+        Some(GatewayCommands::Init) => {
+            let db_path = config.settings_dir.join("workflows.sqlite3");
+            let workflow_db = crate::db::WorkflowDb::new(db_path.clone());
+            match workflow_db.init() {
+                Ok(()) => {
+                    println!("{}", t::icon_ok(&format!("Database initialized: {}", db_path.display())));
+                    println!("  Tables: workflows, mcp_servers, ai_skills");
+                }
+                Err(e) => {
+                    eprintln!("{}: {}", t::icon_fail("Failed to initialize database"), e);
+                    std::process::exit(1);
+                }
             }
             return Ok(());
         }

@@ -5,6 +5,19 @@ use eiva_core::tasks::TaskManager;
 use std::sync::{Arc, OnceLock};
 use salvo::websocket::{Message, WebSocketUpgrade};
 use prost::Message as ProstMessage;
+use eiva_core::gateway::client::GatewayClient;
+use eiva_core::gateway::GatewayCommand;
+use std::collections::HashMap;
+use tokio::sync::{RwLock, broadcast};
+
+static WS_BROADCASTER: OnceLock<broadcast::Sender<proto::ServerMessage>> = OnceLock::new();
+
+fn get_broadcaster() -> broadcast::Sender<proto::ServerMessage> {
+    WS_BROADCASTER.get_or_init(|| {
+        let (tx, _) = broadcast::channel(100);
+        tx
+    }).clone()
+}
 
 pub mod proto {
     include!(concat!(env!("OUT_DIR"), "/eiva.rs"));
@@ -12,6 +25,12 @@ pub mod proto {
 
 static TASK_MGR: OnceLock<Arc<TaskManager>> = OnceLock::new();
 static WORKFLOW_DB: OnceLock<crate::db::WorkflowDb> = OnceLock::new();
+
+static CLIENT_SESSIONS: OnceLock<RwLock<HashMap<String, Arc<GatewayClient>>>> = OnceLock::new();
+
+fn get_client_sessions() -> &'static RwLock<HashMap<String, Arc<GatewayClient>>> {
+    CLIENT_SESSIONS.get_or_init(|| RwLock::new(HashMap::new()))
+}
 
 #[handler]
 async fn health() -> &'static str {
@@ -40,36 +59,131 @@ async fn list_tasks(res: &mut Response) {
     res.render(Json(result));
 }
 
-#[derive(serde::Deserialize)]
-struct CreateTaskReq {
-    requirement: String,
-}
-
 #[handler]
 async fn create_task(req: &mut Request, res: &mut Response) {
     tracing::debug!("Step 1: Start create_task API");
-    let body = req.parse_json::<CreateTaskReq>().await;
+    let body = req.parse_json::<serde_json::Value>().await;
     match body {
         Ok(b) => {
-            tracing::debug!(requirement = ?b.requirement, "Step 2: Parsed request body successfully");
-            if b.requirement.is_empty() {
+            let mut requirement = b.get("requirement").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+            tracing::debug!(requirement = ?requirement, "Step 2: Parsed request body successfully");
+            
+            if let Some(files) = b.get("files").and_then(|v| v.as_array()) {
+                for file in files {
+                    let name = file.get("name").and_then(|v| v.as_str()).unwrap_or("unknown_file");
+                    let content = file.get("content").and_then(|v| v.as_str()).unwrap_or("");
+                    
+                    if !content.is_empty() {
+                        requirement.push_str(&format!("\n\n[Attached File: {}]\n{}", name, content));
+                    }
+                }
+            }
+
+            if requirement.is_empty() {
                 tracing::debug!("Step 3: Requirement is empty, returning BAD_REQUEST");
                 res.status_code(StatusCode::BAD_REQUEST);
                 res.render(Json(serde_json::json!({"error": "requirement 不可為空"})));
                 return;
             }
             
-            // Generate mock task
-            let task_id = uuid::Uuid::new_v4().to_string();
-            tracing::debug!(task_id = ?task_id, "Step 3: Generated mock task_id");
-            
-            res.status_code(StatusCode::ACCEPTED);
-            let result = serde_json::json!({
-                "taskId": task_id,
-                "status": "queued"
-            });
-            tracing::debug!(result = ?result, "Step 4: Returning successful result");
-            res.render(Json(result));
+            match GatewayClient::connect("ssh://127.0.0.1:3000").await {
+                Ok(client) => {
+                    tracing::debug!("Step 3: Connected to GatewayClient on port 3000");
+                    if let Err(e) = client.chat(requirement).await {
+                        tracing::error!("Step 4: Failed to send chat command: {}", e);
+                        res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+                        res.render(Json(serde_json::json!({"error": e.to_string()})));
+                    } else {
+                        tracing::debug!("Step 4: Chat command sent via GatewayClient");
+                        let task_id = uuid::Uuid::new_v4().to_string();
+                        
+                        let client_arc = Arc::new(client);
+                        get_client_sessions().write().await.insert(task_id.clone(), client_arc.clone());
+                        
+                        let task_id_clone = task_id.clone();
+                        tokio::spawn(async move {
+                            let tx = get_broadcaster();
+                            // Broadcast TaskCreated
+                            let _ = tx.send(proto::ServerMessage {
+                                payload: Some(proto::server_message::Payload::TaskCreated(
+                                    proto::TaskCreatedEvent {
+                                        task_id: task_id_clone.clone(),
+                                        status: "queued".to_string(),
+                                    }
+                                ))
+                            });
+                            
+                            let mut full_result = String::new();
+                            while let Some(event) = client_arc.recv().await {
+                                match event {
+                                    eiva_core::gateway::GatewayEvent::Chunk { delta } => {
+                                        full_result.push_str(&delta);
+                                    }
+                                    eiva_core::gateway::GatewayEvent::ResponseDone => {
+                                        let _ = tx.send(proto::ServerMessage {
+                                            payload: Some(proto::server_message::Payload::TaskCompleted(
+                                                proto::TaskCompletedEvent {
+                                                    task_id: task_id_clone.clone(),
+                                                    result: full_result.clone(),
+                                                    at: chrono::Utc::now().to_rfc3339(),
+                                                }
+                                            ))
+                                        });
+                                    }
+                                    eiva_core::gateway::GatewayEvent::ToolOutput { chunk, .. } => {
+                                        let _ = tx.send(proto::ServerMessage {
+                                            payload: Some(proto::server_message::Payload::TaskLog(
+                                                proto::TaskLogEvent {
+                                                    task_id: task_id_clone.clone(),
+                                                    message: chunk,
+                                                    at: chrono::Utc::now().to_rfc3339(),
+                                                }
+                                            ))
+                                        });
+                                    }
+                                    eiva_core::gateway::GatewayEvent::AuthFailed { message, .. } |
+                                    eiva_core::gateway::GatewayEvent::ModelError { message } => {
+                                        let _ = tx.send(proto::ServerMessage {
+                                            payload: Some(proto::server_message::Payload::TaskFailed(
+                                                proto::TaskFailedEvent {
+                                                    task_id: task_id_clone.clone(),
+                                                    error: message,
+                                                    at: chrono::Utc::now().to_rfc3339(),
+                                                }
+                                            ))
+                                        });
+                                    }
+                                    eiva_core::gateway::GatewayEvent::ToolCall { name, .. } => {
+                                        let _ = tx.send(proto::ServerMessage {
+                                            payload: Some(proto::server_message::Payload::TaskLog(
+                                                proto::TaskLogEvent {
+                                                    task_id: task_id_clone.clone(),
+                                                    message: format!("Tool call: {}", name),
+                                                    at: chrono::Utc::now().to_rfc3339(),
+                                                }
+                                            ))
+                                        });
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            // Clean up when the connection drops or task finishes
+                            get_client_sessions().write().await.remove(&task_id_clone);
+                        });
+
+                        res.status_code(StatusCode::ACCEPTED);
+                        res.render(Json(serde_json::json!({
+                            "taskId": task_id,
+                            "status": "queued"
+                        })));
+                    }
+                }
+                Err(e) => {
+                    tracing::error!("Step 3: Failed to connect to GatewayClient: {}", e);
+                    res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+                    res.render(Json(serde_json::json!({"error": e.to_string()})));
+                }
+            }
         }
         Err(e) => {
             tracing::debug!(error = ?e, "Step 2: Failed to parse request body, returning BAD_REQUEST");
@@ -83,13 +197,29 @@ async fn stop_task(req: &mut Request, res: &mut Response) {
     let task_id = req.param::<String>("taskId").unwrap_or_default();
     tracing::debug!(task_id = ?task_id, "Step 1: Start stop_task API");
     
-    res.status_code(StatusCode::ACCEPTED);
-    let result = serde_json::json!({
-        "taskId": task_id,
-        "status": "stopping"
-    });
-    tracing::debug!(result = ?result, "Step 2: Returning successful result");
-    res.render(Json(result));
+    let client_opt = get_client_sessions().read().await.get(&task_id).cloned();
+    match client_opt {
+        Some(client) => {
+            tracing::debug!("Step 2: Found active GatewayClient for task");
+            if let Err(e) = client.send(GatewayCommand::Cancel).await {
+                tracing::error!("Step 3: Failed to send Cancel command: {}", e);
+                res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+                res.render(Json(serde_json::json!({"error": e.to_string()})));
+            } else {
+                tracing::debug!("Step 3: Cancel command sent successfully");
+                res.status_code(StatusCode::ACCEPTED);
+                res.render(Json(serde_json::json!({
+                    "taskId": task_id,
+                    "status": "stopping"
+                })));
+            }
+        }
+        None => {
+            tracing::error!("Step 2: No active GatewayClient found for task_id");
+            res.status_code(StatusCode::NOT_FOUND);
+            res.render(Json(serde_json::json!({"error": "Task not found or already finished"})));
+        }
+    }
 }
 
 #[handler]
@@ -150,55 +280,77 @@ async fn ws_handler(req: &mut Request, res: &mut Response) -> Result<(), StatusE
     tracing::debug!("Step 1: Start ws_handler API");
     WebSocketUpgrade::new().upgrade(req, res, |mut ws| async move {
         tracing::debug!("Step 2: WebSocket connected");
-        while let Some(msg) = ws.recv().await {
-            let msg = if let Ok(msg) = msg { msg } else { break; };
-            if msg.is_binary() {
-                let data = msg.into_bytes();
-                if let Ok(client_msg) = proto::ClientMessage::decode(&*data) {
-                    tracing::debug!(?client_msg, "Step 3: Received ClientMessage via WS");
-                    if let Some(payload) = client_msg.payload {
-                        match payload {
-                            proto::client_message::Payload::CreateTask(req) => {
-                                let task_id = uuid::Uuid::new_v4().to_string();
-                                tracing::debug!(task_id = ?task_id, "Step 4: Creating task");
-                                let response = proto::ServerMessage {
-                                    payload: Some(proto::server_message::Payload::TaskCreated(
-                                        proto::TaskCreatedEvent {
-                                            task_id,
-                                            status: "queued".to_string(),
+        
+        let mut rx = get_broadcaster().subscribe();
+        
+        loop {
+            tokio::select! {
+                // Receive messages from the client
+                msg = ws.recv() => {
+                    if let Some(Ok(msg)) = msg {
+                        if msg.is_binary() {
+                            let data = msg.into_bytes();
+                            if let Ok(client_msg) = proto::ClientMessage::decode(&*data) {
+                                tracing::debug!(?client_msg, "Step 3: Received ClientMessage via WS");
+                                if let Some(payload) = client_msg.payload {
+                                    match payload {
+                                        proto::client_message::Payload::CreateTask(_req) => {
+                                            // Handle CreateTask via WS if needed, or leave stub
+                                            let task_id = uuid::Uuid::new_v4().to_string();
+                                            let response = proto::ServerMessage {
+                                                payload: Some(proto::server_message::Payload::TaskCreated(
+                                                    proto::TaskCreatedEvent {
+                                                        task_id,
+                                                        status: "queued".to_string(),
+                                                    }
+                                                ))
+                                            };
+                                            let mut buf = Vec::new();
+                                            response.encode(&mut buf).unwrap();
+                                            let _ = ws.send(Message::binary(buf)).await;
                                         }
-                                    ))
-                                };
-                                let mut buf = Vec::new();
-                                response.encode(&mut buf).unwrap();
-                                let _ = ws.send(Message::binary(buf)).await;
-                            }
-                            proto::client_message::Payload::StopTask(req) => {
-                                tracing::debug!(task_id = ?req.task_id, "Step 4: Stopping task");
-                                let response = proto::ServerMessage {
-                                    payload: Some(proto::server_message::Payload::TaskStatus(
-                                        proto::TaskStatusEvent {
-                                            task_id: req.task_id,
-                                            status: "stopping".to_string(),
+                                        proto::client_message::Payload::StopTask(req) => {
+                                            tracing::debug!(task_id = ?req.task_id, "Step 4: Stopping task via WS");
+                                            let response = proto::ServerMessage {
+                                                payload: Some(proto::server_message::Payload::TaskStatus(
+                                                    proto::TaskStatusEvent {
+                                                        task_id: req.task_id,
+                                                        status: "stopping".to_string(),
+                                                    }
+                                                ))
+                                            };
+                                            let mut buf = Vec::new();
+                                            response.encode(&mut buf).unwrap();
+                                            let _ = ws.send(Message::binary(buf)).await;
                                         }
-                                    ))
-                                };
-                                let mut buf = Vec::new();
-                                response.encode(&mut buf).unwrap();
-                                let _ = ws.send(Message::binary(buf)).await;
+                                        proto::client_message::Payload::Ping(_) => {
+                                            tracing::debug!("Step 4: Ping received, sending Pong");
+                                            let response = proto::ServerMessage {
+                                                payload: Some(proto::server_message::Payload::Pong(
+                                                    proto::Pong {}
+                                                ))
+                                            };
+                                            let mut buf = Vec::new();
+                                            response.encode(&mut buf).unwrap();
+                                            let _ = ws.send(Message::binary(buf)).await;
+                                        }
+                                        _ => {}
+                                    }
+                                }
                             }
-                            proto::client_message::Payload::Ping(_) => {
-                                tracing::debug!("Step 4: Ping received, sending Pong");
-                                let response = proto::ServerMessage {
-                                    payload: Some(proto::server_message::Payload::Pong(
-                                        proto::Pong {}
-                                    ))
-                                };
-                                let mut buf = Vec::new();
-                                response.encode(&mut buf).unwrap();
-                                let _ = ws.send(Message::binary(buf)).await;
-                            }
-                            _ => {}
+                        }
+                    } else {
+                        break; // Connection closed
+                    }
+                }
+                
+                // Receive broadcast messages from the backend
+                broadcast_msg = rx.recv() => {
+                    if let Ok(server_msg) = broadcast_msg {
+                        let mut buf = Vec::new();
+                        server_msg.encode(&mut buf).unwrap();
+                        if ws.send(Message::binary(buf)).await.is_err() {
+                            break; // Connection closed
                         }
                     }
                 }
@@ -374,7 +526,26 @@ async fn save_mcp_server(req: &mut Request, res: &mut Response) {
     let id = req.param::<String>("id").unwrap_or_default();
     if let Ok(body) = req.parse_json::<serde_json::Value>().await {
         if let Some(db) = WORKFLOW_DB.get() {
-            match db.save_mcp_server(id.clone(), body.to_string()).await {
+            let name = body["name"].as_str().unwrap_or("").to_string();
+            let command = body["command"].as_str().unwrap_or("").to_string();
+            let args = body["args"].to_string();
+            let env = body["env"].to_string();
+            let cwd = body["cwd"].as_str().map(String::from);
+            let enabled = body["enabled"].as_bool().unwrap_or(true);
+            let timeout_secs = body["timeout_secs"].as_u64().unwrap_or(30);
+            match db
+                .save_mcp_server(
+                    id.clone(),
+                    name,
+                    command,
+                    args,
+                    env,
+                    cwd,
+                    enabled,
+                    timeout_secs,
+                )
+                .await
+            {
                 Ok(_) => res.render(Json(serde_json::json!({"status": "success", "id": id}))),
                 Err(e) => {
                     res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
@@ -399,6 +570,99 @@ async fn delete_mcp_server(req: &mut Request, res: &mut Response) {
                 res.render(Json(serde_json::json!({"error": e.to_string()})));
             }
         }
+    }
+}
+
+#[handler]
+async fn test_mcp_server(req: &mut Request, res: &mut Response) {
+    let id = req.param::<String>("id").unwrap_or_default();
+    // Read server config from DB
+    let server_json = if let Some(db) = WORKFLOW_DB.get() {
+        match db.get_mcp_server(id.clone()).await {
+            Ok(Some(data)) => data,
+            Ok(None) => {
+                res.status_code(StatusCode::NOT_FOUND);
+                res.render(Json(serde_json::json!({"status": "error", "error": "Server not found"})));
+                return;
+            }
+            Err(e) => {
+                res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+                res.render(Json(serde_json::json!({"status": "error", "error": e.to_string()})));
+                return;
+            }
+        }
+    } else {
+        res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+        res.render(Json(serde_json::json!({"status": "error", "error": "Database not initialized"})));
+        return;
+    };
+    // Parse server config from JSON
+    let v: serde_json::Value = match serde_json::from_str(&server_json) {
+        Ok(v) => v,
+        Err(e) => {
+            res.render(Json(serde_json::json!({"status": "error", "error": format!("JSON parse error: {}", e)})));
+            return;
+        }
+    };
+    let command = v["command"].as_str().unwrap_or("").to_string();
+    if command.is_empty() {
+        res.render(Json(serde_json::json!({"status": "error", "error": "Command is empty"})));
+        return;
+    }
+    // Attempt connection via McpManager
+    #[cfg(feature = "mcp")]
+    {
+        let server_name = v["name"].as_str().unwrap_or(&id).to_string();
+        let args: Vec<String> = v["args"]
+            .as_array()
+            .map(|a| a.iter().filter_map(|x| x.as_str().map(String::from)).collect())
+            .unwrap_or_default();
+        let env: std::collections::HashMap<String, String> = v["env"]
+            .as_object()
+            .map(|o| o.iter().filter_map(|(k, val)| val.as_str().map(|v| (k.clone(), v.to_string()))).collect())
+            .unwrap_or_default();
+        let cwd = v["cwd"].as_str().map(String::from);
+        let timeout_secs = v["timeout_secs"].as_u64().unwrap_or(30);
+        let server_cfg = eiva_core::mcp::McpServerConfig {
+            command,
+            args,
+            env,
+            cwd,
+            enabled: true,
+            timeout_secs,
+        };
+        if let Some(mgr) = eiva_core::runtime_ctx::get_mcp_manager() {
+            let mgr = mgr.lock().await;
+            // Disconnect first if already connected
+            let _ = mgr.disconnect(&server_name).await;
+            match mgr.connect(&server_name, &server_cfg).await {
+                Ok(()) => {
+                    let tools = mgr.list_tools(&server_name).await
+                        .map(|ts| ts.iter().map(|t| t.prefixed_name()).collect::<Vec<_>>())
+                        .unwrap_or_default();
+                    let _ = mgr.disconnect(&server_name).await;
+                    res.render(Json(serde_json::json!({
+                        "status": "success",
+                        "server": server_name,
+                        "tools": tools,
+                        "tool_count": tools.len(),
+                    })));
+                }
+                Err(e) => {
+                    res.render(Json(serde_json::json!({
+                        "status": "error",
+                        "server": server_name,
+                        "error": e.to_string(),
+                    })));
+                }
+            }
+        } else {
+            res.render(Json(serde_json::json!({"status": "error", "error": "MCP manager not initialized"})));
+        }
+    }
+    #[cfg(not(feature = "mcp"))]
+    {
+        res.render(Json(serde_json::json!({"status": "error", "error": "MCP feature not enabled"})));
     }
 }
 
@@ -442,7 +706,15 @@ async fn save_skill(req: &mut Request, res: &mut Response) {
     let id = req.param::<String>("id").unwrap_or_default();
     if let Ok(body) = req.parse_json::<serde_json::Value>().await {
         if let Some(db) = WORKFLOW_DB.get() {
-            match db.save_skill(id.clone(), body.to_string()).await {
+            let name = body["name"].as_str().unwrap_or("").to_string();
+            let description = body["description"].as_str().unwrap_or("").to_string();
+            let instructions = body["instructions"].as_str().unwrap_or("").to_string();
+            let enabled = body["enabled"].as_bool().unwrap_or(true);
+            let linked_secrets = body["linked_secrets"].to_string();
+            match db
+                .save_skill(id.clone(), name, description, instructions, enabled, linked_secrets)
+                .await
+            {
                 Ok(_) => res.render(Json(serde_json::json!({"status": "success", "id": id}))),
                 Err(e) => {
                     res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
@@ -470,6 +742,80 @@ async fn delete_skill(req: &mut Request, res: &mut Response) {
     }
 }
 
+#[handler]
+async fn test_skill(req: &mut Request, res: &mut Response) {
+    let id = req.param::<String>("id").unwrap_or_default();
+    let skill_json = if let Some(db) = WORKFLOW_DB.get() {
+        match db.get_skill(id.clone()).await {
+            Ok(Some(data)) => data,
+            Ok(None) => {
+                res.status_code(StatusCode::NOT_FOUND);
+                res.render(Json(serde_json::json!({"status": "error", "error": "Skill not found"})));
+                return;
+            }
+            Err(e) => {
+                res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+                res.render(Json(serde_json::json!({"status": "error", "error": e.to_string()})));
+                return;
+            }
+        }
+    } else {
+        res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+        res.render(Json(serde_json::json!({"status": "error", "error": "Database not initialized"})));
+        return;
+    };
+    let v: serde_json::Value = match serde_json::from_str(&skill_json) {
+        Ok(v) => v,
+        Err(e) => {
+            res.render(Json(serde_json::json!({"status": "error", "error": format!("JSON parse error: {}", e)})));
+            return;
+        }
+    };
+    let name = v["name"].as_str().unwrap_or("").to_string();
+    let instructions = v["instructions"].as_str().unwrap_or("").to_string();
+    let mut errors: Vec<String> = Vec::new();
+    let mut warnings: Vec<String> = Vec::new();
+    // Validation checks
+    if name.is_empty() {
+        errors.push("Skill name is empty".into());
+    } else if !name.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_') {
+        warnings.push("Skill name contains non-alphanumeric characters (kebab-case recommended)".into());
+    }
+    if instructions.is_empty() {
+        errors.push("Instructions (prompt) are empty".into());
+    } else {
+        let line_count = instructions.lines().count();
+        if line_count < 3 {
+            warnings.push(format!("Instructions are very short ({} lines) — consider adding more detail", line_count));
+        }
+    }
+    // Check linked secrets format
+    if let Some(secrets) = v["linked_secrets"].as_array() {
+        for s in secrets {
+            if let Some(val) = s.as_str() {
+                if val.is_empty() {
+                    warnings.push("Empty linked secret name found".into());
+                }
+            }
+        }
+    }
+    if errors.is_empty() {
+        res.render(Json(serde_json::json!({
+            "status": "success",
+            "skill": name,
+            "warnings": warnings,
+            "manager_validated": false,
+        })));
+    } else {
+        res.render(Json(serde_json::json!({
+            "status": "error",
+            "skill": name,
+            "errors": errors,
+            "warnings": warnings,
+        })));
+    }
+}
+
 pub async fn run_server(task_mgr: Arc<TaskManager>, workflow_db: crate::db::WorkflowDb, port: u16) -> anyhow::Result<()> {
     // Initialize global state
     let _ = TASK_MGR.set(task_mgr);
@@ -494,10 +840,15 @@ pub async fn run_server(task_mgr: Arc<TaskManager>, workflow_db: crate::db::Work
                     Router::with_path("tasks")
                         .get(list_tasks)
                         .post(create_task)
+                        .options(handle_options)
                         .push(
                             Router::with_path("<taskId>")
                                 .get(get_task)
-                                .push(Router::with_path("stop").post(stop_task))
+                                .push(
+                                    Router::with_path("stop")
+                                        .post(stop_task)
+                                        .options(handle_options)
+                                )
                         )
                 )
                 .push(
@@ -537,6 +888,11 @@ pub async fn run_server(task_mgr: Arc<TaskManager>, workflow_db: crate::db::Work
                         .options(handle_options)
                 )
                 .push(
+                    Router::with_path("mcp-server/<id>/test")
+                        .post(test_mcp_server)
+                        .options(handle_options)
+                )
+                .push(
                     Router::with_path("skills")
                         .get(list_skills)
                 )
@@ -546,6 +902,45 @@ pub async fn run_server(task_mgr: Arc<TaskManager>, workflow_db: crate::db::Work
                         .post(save_skill)
                         .delete(delete_skill)
                         .options(handle_options)
+                )
+                .push(
+                    Router::with_path("skill/<id>/test")
+                        .post(test_skill)
+                        .options(handle_options)
+                )
+                .push(
+                    Router::with_path("ai-model")
+                        .get(list_ai_models)
+                        .options(handle_options)
+                )
+                .push(
+                    Router::with_path("ai-model/<id>")
+                        .get(list_ai_models) // GET single ai model (reuse list or we didn't implement GET single)
+                        .post(save_ai_model)
+                        .delete(delete_ai_model)
+                        .options(handle_options)
+                )
+                .push(
+                    Router::with_path("workspace")
+                        .push(Router::with_path("tree").get(crate::workspace::get_workspace_tree))
+                        .push(Router::with_path("list").get(crate::workspace::list_workspace))
+                        .push(Router::with_path("file")
+                            .get(crate::workspace::download_workspace_file)
+                            .post(crate::workspace::upload_workspace_file)
+                            .options(handle_options)
+                        )
+                        .push(Router::with_path("dir")
+                            .post(crate::workspace::create_workspace_dir)
+                            .options(handle_options)
+                        )
+                        .push(Router::with_path("delete")
+                            .post(crate::workspace::delete_workspace_entry)
+                            .options(handle_options)
+                        )
+                        .push(Router::with_path("rename")
+                            .post(crate::workspace::rename_workspace_entry)
+                            .options(handle_options)
+                        )
                 )
         )
         .push(
@@ -561,4 +956,90 @@ pub async fn run_server(task_mgr: Arc<TaskManager>, workflow_db: crate::db::Work
     tracing::info!("Salvo API Server listening on 0.0.0.0:{}", port);
     Server::new(acceptor).serve(router).await;
     Ok(())
+}
+
+// --- AI Model Handlers ---
+
+#[handler]
+async fn list_ai_models(res: &mut Response) {
+    if let Some(db) = WORKFLOW_DB.get() {
+        match db.list_ai_models().await {
+            Ok(models) => {
+                let models: Vec<serde_json::Value> = models
+                    .into_iter()
+                    .filter_map(|s| serde_json::from_str(&s).ok())
+                    .collect();
+                res.render(Json(models));
+            }
+            Err(e) => {
+                res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+                res.render(Json(serde_json::json!({"error": e.to_string()})));
+            }
+        }
+    } else {
+        res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+        res.render(Json(serde_json::json!({"error": "DB not initialized"})));
+    }
+}
+
+#[handler]
+async fn save_ai_model(req: &mut Request, res: &mut Response) {
+    if let Ok(body) = req.parse_json::<serde_json::Value>().await {
+        let id = body.get("id").and_then(|v| v.as_str()).unwrap_or("").to_string();
+        let provider = body.get("provider").and_then(|v| v.as_str()).unwrap_or("").to_string();
+        let name = body.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string();
+        let api_key = body.get("api_key").and_then(|v| v.as_str()).unwrap_or("").to_string();
+        let base_url = body.get("base_url").and_then(|v| v.as_str()).unwrap_or("").to_string();
+        let enabled = body.get("enabled").and_then(|v| v.as_bool()).unwrap_or(true);
+        let extra_params = body.get("extra_params").map(|v| v.to_string()).unwrap_or_else(|| "{}".to_string());
+
+        if id.is_empty() {
+            res.status_code(StatusCode::BAD_REQUEST);
+            res.render(Json(serde_json::json!({"error": "Missing id"})));
+            return;
+        }
+
+        if let Some(db) = WORKFLOW_DB.get() {
+            match db.save_ai_model(id.clone(), provider, name, api_key, base_url, enabled, extra_params).await {
+                Ok(_) => {
+                    res.render(Json(serde_json::json!({"status": "ok", "id": id})));
+                }
+                Err(e) => {
+                    res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+                    res.render(Json(serde_json::json!({"error": e.to_string()})));
+                }
+            }
+        } else {
+            res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+            res.render(Json(serde_json::json!({"error": "DB not initialized"})));
+        }
+    } else {
+        res.status_code(StatusCode::BAD_REQUEST);
+        res.render(Json(serde_json::json!({"error": "Invalid JSON"})));
+    }
+}
+
+#[handler]
+async fn delete_ai_model(req: &mut Request, res: &mut Response) {
+    let id = req.param::<String>("id").unwrap_or_default();
+    if id.is_empty() {
+        res.status_code(StatusCode::BAD_REQUEST);
+        res.render(Json(serde_json::json!({"error": "Missing id"})));
+        return;
+    }
+
+    if let Some(db) = WORKFLOW_DB.get() {
+        match db.delete_ai_model(id).await {
+            Ok(_) => {
+                res.render(Json(serde_json::json!({"status": "ok"})));
+            }
+            Err(e) => {
+                res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+                res.render(Json(serde_json::json!({"error": e.to_string()})));
+            }
+        }
+    } else {
+        res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
+        res.render(Json(serde_json::json!({"error": "DB not initialized"})));
+    }
 }

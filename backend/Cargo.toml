@@ -155,6 +155,9 @@ indicatif = "0.18"
 unicode-width = "0.2"
 rpassword = "=7.4.0"
 
+# Environment variable loading from .env files
+dotenvy = "0.15"
+
 # TUI dependencies
 iocraft = "0.7"
 smol = "2"

@@ -5,6 +5,8 @@ import './style.css';
 import WorkflowEditor from './WorkflowEditor.jsx';
 import McpConfigPage from './McpConfigPage.jsx';
 import SkillConfigPage from './SkillConfigPage.jsx';
+import WorkspacePage from './WorkspacePage.jsx';
+import { SystemConfigPage } from './SystemConfigPage.jsx';
 import { I18nProvider, useI18n, locales } from './i18n/index.jsx';
 
 const statusTone = {
@@ -83,47 +85,25 @@ const localScheduleIdPrefix = 'local-schedule-';
 const scheduleRefreshIntervalMs = 10000;
 
 function RobotIcon() {
-  const { t } = useI18n();
   return (
-    <svg className="robot-icon" viewBox="0 0 64 64" role="img" aria-label={t('misc.robot')} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="nordic-body" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#f8fafc" />
-          <stop offset="100%" stopColor="#cbd5e1" />
-        </linearGradient>
-        <linearGradient id="nordic-glass" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#1e293b" />
-          <stop offset="100%" stopColor="#0f172a" />
-        </linearGradient>
-        <linearGradient id="nordic-eye" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#0284c7" />
-        </linearGradient>
-        <filter id="soft-shadow" x="-10%" y="-10%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#0f172a" floodOpacity="0.15" />
-        </filter>
-      </defs>
-      
-      {/* Ears */}
-      <rect x="6" y="28" width="6" height="12" rx="3" fill="#94a3b8" />
-      <rect x="52" y="28" width="6" height="12" rx="3" fill="#94a3b8" />
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 256 256">
+      <path d="M144,168a8,8,0,0,1-8,8H120a8,8,0,0,1,0-16h16A8,8,0,0,1,144,168Zm72-64H200V88a48.05,48.05,0,0,0-48-48H104A48.05,48.05,0,0,0,56,88v16H40a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16H56v16a48.05,48.05,0,0,0,48,48h48a48.05,48.05,0,0,0,48-48V184h16a16,16,0,0,0,16-16V120A16,16,0,0,0,216,104ZM56,88a32,32,0,0,1,32-32h48a32,32,0,0,1,32,32v96a32,32,0,0,1-32,32H88a32,32,0,0,1-32-32Zm160,80H200V120h16ZM84,140a12,12,0,1,1,12-12A12,12,0,0,1,84,140Zm88,0a12,12,0,1,1,12-12A12,12,0,0,1,172,140Z"></path>
+    </svg>
+  );
+}
 
-      {/* Background shadow & Body */}
-      <rect x="12" y="16" width="40" height="36" rx="12" fill="url(#nordic-body)" filter="url(#soft-shadow)" />
-      
-      {/* Top highlight (3D edge) */}
-      <rect x="12" y="16" width="40" height="36" rx="12" fill="none" stroke="#ffffff" strokeWidth="2" strokeOpacity="0.8" />
+function AttachIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 256 256">
+      <path d="M209.66,122.34a8,8,0,0,1,0,11.32l-82.05,82a56,56,0,0,1-79.2-79.21L147.67,35.73a40,40,0,1,1,56.61,56.55L105,191.46a24,24,0,1,1-34-33.9L161.67,67A8,8,0,0,1,173,78.33L82.35,168.89a8,8,0,0,0,11.31,11.32l99.26-99.18a24,24,0,0,0-34-33.9L60.59,146.3A40,40,0,1,0,117.2,202.85l81.14-80.51A8,8,0,0,1,209.66,122.34Z"></path>
+    </svg>
+  );
+}
 
-      {/* Antenna */}
-      <rect x="30" y="6" width="4" height="12" rx="2" fill="#94a3b8" />
-      <circle cx="32" cy="6" r="4" fill="url(#nordic-eye)" filter="url(#soft-shadow)" />
-
-      {/* Screen/Face */}
-      <rect x="18" y="24" width="28" height="16" rx="6" fill="url(#nordic-glass)" />
-
-      {/* Eyes */}
-      <circle cx="26" cy="32" r="2.5" fill="url(#nordic-eye)" />
-      <circle cx="38" cy="32" r="2.5" fill="url(#nordic-eye)" />
+function CloseIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256">
+      <path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path>
     </svg>
   );
 }
@@ -405,7 +385,27 @@ function App() {
   const [requirement, setRequirement] = useState('');
   const [submittedRequirement, setSubmittedRequirement] = useState('');
   const [taskId, setTaskId] = useState('');
-  const [activeView, setActiveView] = useState('current');
+  const [activeView, setActiveView] = useState(() => {
+    const hash = window.location.hash.replace('#', '');
+    const validViews = ['current', 'history', 'schedule', 'settings', 'workflow', 'workspace', 'mcp', 'skill'];
+    return validViews.includes(hash) ? hash : 'current';
+  });
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      const validViews = ['current', 'history', 'schedule', 'settings', 'workflow', 'workspace', 'mcp', 'skill'];
+      if (validViews.includes(hash)) {
+        setActiveView(hash);
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const navigateTo = (view) => {
+    window.location.hash = view;
+  };
   const [status, setStatus] = useState('idle');
   const [history, setHistory] = useState(() => loadHistory());
   const [selectedHistoryId, setSelectedHistoryId] = useState('');
@@ -420,6 +420,7 @@ function App() {
   const [isStopping, setIsStopping] = useState(false);
   const [systemSidebarOpen, setSystemSidebarOpen] = useState(true);
   const [systemSettings, setSystemSettings] = useState(() => loadSystemSettings());
+  const [attachedFiles, setAttachedFiles] = useState([]);
   const socketRef = useRef(null);
   const logRef = useRef(null);
   const statusLogRef = useRef(null);
@@ -429,7 +430,7 @@ function App() {
   const canUseComposer = activeView === 'current';
   const shouldShowComposer = canUseComposer;
   const shouldShowComposerStatus = status !== 'idle';
-  const shortcutLabel = isMacPlatform() ? '⌘ Enter' : 'Alt Enter';
+  const shortcutLabel = 'Enter';
   function updateSystemSetting(key, value) {
     setSystemSettings((current) => {
       const next = { ...current, [key]: value };
@@ -720,9 +721,9 @@ function App() {
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.hostname}:39999/eiva/backend/api/ver-0.95/ws`;
-    const socket = new WebSocket(wsUrl);
-    socket.binaryType = 'arraybuffer';
-    socketRef.current = socket;
+    
+    let reconnectTimer = null;
+    let isMounted = true;
 
     const appendLog = (entry, options = {}) => {
       if (isHiddenLogMessage(entry.message)) return;
@@ -741,74 +742,99 @@ function App() {
       }
     };
 
-    socket.onopen = () => {
-      appendLog({ message: t('chat.wsConnected') });
-      const pingMsg = eiva.ClientMessage.create({ ping: {} });
-      socket.send(eiva.ClientMessage.encode(pingMsg).finish());
-    };
+    const connectWs = () => {
+      if (!isMounted) return;
 
-    socket.onclose = () => appendLog({ message: t('chat.wsDisconnected') });
+      const socket = new WebSocket(wsUrl);
+      socket.binaryType = 'arraybuffer';
+      socketRef.current = socket;
 
-    socket.onmessage = (event) => {
-      try {
-        const data = new Uint8Array(event.data);
-        const serverMsg = eiva.ServerMessage.decode(data);
-        const payloadType = serverMsg.payload;
-
-        if (payloadType === 'taskCreated') {
-          const ev = serverMsg.taskCreated;
-          setTaskId(ev.taskId);
-          updateLatestHistory({ taskId: ev.taskId });
-          setRequirement('');
-          setLogs([{ at: new Date().toISOString(), message: t('chat.taskCreated') }]);
-          setStatus('queued');
-          setIsSubmitting(false);
-        } else if (payloadType === 'taskStatus') {
-          const ev = serverMsg.taskStatus;
-          if (ev.status === 'stopping') setIsStopping(true);
-          else if (ev.status === 'running') {
-            setIsStopping(false);
-            setStatus('running');
-            appendLog({ taskId: ev.taskId, message: t('chat.taskStarted'), at: new Date().toISOString() }, { addToHistory: true });
-          }
-        } else if (payloadType === 'taskLog') {
-          const ev = serverMsg.taskLog;
-          const shouldRecordLog = !ev.message?.startsWith('已訂閱任務 ');
-          appendLog({ taskId: ev.taskId, message: ev.message, at: ev.at }, { addToHistory: shouldRecordLog });
-        } else if (payloadType === 'taskCompleted') {
-          const ev = serverMsg.taskCompleted;
-          setIsStopping(false);
-          setStatus('completed');
-          setResult(ev.result);
-          updateHistoryByTaskId(ev.taskId, { result: ev.result, completedAt: ev.at });
-          appendLog({ taskId: ev.taskId, message: t('chat.taskCompleted'), at: ev.at }, { addToHistory: true });
-        } else if (payloadType === 'taskFailed') {
-          const ev = serverMsg.taskFailed;
-          setIsStopping(false);
-          setStatus('failed');
-          setError(ev.error || t('chat.taskFailed'));
-          updateHistoryByTaskId(ev.taskId, { error: ev.error || t('chat.taskFailed'), completedAt: ev.at });
-          appendLog({ taskId: ev.taskId, message: ev.error || t('chat.taskFailed'), at: ev.at }, { addToHistory: true });
-        } else if (payloadType === 'taskInterrupted') {
-          const ev = serverMsg.taskInterrupted;
-          setIsStopping(false);
-          setStatus('interrupted');
-          setError(ev.error || t('chat.taskStopped'));
-          updateHistoryByTaskId(ev.taskId, { error: ev.error || t('chat.taskStopped'), completedAt: ev.at });
-          appendLog({ taskId: ev.taskId, message: ev.error || t('chat.taskStopped'), at: ev.at }, { addToHistory: true });
-        } else if (payloadType === 'error') {
-          setIsSubmitting(false);
-          setStatus('failed');
-          setError(serverMsg.error.message);
-          updateLatestHistory({ error: serverMsg.error.message });
-          setLogs([{ at: new Date().toISOString(), message: serverMsg.error.message }]);
+      socket.onopen = () => {
+        if (reconnectTimer) {
+          clearTimeout(reconnectTimer);
+          reconnectTimer = null;
         }
-      } catch (err) {
-        console.error("Failed to decode ServerMessage:", err);
-      }
+        appendLog({ message: t('chat.wsConnected') });
+        const pingMsg = eiva.ClientMessage.create({ ping: {} });
+        socket.send(eiva.ClientMessage.encode(pingMsg).finish());
+      };
+
+      socket.onclose = () => {
+        appendLog({ message: t('chat.wsDisconnected') });
+        if (isMounted) {
+          reconnectTimer = setTimeout(() => {
+            if (isMounted) connectWs();
+          }, 15000);
+        }
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const data = new Uint8Array(event.data);
+          const serverMsg = eiva.ServerMessage.decode(data);
+          const payloadType = serverMsg.payload;
+
+          if (payloadType === 'taskCreated') {
+            const ev = serverMsg.taskCreated;
+            setTaskId(ev.taskId);
+            updateLatestHistory({ taskId: ev.taskId });
+            setRequirement('');
+            setLogs([{ at: new Date().toISOString(), message: t('chat.taskCreated') }]);
+            setStatus('queued');
+            setIsSubmitting(false);
+          } else if (payloadType === 'taskStatus') {
+            const ev = serverMsg.taskStatus;
+            if (ev.status === 'stopping') setIsStopping(true);
+            else if (ev.status === 'running') {
+              setIsStopping(false);
+              setStatus('running');
+              appendLog({ taskId: ev.taskId, message: t('chat.taskStarted'), at: new Date().toISOString() }, { addToHistory: true });
+            }
+          } else if (payloadType === 'taskLog') {
+            const ev = serverMsg.taskLog;
+            const shouldRecordLog = !ev.message?.startsWith('已訂閱任務 ');
+            appendLog({ taskId: ev.taskId, message: ev.message, at: ev.at }, { addToHistory: shouldRecordLog });
+          } else if (payloadType === 'taskCompleted') {
+            const ev = serverMsg.taskCompleted;
+            setIsStopping(false);
+            setStatus('completed');
+            setResult(ev.result);
+            updateHistoryByTaskId(ev.taskId, { result: ev.result, completedAt: ev.at });
+            appendLog({ taskId: ev.taskId, message: t('chat.taskCompleted'), at: ev.at }, { addToHistory: true });
+          } else if (payloadType === 'taskFailed') {
+            const ev = serverMsg.taskFailed;
+            setIsStopping(false);
+            setStatus('failed');
+            setError(ev.error || t('chat.taskFailed'));
+            updateHistoryByTaskId(ev.taskId, { error: ev.error || t('chat.taskFailed'), completedAt: ev.at });
+            appendLog({ taskId: ev.taskId, message: ev.error || t('chat.taskFailed'), at: ev.at }, { addToHistory: true });
+          } else if (payloadType === 'taskInterrupted') {
+            const ev = serverMsg.taskInterrupted;
+            setIsStopping(false);
+            setStatus('interrupted');
+            setError(ev.error || t('chat.taskStopped'));
+            updateHistoryByTaskId(ev.taskId, { error: ev.error || t('chat.taskStopped'), completedAt: ev.at });
+            appendLog({ taskId: ev.taskId, message: ev.error || t('chat.taskStopped'), at: ev.at }, { addToHistory: true });
+          } else if (payloadType === 'error') {
+            setIsSubmitting(false);
+            setStatus('failed');
+            setError(serverMsg.error.message);
+            updateLatestHistory({ error: serverMsg.error.message });
+            setLogs([{ at: new Date().toISOString(), message: serverMsg.error.message }]);
+          }
+        } catch (err) {
+          console.error("Failed to decode ServerMessage:", err);
+        }
+      };
     };
 
-    return () => socket.close();
+    connectWs();
+
+    return () => {
+      isMounted = false;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (socketRef.current) socketRef.current.close();
+    };
   }, []);
 
   useEffect(() => {
@@ -989,19 +1015,30 @@ function App() {
     });
     setSelectedHistoryId('');
 
-    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      const req = eiva.ClientMessage.create({
-        createTask: {
-          requirement: trimmed,
-          systemSettings: JSON.stringify(systemSettings)
-        }
+    try {
+      const apiUrl = `${window.location.protocol}//${window.location.hostname}:39999/eiva/backend/api/ver-0.95/tasks`;
+      const payload = { requirement: trimmed, systemSettings, files: attachedFiles };
+      console.log(`[API Call] POST ${apiUrl}`, payload);
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
-      socketRef.current.send(eiva.ClientMessage.encode(req).finish());
-    } else {
+      
+      const data = await response.json();
+      console.log(`[API Response] POST ${apiUrl}`, data);
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create task');
+      }
+      setAttachedFiles([]);
+      // The socket will receive taskCreated and update state accordingly
+    } catch (err) {
       setIsSubmitting(false);
       setStatus('failed');
-      setError(t('chat.wsNotConnected'));
-      updateLatestHistory({ error: t('chat.wsNotConnected') });
+      setError(err.message || t('chat.taskFailed'));
+      updateLatestHistory({ error: err.message || t('chat.taskFailed') });
     }
   }
 
@@ -1013,16 +1050,20 @@ function App() {
     setLogs((current) => [...current, entry]);
     appendProcessLogToHistory(taskId, entry);
 
-    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
-      const req = eiva.ClientMessage.create({
-        stopTask: {
-          taskId: taskId
-        }
-      });
-      socketRef.current.send(eiva.ClientMessage.encode(req).finish());
-    } else {
+    try {
+      const apiUrl = `${window.location.protocol}//${window.location.hostname}:39999/eiva/backend/api/ver-0.95/tasks/${encodeURIComponent(taskId)}/stop`;
+      console.log(`[API Call] POST ${apiUrl}`);
+      
+      const response = await fetch(apiUrl, { method: 'POST' });
+      const data = await response.json();
+      console.log(`[API Response] POST ${apiUrl}`, data);
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to stop task');
+      }
+    } catch (err) {
       setIsStopping(false);
-      const errorEntry = { at: new Date().toISOString(), message: t('chat.wsNotConnected') };
+      const errorEntry = { at: new Date().toISOString(), message: err.message || t('chat.taskFailed') };
       setLogs((current) => [...current, errorEntry]);
       appendProcessLogToHistory(taskId, errorEntry);
     }
@@ -1031,11 +1072,7 @@ function App() {
   function handleRequirementKeyDown(event) {
     if (event.key !== 'Enter' || event.isComposing) return;
 
-    const isSubmitShortcut = isMacPlatform()
-      ? event.metaKey && !event.altKey && !event.ctrlKey && !event.shiftKey
-      : event.altKey && !event.metaKey && !event.ctrlKey && !event.shiftKey;
-
-    if (!isSubmitShortcut) return;
+    if (event.shiftKey) return;
 
     event.preventDefault();
     if (canStopTask) {
@@ -1044,6 +1081,37 @@ function App() {
     }
     submitTask();
   }
+
+  const handleFiles = async (files) => {
+    const newFiles = [];
+    for (const file of files) {
+      const content = await new Promise((resolve) => {
+        const reader = new FileReader();
+        const isText = file.type.startsWith('text/') || 
+                       ['.js', '.jsx', '.json', '.md', '.rs', '.css', '.html', '.ts', '.tsx', '.py'].some(ext => file.name.endsWith(ext));
+        reader.onload = (e) => resolve(e.target.result);
+        if (isText) {
+          reader.readAsText(file);
+        } else {
+          reader.readAsDataURL(file);
+        }
+      });
+      newFiles.push({ name: file.name, content });
+    }
+    setAttachedFiles(prev => [...prev, ...newFiles]);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFiles(e.dataTransfer.files);
+      e.dataTransfer.clearData();
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
 
   function renderSchedulePromptItem(item) {
     const isEditing = editingSchedulePromptId === item.id;
@@ -1258,51 +1326,58 @@ function App() {
               <button
                 className={`nav-item ${activeView === 'current' ? 'active' : ''}`}
                 type="button"
-                onClick={() => setActiveView('current')}
+                onClick={() => navigateTo('current')}
               >
-                {t('sidebar.aiMaintenance')}
+                🤖 {t('sidebar.aiMaintenance')}
               </button>
               <button
                 className={`nav-item ${activeView === 'history' ? 'active' : ''}`}
                 type="button"
-                onClick={() => setActiveView('history')}
+                onClick={() => navigateTo('history')}
               >
-                {t('sidebar.history')}
+                📜 {t('sidebar.history')}
               </button>
               <button
                 className={`nav-item ${activeView === 'schedule' ? 'active' : ''}`}
                 type="button"
-                onClick={() => setActiveView('schedule')}
+                onClick={() => navigateTo('schedule')}
               >
-                {t('sidebar.schedule')}
+                📅 {t('sidebar.schedule')}
               </button>
               <button
                 className={`nav-item ${activeView === 'settings' ? 'active' : ''}`}
                 type="button"
-                onClick={() => setActiveView('settings')}
+                onClick={() => navigateTo('settings')}
               >
-                {t('sidebar.systemSettings')}
+                ⚙️ {t('sidebar.systemSettings')}
               </button>
               <button
                 className={`nav-item ${activeView === 'workflow' ? 'active' : ''}`}
                 type="button"
-                onClick={() => setActiveView('workflow')}
+                onClick={() => navigateTo('workflow')}
               >
-                {t('sidebar.workflowEditor')}
+                🔄 {t('sidebar.workflowEditor')}
+              </button>
+              <button
+                className={`nav-item ${activeView === 'workspace' ? 'active' : ''}`}
+                type="button"
+                onClick={() => navigateTo('workspace')}
+              >
+                📁 {t('sidebar.workspace') || 'Workspace'}
               </button>
               <button
                 className={`nav-item ${activeView === 'mcp' ? 'active' : ''}`}
                 type="button"
-                onClick={() => setActiveView('mcp')}
+                onClick={() => navigateTo('mcp')}
               >
-                {t('sidebar.mcpServer')}
+                🖥️ {t('sidebar.mcpServer')}
               </button>
               <button
                 className={`nav-item ${activeView === 'skill' ? 'active' : ''}`}
                 type="button"
-                onClick={() => setActiveView('skill')}
+                onClick={() => navigateTo('skill')}
               >
-                {t('sidebar.aiSkill')}
+                🧠 {t('sidebar.aiSkill')}
               </button>
               <div className="sidebar-lang-switcher" style={{ marginTop: '16px', borderTop: '1px solid #e2e8f0', paddingTop: '12px' }}>
                 {locales.map((loc) => (
@@ -1541,53 +1616,20 @@ function App() {
             </article>
           ) : activeView === 'workflow' ? (
             <WorkflowEditor />
+          ) : activeView === 'workspace' ? (
+            <WorkspacePage />
           ) : activeView === 'mcp' ? (
             <McpConfigPage />
           ) : activeView === 'skill' ? (
             <SkillConfigPage />
           ) : (
-            <article className="message assistant-message settings-message">
-              <div className="avatar">
-                <RobotIcon />
-              </div>
-              <div className="message-body">
-                <div className="message-title">
-                  <span>{t('chat.systemSettingsTitle')}</span>
-                </div>
-                <div className="settings-form">
-                  {systemSettingFields.map((field) => (
-                    <div className="settings-field" key={field.key}>
-                      <span className="settings-field-header">
-                        <label className="settings-label" htmlFor={`system-setting-${field.key}`}>
-                          {field.label}
-                        </label>
-                      </span>
-                      <span className="settings-description">{field.description}</span>
-                      <div className="settings-input-wrap">
-                        <textarea
-                          id={`system-setting-${field.key}`}
-                          value={systemSettings[field.key]}
-                          onChange={(event) => updateSystemSetting(field.key, event.target.value)}
-                          placeholder={field.key === 'prefixPrompt' ? t('prompts.enterPrefix') :
-                                       field.key === 'suffixPrompt' ? t('prompts.enterSuffix') :
-                                       field.key === 'roleDefinition' ? t('prompts.enterRole') :
-                                       field.key === 'shortDescription' ? t('prompts.enterShortDesc') :
-                                       t('prompts.enterUsageTiming')}
-                          rows={field.key === 'shortDescription' ? 2 : 4}
-                        />
-                        <button
-                          className="settings-clear-button"
-                          type="button"
-                          onClick={() => clearSystemSetting(field.key)}
-                        >
-                          {t('prompts.clearContent')}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </article>
+            <SystemConfigPage 
+              systemSettings={systemSettings}
+              updateSystemSetting={updateSystemSetting}
+              clearSystemSetting={clearSystemSetting}
+              systemSettingFields={systemSettingFields}
+              t={t}
+            />
           )}
         </div>
 
@@ -1610,31 +1652,53 @@ function App() {
                   {statusText[status]}
                 </span>
               )}
-              <div className={`composer ${canStopTask ? 'has-stop-button' : ''}`}>
-                <textarea
-                  ref={composerRef}
-                  value={requirement}
-                  onChange={(event) => setRequirement(event.target.value)}
-                  onKeyDown={handleRequirementKeyDown}
-                  placeholder={t('chat.placeholder')}
-                  rows={1}
-                />
-                <button
-                  className={`send-button ${canStopTask ? 'stop-button' : ''}`}
-                  type="submit"
-                  disabled={canStopTask ? isStopping : (!requirement.trim() || isSubmitting || isTaskRunning)}
-                  aria-label={canStopTask ? t('chat.stopTaskLabel') : t('chat.sendLabel')}
-                  aria-keyshortcuts="Meta+Enter Alt+Enter"
-                  title={canStopTask ? `${t('chat.stopTaskLabel')} (${shortcutLabel})` : `${t('chat.sendLabel')} (${shortcutLabel})`}
-                >
-                  {isSubmitting || isStopping ? (
-                    <span className="button-spinner" aria-hidden="true" />
-                  ) : canStopTask ? (
-                    <StopIcon />
-                  ) : (
-                    '↑'
-                  )}
-                </button>
+              <div 
+                className={`composer ${canStopTask ? 'has-stop-button' : ''}`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+              >
+                {attachedFiles.length > 0 && (
+                  <div className="composer-attachments">
+                    {attachedFiles.map((file, i) => (
+                      <div className="attachment-chip" key={i}>
+                        <span className="attachment-name" title={file.name}>{file.name}</span>
+                        <button type="button" onClick={() => setAttachedFiles(prev => prev.filter((_, idx) => idx !== i))}>
+                          <CloseIcon />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div style={{display: 'flex', width: '100%', alignItems: 'flex-start'}}>
+                  <input type="file" multiple hidden id="file-upload" onChange={(e) => handleFiles(e.target.files)} />
+                  <label htmlFor="file-upload" className="attach-button" aria-label="Attach File">
+                    <AttachIcon />
+                  </label>
+                  <textarea
+                    ref={composerRef}
+                    value={requirement}
+                    onChange={(event) => setRequirement(event.target.value)}
+                    onKeyDown={handleRequirementKeyDown}
+                    placeholder={t('chat.placeholder')}
+                    rows={1}
+                  />
+                  <button
+                    className={`send-button ${canStopTask ? 'stop-button' : ''}`}
+                    type="submit"
+                    disabled={canStopTask ? isStopping : ((!requirement.trim() && attachedFiles.length === 0) || isSubmitting || isTaskRunning)}
+                    aria-label={canStopTask ? t('chat.stopTaskLabel') : t('chat.sendLabel')}
+                    aria-keyshortcuts="Enter"
+                    title={canStopTask ? `${t('chat.stopTaskLabel')} (${shortcutLabel})` : `${t('chat.sendLabel')} (${shortcutLabel})`}
+                  >
+                    {isSubmitting || isStopping ? (
+                      <span className="button-spinner" aria-hidden="true" />
+                    ) : canStopTask ? (
+                      <StopIcon />
+                    ) : (
+                      '↑'
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
             <p className="composer-hint">

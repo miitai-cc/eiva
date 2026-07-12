@@ -862,18 +862,27 @@ pre {
    Settings
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.settings-message .message-body { width: min(720px, 100%); }
+.settings-message .message-body { width: min(800px, 100%); }
 
-.settings-form { display: grid; gap: 20px; }
+.settings-form { display: grid; gap: 24px; }
 
-.settings-field { display: grid; gap: 7px; }
+.settings-field { 
+  display: flex; 
+  flex-direction: column;
+  gap: 12px; 
+  padding: 20px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
 
 .settings-field-header { display: flex; align-items: center; }
 
 .settings-label {
   min-width: 0;
   color: var(--c-text);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -881,23 +890,24 @@ pre {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 8px;
+  gap: 12px;
 }
 
 .settings-clear-button {
-  min-height: 30px;
-  padding: 0 10px;
+  min-height: 32px;
+  padding: 0 14px;
   border: 1px solid var(--c-border);
   border-radius: var(--radius-sm);
-  background: var(--c-surface);
-  color: var(--c-text-muted);
-  font-size: 12px;
-  font-weight: 600;
+  background: var(--c-surface-alt);
+  color: var(--c-text);
+  font-size: 13px;
+  font-weight: 500;
   transition: all 0.15s var(--ease);
+  cursor: pointer;
 }
 
 .settings-clear-button:hover {
-  background: var(--c-surface-alt);
+  background: var(--c-border);
   color: var(--c-text);
 }
 
@@ -908,19 +918,25 @@ pre {
 }
 
 .settings-field textarea {
-  min-height: 96px;
-  max-height: 220px;
-  padding: 10px 12px;
+  width: 100%;
+  min-height: 100px;
+  max-height: 300px;
+  padding: 12px 16px;
   border: 1px solid var(--c-border);
   border-radius: var(--radius-sm);
-  background: var(--c-surface);
-  transition: border-color 0.15s;
+  background: var(--c-bg);
+  font-size: 14px;
+  line-height: 1.5;
+  transition: all 0.15s;
+  box-sizing: border-box;
+  resize: vertical;
 }
 
 .settings-field textarea:focus {
   border-color: var(--c-primary);
   box-shadow: 0 0 0 3px var(--c-primary-ring);
   outline: none;
+  background: var(--c-surface);
 }
 
 .secondary-action {
@@ -1299,6 +1315,600 @@ pre {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   DataGrid — MCP Server CRUD Table
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.datagrid-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.datagrid-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface);
+}
+
+.datagrid-toolbar h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.datagrid-wrapper {
+  flex: 1;
+  overflow: auto;
+  padding: 0;
+}
+
+.datagrid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.datagrid th,
+.datagrid td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--c-border);
+  white-space: nowrap;
+}
+
+.datagrid th {
+  background: var(--c-surface-alt);
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--c-text-muted);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  user-select: none;
+}
+
+.datagrid th.sortable {
+  cursor: pointer;
+}
+
+.datagrid th.sortable:hover {
+  color: var(--c-primary);
+}
+
+.datagrid-sort-indicator {
+  font-size: 11px;
+  margin-left: 2px;
+  opacity: 0.4;
+}
+
+.datagrid-sort-indicator.active {
+  opacity: 1;
+  color: var(--c-primary);
+}
+
+.datagrid-row {
+  transition: background 0.12s var(--ease);
+}
+
+.datagrid-row:hover {
+  background: var(--c-surface-alt);
+}
+
+.datagrid-row.editing {
+  background: var(--c-primary-light);
+}
+
+.datagrid-row.new {
+  background: var(--c-warning-light);
+}
+
+.datagrid-cell {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.datagrid-cell.center {
+  text-align: center;
+}
+
+.datagrid-cell.actions {
+  white-space: nowrap;
+  display: flex;
+  gap: 6px;
+}
+
+.datagrid-cell-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.datagrid-cell-empty {
+  color: var(--c-text-faint);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.datagrid-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.datagrid-input:focus {
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 2px var(--c-primary-ring);
+}
+
+.datagrid-input.mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.datagrid-input.num {
+  width: 72px;
+  text-align: center;
+}
+
+.datagrid-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--c-text-faint);
+  font-style: italic;
+}
+
+/* ── Tag Button (args/env) ─────────────────────────────────────────────── */
+
+.datagrid-tag-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  background: var(--c-surface);
+  color: var(--c-primary);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s var(--ease);
+}
+
+.datagrid-tag-btn:hover {
+  background: var(--c-primary-light);
+  border-color: var(--c-primary);
+}
+
+/* ── Toggle Switch ─────────────────────────────────────────────────────── */
+
+.datagrid-toggle {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.datagrid-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.datagrid-toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--c-border);
+  border-radius: 20px;
+  transition: background 0.2s var(--ease);
+}
+
+.datagrid-toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 2px;
+  bottom: 2px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s var(--ease);
+  box-shadow: var(--shadow-xs);
+}
+
+.datagrid-toggle input:checked + .datagrid-toggle-slider {
+  background: var(--c-success);
+}
+
+.datagrid-toggle input:checked + .datagrid-toggle-slider::before {
+  transform: translateX(16px);
+}
+
+/* ── Action Buttons ────────────────────────────────────────────────────── */
+
+.datagrid-action-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  background: var(--c-surface);
+  color: var(--c-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s var(--ease);
+}
+
+.datagrid-action-btn:hover {
+  background: var(--c-surface-alt);
+  color: var(--c-text);
+}
+
+.datagrid-action-btn.save {
+  background: var(--c-success);
+  color: white;
+  border-color: var(--c-success);
+}
+
+.datagrid-action-btn.save:hover {
+  background: #15803d;
+}
+
+.datagrid-action-btn.danger {
+  color: var(--c-danger);
+  border-color: var(--c-danger);
+}
+
+.datagrid-action-btn.danger:hover {
+  background: var(--c-danger-light);
+}
+
+.datagrid-action-btn.test {
+  color: var(--c-primary);
+  border-color: var(--c-primary);
+}
+
+.datagrid-action-btn.test:hover {
+  background: var(--c-primary-light);
+}
+
+.datagrid-action-btn.test.testing {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Popup Overlay ─────────────────────────────────────────────────────── */
+
+/* ── Test Results ─────────────────────────────────────────────────────── */
+
+.datagrid-test-results {
+  border-top: 1px solid var(--c-border);
+  background: var(--c-surface);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.datagrid-test-results-header {
+  padding: 10px 16px;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--c-text-muted);
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface-alt);
+}
+
+.datagrid-test-result {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.datagrid-test-result.success {
+  background: var(--c-success-light);
+}
+
+.datagrid-test-result.error {
+  background: var(--c-danger-light);
+}
+
+.datagrid-test-result-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.datagrid-test-result-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--c-text);
+}
+
+.datagrid-test-result-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+}
+
+.datagrid-test-result-badge.success {
+  background: var(--c-success);
+}
+
+.datagrid-test-result-badge.error {
+  background: var(--c-danger);
+}
+
+.datagrid-test-result-close {
+  margin-left: auto;
+  border: none;
+  background: none;
+  color: var(--c-text-faint);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.datagrid-test-result-close:hover {
+  color: var(--c-text);
+}
+
+.datagrid-test-result-detail {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--c-text-muted);
+  line-height: 1.5;
+}
+
+.datagrid-test-result-detail.error {
+  color: var(--c-danger);
+  font-family: var(--font-mono);
+}
+
+.datagrid-test-result-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.datagrid-test-tool-tag {
+  padding: 2px 8px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--c-text-muted);
+}
+
+.datagrid-test-warnings {
+  margin-top: 4px;
+}
+
+.datagrid-test-warning {
+  font-size: 12px;
+  color: var(--c-warning);
+  padding: 2px 0;
+}
+
+.datagrid-popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.datagrid-popup {
+  background: var(--c-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  width: 420px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.datagrid-popup-wide {
+  width: 600px;
+}
+
+.datagrid-popup-textarea {
+  width: 100%;
+  min-height: 300px;
+  padding: 16px;
+  border: none;
+  border-top: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+}
+
+.datagrid-popup-textarea:focus {
+  border-color: var(--c-primary);
+}
+
+.datagrid-popup-header {
+  padding: 16px 20px;
+  font-weight: 700;
+  font-size: 15px;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.datagrid-popup-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+  min-height: 60px;
+  max-height: 240px;
+}
+
+.datagrid-popup-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  transition: background 0.12s;
+}
+
+.datagrid-popup-item:hover {
+  background: var(--c-surface-alt);
+}
+
+.datagrid-popup-item-text {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--c-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.datagrid-popup-item-remove {
+  border: none;
+  background: none;
+  color: var(--c-danger);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.datagrid-popup-item-remove:hover {
+  opacity: 1;
+}
+
+.datagrid-popup-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--c-text-faint);
+  font-style: italic;
+  font-size: 13px;
+}
+
+.datagrid-popup-add {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--c-border);
+}
+
+.datagrid-popup-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-size: 13px;
+  font-family: var(--font-mono);
+  outline: none;
+}
+
+.datagrid-popup-input:focus {
+  border-color: var(--c-primary);
+}
+
+.datagrid-popup-add-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--c-primary);
+  border-radius: var(--radius-sm);
+  background: var(--c-primary);
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.datagrid-popup-add-btn:hover {
+  background: var(--c-primary-hover);
+}
+
+.datagrid-popup-add-env {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--c-border);
+}
+
+/* ── Env Table inside Popup ────────────────────────────────────────────── */
+
+.datagrid-popup-table {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 12px;
+  max-height: 200px;
+}
+
+.datagrid-popup-table-header,
+.datagrid-popup-table-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 28px;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.datagrid-popup-table-header {
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--c-text-muted);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.datagrid-popup-table-row {
+  border-bottom: 1px solid var(--c-surface-alt);
+}
+
+.datagrid-popup-table-cell {
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.datagrid-popup-footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 12px 20px;
+  border-top: 1px solid var(--c-border);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    Responsive
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -1394,4 +2004,320 @@ pre {
     max-width: none;
     margin: 0 16px 12px;
   }
+}
+
+.composer-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 12px 0;
+  margin-bottom: -8px;
+}
+.attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  background: var(--surface-2);
+  border-radius: 16px;
+  padding: 4px 8px 4px 12px;
+  font-size: 13px;
+  gap: 6px;
+  max-width: 200px;
+}
+.attachment-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.attachment-chip button {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  border-radius: 50%;
+}
+.attachment-chip button:hover {
+  background: var(--surface-3);
+  color: var(--text-primary);
+}
+.attach-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  border-radius: 8px;
+  margin-right: 4px;
+}
+.attach-button:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+/* Workspace Page */
+.workspace-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px;
+  background: var(--surface-1);
+  border-radius: 12px;
+}
+.workspace-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.workspace-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.workspace-actions {
+  display: flex;
+  gap: 12px;
+}
+.workspace-actions .button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.workspace-breadcrumbs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.breadcrumb-item {
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.breadcrumb-item:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+.workspace-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-grow: 1;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+}
+.workspace-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.workspace-item:hover {
+  background: var(--surface-2);
+}
+.workspace-item-icon {
+  margin-right: 12px;
+  color: var(--text-secondary);
+  display: flex;
+}
+.workspace-item-name {
+  flex-grow: 1;
+}
+.workspace-item-size {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.workspace-preview-modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.workspace-preview-content {
+  background: var(--surface-1);
+  border-radius: 12px;
+  width: 80vw;
+  height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.workspace-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.workspace-preview-header h3 {
+  margin: 0;
+}
+.workspace-preview-actions {
+  display: flex;
+  gap: 8px;
+}
+.workspace-preview-actions .icon-button {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+}
+.workspace-preview-actions .icon-button:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+.workspace-preview-body {
+  flex-grow: 1;
+  overflow: auto;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-0);
+}
+.workspace-preview-body img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Icon button styles for datagrid actions */
+.datagrid-icon-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.datagrid-icon-btn:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+.datagrid-icon-btn-danger:hover {
+  background: rgba(220, 53, 69, 0.1);
+  color: var(--error);
+}
+.workspace-preview-body pre {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.workspace-split-layout {
+  display: flex;
+  flex-grow: 1;
+  overflow: hidden;
+}
+.workspace-sidebar {
+  width: 250px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  background: var(--surface-1);
+}
+.workspace-tree-node {
+  display: flex;
+  flex-direction: column;
+}
+.workspace-tree-item {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+  user-select: none;
+  font-size: 14px;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+.workspace-tree-item:hover {
+  background: var(--surface-2);
+}
+.workspace-tree-item.active {
+  background: var(--primary);
+  color: var(--surface-0);
+}
+.workspace-tree-toggle {
+  width: 16px;
+  text-align: center;
+  font-size: 10px;
+  cursor: pointer;
+  display: inline-block;
+}
+.workspace-tree-children {
+  padding-left: 16px;
+}
+.workspace-main {
+  position: relative;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.workspace-drop-zone {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 120, 255, 0.1);
+  border: 2px dashed var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--primary);
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* ── Settings Tabs ──────────────────────────────────────────────────────── */
+.settings-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 16px 20px 16px 20px;
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface);
+}
+.settings-tab-btn {
+  padding: 8px 20px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+.settings-tab-btn:hover {
+  background-color: var(--c-surface-hover);
+  color: var(--c-text);
+}
+.settings-tab-btn.active {
+  background-color: var(--c-primary);
+  color: white;
+  border-color: var(--c-primary);
+  box-shadow: 0 2px 6px var(--c-primary-ring);
 }

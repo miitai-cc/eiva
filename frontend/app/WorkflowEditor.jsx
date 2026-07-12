@@ -18,19 +18,18 @@ import { useI18n } from './i18n/index.jsx';
 
 const initialEdges = [];
 
-export default function WorkflowEditor() {
+// --- Custom Nodes ---
+
+const NodeHeader = ({ title, type, typeClass }) => (
+  <div className="custom-node-header">
+    <span>{title}</span>
+    <span className={`custom-node-type ${typeClass}`}>{type}</span>
+  </div>
+);
+
+const PromptInput = ({ data, onChange }) => {
   const { t } = useI18n();
-
-  // --- Custom Nodes ---
-
-  const NodeHeader = ({ title, type, typeClass }) => (
-    <div className="custom-node-header">
-      <span>{title}</span>
-      <span className={`custom-node-type ${typeClass}`}>{type}</span>
-    </div>
-  );
-
-  const PromptInput = ({ data, onChange }) => (
+  return (
     <div className="custom-node-body">
       <label>{t('workflow.nodes.promptLabel')}</label>
       <textarea
@@ -41,217 +40,230 @@ export default function WorkflowEditor() {
       />
     </div>
   );
+};
 
-  const StartNode = ({ data, isConnectable }) => {
-    return (
-      <div className="start-node circle-node">
-        <div className="circle-content">{data.label || t('workflow.nodes.start')}</div>
-        <Handle type="source" position={Position.Right} id="source-right" isConnectable={isConnectable} />
-        <Handle type="source" position={Position.Bottom} id="source-bottom" isConnectable={isConnectable} />
+const StartNode = ({ data, isConnectable }) => {
+  const { t } = useI18n();
+  return (
+    <div className="start-node circle-node">
+      <div className="circle-content">{data.label || t('workflow.nodes.start')}</div>
+      <Handle type="source" position={Position.Right} id="source-right" isConnectable={isConnectable} />
+      <Handle type="source" position={Position.Bottom} id="source-bottom" isConnectable={isConnectable} />
+    </div>
+  );
+};
+
+const AgentNode = ({ id, data, isConnectable }) => {
+  return (
+    <div className="custom-node">
+      <Handle type="target" position={Position.Top} id="target-top" isConnectable={isConnectable} />
+      <Handle type="target" position={Position.Left} id="target-left" isConnectable={isConnectable} />
+      <NodeHeader title={data.label} type="AGENT" typeClass="node-type-agent" />
+      <PromptInput
+        data={data}
+        onChange={(e) => data.onChange(id, 'prompt', e.target.value)}
+      />
+      <Handle type="source" position={Position.Right} id="source-right" isConnectable={isConnectable} />
+      <Handle type="source" position={Position.Bottom} id="source-bottom" isConnectable={isConnectable} />
+    </div>
+  );
+};
+
+const ToolNode = ({ id, data, isConnectable }) => {
+  return (
+    <div className="custom-node">
+      <Handle type="target" position={Position.Top} id="target-top" isConnectable={isConnectable} />
+      <Handle type="target" position={Position.Left} id="target-left" isConnectable={isConnectable} />
+      <NodeHeader title={data.label} type="TOOL" typeClass="node-type-tool" />
+      <PromptInput
+        data={data}
+        onChange={(e) => data.onChange(id, 'prompt', e.target.value)}
+      />
+      <Handle type="source" position={Position.Right} id="source-right" isConnectable={isConnectable} />
+      <Handle type="source" position={Position.Bottom} id="source-bottom" isConnectable={isConnectable} />
+    </div>
+  );
+};
+
+const EndNode = ({ data, isConnectable }) => {
+  const { t } = useI18n();
+  return (
+    <div className="end-node circle-node">
+      <Handle type="target" position={Position.Top} id="target-top" isConnectable={isConnectable} />
+      <Handle type="target" position={Position.Left} id="target-left" isConnectable={isConnectable} />
+      <div className="circle-content">{data.label || t('workflow.nodes.end')}</div>
+    </div>
+  );
+};
+
+const BasicNode = ({ id, data, isConnectable }) => {
+  return (
+    <div className="custom-node">
+      <Handle type="target" position={Position.Top} id="target-top" isConnectable={isConnectable} />
+      <Handle type="target" position={Position.Left} id="target-left" isConnectable={isConnectable} />
+      <NodeHeader title={data.label} type="BASIC" typeClass="" />
+      <PromptInput
+        data={data}
+        onChange={(e) => data.onChange(id, 'prompt', e.target.value)}
+      />
+      <Handle type="source" position={Position.Right} id="source-right" isConnectable={isConnectable} />
+      <Handle type="source" position={Position.Bottom} id="source-bottom" isConnectable={isConnectable} />
+    </div>
+  );
+};
+
+const SkillNode = ({ id, data, isConnectable }) => {
+  const { t } = useI18n();
+  return (
+    <div className="custom-node">
+      <Handle type="target" position={Position.Top} id="target-top" isConnectable={isConnectable} />
+      <Handle type="target" position={Position.Left} id="target-left" isConnectable={isConnectable} />
+      <NodeHeader title={data.label} type="SKILL" typeClass="node-type-tool" />
+      <div className="custom-node-body">
+        <label>{t('workflow.properties.skill')}</label>
+        <div style={{ fontSize: '12px', color: 'var(--c-text-muted)', marginBottom: '8px', wordBreak: 'break-all' }}>{data.skillName || t('workflow.nodes.notSet')}</div>
       </div>
-    );
-  };
+      <PromptInput
+        data={data}
+        onChange={(e) => data.onChange(id, 'prompt', e.target.value)}
+      />
+      <Handle type="source" position={Position.Right} id="source-right" isConnectable={isConnectable} />
+      <Handle type="source" position={Position.Bottom} id="source-bottom" isConnectable={isConnectable} />
+    </div>
+  );
+};
 
-  const AgentNode = ({ id, data, isConnectable }) => {
-    return (
-      <div className="custom-node">
-        <Handle type="target" position={Position.Top} id="target-top" isConnectable={isConnectable} />
-        <Handle type="target" position={Position.Left} id="target-left" isConnectable={isConnectable} />
-        <NodeHeader title={data.label} type="AGENT" typeClass="node-type-agent" />
-        <PromptInput
-          data={data}
-          onChange={(e) => data.onChange(id, 'prompt', e.target.value)}
-        />
-        <Handle type="source" position={Position.Right} id="source-right" isConnectable={isConnectable} />
-        <Handle type="source" position={Position.Bottom} id="source-bottom" isConnectable={isConnectable} />
+const McpNode = ({ id, data, isConnectable }) => {
+  const { t } = useI18n();
+  return (
+    <div className="custom-node">
+      <Handle type="target" position={Position.Top} id="target-top" isConnectable={isConnectable} />
+      <Handle type="target" position={Position.Left} id="target-left" isConnectable={isConnectable} />
+      <NodeHeader title={data.label} type="MCP" typeClass="node-type-tool" />
+      <div className="custom-node-body">
+        <label>{t('workflow.properties.mcp')}</label>
+        <div style={{ fontSize: '12px', color: 'var(--c-text-muted)', marginBottom: '8px', wordBreak: 'break-all' }}>{data.mcpName || t('workflow.nodes.notSet')}</div>
       </div>
-    );
-  };
+      <PromptInput
+        data={data}
+        onChange={(e) => data.onChange(id, 'prompt', e.target.value)}
+      />
+      <Handle type="source" position={Position.Right} id="source-right" isConnectable={isConnectable} />
+      <Handle type="source" position={Position.Bottom} id="source-bottom" isConnectable={isConnectable} />
+    </div>
+  );
+};
 
-  const ToolNode = ({ id, data, isConnectable }) => {
-    return (
-      <div className="custom-node">
-        <Handle type="target" position={Position.Top} id="target-top" isConnectable={isConnectable} />
-        <Handle type="target" position={Position.Left} id="target-left" isConnectable={isConnectable} />
-        <NodeHeader title={data.label} type="TOOL" typeClass="node-type-tool" />
-        <PromptInput
-          data={data}
-          onChange={(e) => data.onChange(id, 'prompt', e.target.value)}
-        />
-        <Handle type="source" position={Position.Right} id="source-right" isConnectable={isConnectable} />
-        <Handle type="source" position={Position.Bottom} id="source-bottom" isConnectable={isConnectable} />
+const VariableNode = ({ data, isConnectable }) => {
+  const { t } = useI18n();
+  return (
+    <div className="custom-node">
+      <Handle type="target" position={Position.Top} id="target-top" isConnectable={isConnectable} />
+      <Handle type="target" position={Position.Left} id="target-left" isConnectable={isConnectable} />
+      <NodeHeader title={data.label} type="VAR" typeClass="node-type-var" />
+      <div className="custom-node-body" style={{ marginBottom: '8px' }}>
+        <div style={{ fontSize: '12px', color: 'var(--c-text-muted)' }}>{data.varName ? `${data.varName} = ${data.varValue || ''}` : t('workflow.nodes.notSetVar')}</div>
       </div>
-    );
-  };
+      <Handle type="source" position={Position.Right} id="source-right" isConnectable={isConnectable} />
+      <Handle type="source" position={Position.Bottom} id="source-bottom" isConnectable={isConnectable} />
+    </div>
+  );
+};
 
-  const EndNode = ({ data, isConnectable }) => {
-    return (
-      <div className="end-node circle-node">
-        <Handle type="target" position={Position.Top} id="target-top" isConnectable={isConnectable} />
-        <Handle type="target" position={Position.Left} id="target-left" isConnectable={isConnectable} />
-        <div className="circle-content">{data.label || t('workflow.nodes.end')}</div>
+const CalculateNode = ({ data, isConnectable }) => {
+  const { t } = useI18n();
+  return (
+    <div className="custom-node">
+      <Handle type="target" position={Position.Top} id="target-top" isConnectable={isConnectable} />
+      <Handle type="target" position={Position.Left} id="target-left" isConnectable={isConnectable} />
+      <NodeHeader title={data.label} type="CALC" typeClass="node-type-calc" />
+      <div className="custom-node-body" style={{ marginBottom: '8px' }}>
+        <div style={{ fontSize: '12px', color: '#ccc' }}>{data.expression || t('workflow.nodes.notSetExpr')}</div>
       </div>
-    );
-  };
+      <Handle type="source" position={Position.Right} id="source-right" isConnectable={isConnectable} />
+      <Handle type="source" position={Position.Bottom} id="source-bottom" isConnectable={isConnectable} />
+    </div>
+  );
+};
 
-  const BasicNode = ({ id, data, isConnectable }) => {
-    return (
-      <div className="custom-node">
-        <Handle type="target" position={Position.Top} id="target-top" isConnectable={isConnectable} />
-        <Handle type="target" position={Position.Left} id="target-left" isConnectable={isConnectable} />
-        <NodeHeader title={data.label} type="BASIC" typeClass="" />
-        <PromptInput
-          data={data}
-          onChange={(e) => data.onChange(id, 'prompt', e.target.value)}
-        />
-        <Handle type="source" position={Position.Right} id="source-right" isConnectable={isConnectable} />
-        <Handle type="source" position={Position.Bottom} id="source-bottom" isConnectable={isConnectable} />
+const ConditionNode = ({ data, isConnectable }) => {
+  const { t } = useI18n();
+  return (
+    <div className="condition-node custom-node">
+      <Handle type="target" position={Position.Top} id="target-top" isConnectable={isConnectable} />
+      <Handle type="target" position={Position.Left} id="target-left" isConnectable={isConnectable} />
+      <div className="diamond-shape"></div>
+      <div className="diamond-content">
+        <NodeHeader title={data.label} type="COND" typeClass="node-type-cond" />
+        <div style={{ fontSize: '11px', color: '#ccc', marginTop: '4px' }}>{data.condition || t('workflow.nodes.notSet')}</div>
       </div>
-    );
-  };
+      <Handle type="source" position={Position.Right} id="source-right" isConnectable={isConnectable} />
+      <Handle type="source" position={Position.Bottom} id="source-bottom" isConnectable={isConnectable} />
+    </div>
+  );
+};
 
-  const SkillNode = ({ id, data, isConnectable }) => {
-    return (
-      <div className="custom-node">
-        <Handle type="target" position={Position.Top} id="target-top" isConnectable={isConnectable} />
-        <Handle type="target" position={Position.Left} id="target-left" isConnectable={isConnectable} />
-        <NodeHeader title={data.label} type="SKILL" typeClass="node-type-tool" />
-        <div className="custom-node-body">
-          <label>{t('workflow.properties.skill')}</label>
-          <div style={{ fontSize: '12px', color: 'var(--c-text-muted)', marginBottom: '8px', wordBreak: 'break-all' }}>{data.skillName || t('workflow.nodes.notSet')}</div>
-        </div>
-        <PromptInput
-          data={data}
-          onChange={(e) => data.onChange(id, 'prompt', e.target.value)}
-        />
-        <Handle type="source" position={Position.Right} id="source-right" isConnectable={isConnectable} />
-        <Handle type="source" position={Position.Bottom} id="source-bottom" isConnectable={isConnectable} />
-      </div>
-    );
-  };
-
-  const McpNode = ({ id, data, isConnectable }) => {
-    return (
-      <div className="custom-node">
-        <Handle type="target" position={Position.Top} id="target-top" isConnectable={isConnectable} />
-        <Handle type="target" position={Position.Left} id="target-left" isConnectable={isConnectable} />
-        <NodeHeader title={data.label} type="MCP" typeClass="node-type-tool" />
-        <div className="custom-node-body">
-          <label>{t('workflow.properties.mcp')}</label>
-          <div style={{ fontSize: '12px', color: 'var(--c-text-muted)', marginBottom: '8px', wordBreak: 'break-all' }}>{data.mcpName || t('workflow.nodes.notSet')}</div>
-        </div>
-        <PromptInput
-          data={data}
-          onChange={(e) => data.onChange(id, 'prompt', e.target.value)}
-        />
-        <Handle type="source" position={Position.Right} id="source-right" isConnectable={isConnectable} />
-        <Handle type="source" position={Position.Bottom} id="source-bottom" isConnectable={isConnectable} />
-      </div>
-    );
-  };
-
-  const VariableNode = ({ data, isConnectable }) => {
-    return (
-      <div className="custom-node">
-        <Handle type="target" position={Position.Top} id="target-top" isConnectable={isConnectable} />
-        <Handle type="target" position={Position.Left} id="target-left" isConnectable={isConnectable} />
-        <NodeHeader title={data.label} type="VAR" typeClass="node-type-var" />
-        <div className="custom-node-body" style={{ marginBottom: '8px' }}>
-          <div style={{ fontSize: '12px', color: 'var(--c-text-muted)' }}>{data.varName ? `${data.varName} = ${data.varValue || ''}` : t('workflow.nodes.notSetVar')}</div>
-        </div>
-        <Handle type="source" position={Position.Right} id="source-right" isConnectable={isConnectable} />
-        <Handle type="source" position={Position.Bottom} id="source-bottom" isConnectable={isConnectable} />
-      </div>
-    );
-  };
-
-  const CalculateNode = ({ data, isConnectable }) => {
-    return (
-      <div className="custom-node">
-        <Handle type="target" position={Position.Top} id="target-top" isConnectable={isConnectable} />
-        <Handle type="target" position={Position.Left} id="target-left" isConnectable={isConnectable} />
-        <NodeHeader title={data.label} type="CALC" typeClass="node-type-calc" />
-        <div className="custom-node-body" style={{ marginBottom: '8px' }}>
-          <div style={{ fontSize: '12px', color: '#ccc' }}>{data.expression || t('workflow.nodes.notSetExpr')}</div>
-        </div>
-        <Handle type="source" position={Position.Right} id="source-right" isConnectable={isConnectable} />
-        <Handle type="source" position={Position.Bottom} id="source-bottom" isConnectable={isConnectable} />
-      </div>
-    );
-  };
-
-  const ConditionNode = ({ data, isConnectable }) => {
-    return (
-      <div className="condition-node custom-node">
-        <Handle type="target" position={Position.Top} id="target-top" isConnectable={isConnectable} />
-        <Handle type="target" position={Position.Left} id="target-left" isConnectable={isConnectable} />
-        <div className="diamond-shape"></div>
-        <div className="diamond-content">
-          <NodeHeader title={data.label} type="COND" typeClass="node-type-cond" />
-          <div style={{ fontSize: '11px', color: '#ccc', marginTop: '4px' }}>{data.condition || t('workflow.nodes.notSet')}</div>
-        </div>
-        <Handle type="source" position={Position.Right} id="source-right" isConnectable={isConnectable} />
-        <Handle type="source" position={Position.Bottom} id="source-bottom" isConnectable={isConnectable} />
-      </div>
-    );
-  };
-
-  const NoteNode = ({ data, selected }) => {
-    return (
-      <div className="note-node" style={{
-        width: data.autoSize ? 'auto' : '100%',
-        height: data.autoSize ? 'auto' : '100%',
-        minWidth: '100px',
-        minHeight: '50px',
-        backgroundColor: data.bgColor || '#ffeeb6',
-        fontFamily: data.fontFamily || '"Comic Sans MS", cursive, sans-serif'
+const NoteNode = ({ data, selected }) => {
+  const { t } = useI18n();
+  return (
+    <div className="note-node" style={{
+      width: data.autoSize ? 'auto' : '100%',
+      height: data.autoSize ? 'auto' : '100%',
+      minWidth: '100px',
+      minHeight: '50px',
+      backgroundColor: data.bgColor || '#ffeeb6',
+      fontFamily: data.fontFamily || '"Comic Sans MS", cursive, sans-serif'
+    }}>
+      {!data.autoSize && <NodeResizer color="#ffcc00" isVisible={selected} minWidth={100} minHeight={50} />}
+      <div className="note-content" style={{
+        fontSize: data.fontSize || '14px',
+        textAlign: data.textAlign || 'left',
+        fontWeight: data.fontWeight || 'normal',
+        fontStyle: data.fontStyle || 'normal',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: data.verticalAlign || 'flex-start',
+        padding: '10px',
+        boxSizing: 'border-box',
+        height: '100%',
+        whiteSpace: data.autoSize ? 'pre-wrap' : 'normal',
+        wordBreak: 'break-word'
       }}>
-        {!data.autoSize && <NodeResizer color="#ffcc00" isVisible={selected} minWidth={100} minHeight={50} />}
-        <div className="note-content" style={{
-          fontSize: data.fontSize || '14px',
-          textAlign: data.textAlign || 'left',
-          fontWeight: data.fontWeight || 'normal',
-          fontStyle: data.fontStyle || 'normal',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: data.verticalAlign || 'flex-start',
-          padding: '10px',
-          boxSizing: 'border-box',
-          height: '100%',
-          whiteSpace: data.autoSize ? 'pre-wrap' : 'normal',
-          wordBreak: 'break-word'
-        }}>
-          {data.noteText || t('workflow.nodes.noteHint')}
-        </div>
+        {data.noteText || t('workflow.nodes.noteHint')}
       </div>
-    );
-  };
+    </div>
+  );
+};
 
-  const SwimlaneNode = ({ data, selected }) => {
-    const isVertical = data.orientation === 'vertical';
-    const titlePos = data.titlePosition || (isVertical ? 'left' : 'top');
-    return (
-      <div className={`swimlane-node ${isVertical ? 'vertical' : 'horizontal'} ${titlePos}`} style={{ width: '100%', height: '100%' }}>
-        <NodeResizer color="#0066cc" isVisible={selected} minWidth={100} minHeight={100} />
-        <div className="swimlane-header">{data.label || t('workflow.nodes.swimLane')}</div>
-      </div>
-    );
-  };
+const SwimlaneNode = ({ data, selected }) => {
+  const { t } = useI18n();
+  const isVertical = data.orientation === 'vertical';
+  const titlePos = data.titlePosition || (isVertical ? 'left' : 'top');
+  return (
+    <div className={`swimlane-node ${isVertical ? 'vertical' : 'horizontal'} ${titlePos}`} style={{ width: '100%', height: '100%' }}>
+      <NodeResizer color="#0066cc" isVisible={selected} minWidth={100} minHeight={100} />
+      <div className="swimlane-header">{data.label || t('workflow.nodes.swimLane')}</div>
+    </div>
+  );
+};
 
-  const nodeTypes = useMemo(() => ({
-    startNode: StartNode,
-    agentNode: AgentNode,
-    toolNode: ToolNode,
-    endNode: EndNode,
-    basicNode: BasicNode,
-    skillNode: SkillNode,
-    mcpNode: McpNode,
-    variableNode: VariableNode,
-    calculateNode: CalculateNode,
-    conditionNode: ConditionNode,
-    noteNode: NoteNode,
-    swimlaneNode: SwimlaneNode,
-  }), [t]);
+const nodeTypes = {
+  startNode: StartNode,
+  agentNode: AgentNode,
+  toolNode: ToolNode,
+  endNode: EndNode,
+  basicNode: BasicNode,
+  skillNode: SkillNode,
+  mcpNode: McpNode,
+  variableNode: VariableNode,
+  calculateNode: CalculateNode,
+  conditionNode: ConditionNode,
+  noteNode: NoteNode,
+  swimlaneNode: SwimlaneNode,
+};
+
+export default function WorkflowEditor() {
+  const { t } = useI18n();
 
   const initialNodes = useMemo(() => [
     { id: '1', type: 'startNode', position: { x: 250, y: 50 }, data: { label: t('workflow.nodes.startNode'), prompt: '' } },
@@ -927,18 +939,18 @@ export default function WorkflowEditor() {
           {leftSidebarOpen && (
             <aside className="workflow-sidebar left-sidebar">
               <h3>{t('workflow.newNodeTitle')}</h3>
-              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'startNode', t('workflow.toolbar.start'))} onClick={() => addNode('startNode', t('workflow.toolbar.start'))} title={t('workflow.toolbar.startTitle')}>{t('workflow.toolbar.start')}</button>
-              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'agentNode', t('workflow.toolbar.agent'))} onClick={() => addNode('agentNode', t('workflow.toolbar.agent'))} title={t('workflow.toolbar.agentTitle')}>{t('workflow.toolbar.agent')}</button>
-              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'toolNode', t('workflow.toolbar.tool'))} onClick={() => addNode('toolNode', t('workflow.toolbar.tool'))} title={t('workflow.toolbar.toolTitle')}>{t('workflow.toolbar.tool')}</button>
-              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'skillNode', t('workflow.toolbar.skill'))} onClick={() => addNode('skillNode', t('workflow.toolbar.skill'))} title={t('workflow.toolbar.skillTitle')}>{t('workflow.toolbar.skill')}</button>
-              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'mcpNode', t('workflow.toolbar.mcp'))} onClick={() => addNode('mcpNode', t('workflow.toolbar.mcp'))} title={t('workflow.toolbar.mcpTitle')}>{t('workflow.toolbar.mcp')}</button>
-              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'variableNode', t('workflow.toolbar.variable'))} onClick={() => addNode('variableNode', t('workflow.toolbar.variable'))} title={t('workflow.toolbar.variableTitle')}>{t('workflow.toolbar.variable')}</button>
-              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'calculateNode', t('workflow.toolbar.calc'))} onClick={() => addNode('calculateNode', t('workflow.toolbar.calc'))} title={t('workflow.toolbar.calcTitle')}>{t('workflow.toolbar.calc')}</button>
-              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'conditionNode', t('workflow.toolbar.cond'))} onClick={() => addNode('conditionNode', t('workflow.toolbar.cond'))} title={t('workflow.toolbar.condTitle')}>{t('workflow.toolbar.cond')}</button>
-              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'endNode', t('workflow.toolbar.end'))} onClick={() => addNode('endNode', t('workflow.toolbar.end'))} title={t('workflow.toolbar.endTitle')}>{t('workflow.toolbar.end')}</button>
-              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'swimlaneNode', t('workflow.toolbar.swimLane'))} onClick={() => addNode('swimlaneNode', t('workflow.toolbar.swimLane'))} title={t('workflow.toolbar.swimLaneTitle')}>{t('workflow.toolbar.swimLane')}</button>
-              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'noteNode', t('workflow.toolbar.note'))} onClick={() => addNode('noteNode', t('workflow.toolbar.note'))} title={t('workflow.toolbar.noteTitle')}>{t('workflow.toolbar.note')}</button>
-              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'basicNode', t('workflow.toolbar.basic'))} onClick={() => addNode('basicNode', t('workflow.toolbar.basic'))} title={t('workflow.toolbar.basicTitle')}>{t('workflow.toolbar.basic')}</button>
+              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'startNode', t('workflow.toolbar.start'))} onClick={() => addNode('startNode', t('workflow.toolbar.start'))} title={t('workflow.toolbar.startTitle')}>{'▶️ ' + t('workflow.toolbar.start')}</button>
+              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'agentNode', t('workflow.toolbar.agent'))} onClick={() => addNode('agentNode', t('workflow.toolbar.agent'))} title={t('workflow.toolbar.agentTitle')}>{'🤖 ' + t('workflow.toolbar.agent')}</button>
+              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'toolNode', t('workflow.toolbar.tool'))} onClick={() => addNode('toolNode', t('workflow.toolbar.tool'))} title={t('workflow.toolbar.toolTitle')}>{'🔧 ' + t('workflow.toolbar.tool')}</button>
+              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'skillNode', t('workflow.toolbar.skill'))} onClick={() => addNode('skillNode', t('workflow.toolbar.skill'))} title={t('workflow.toolbar.skillTitle')}>{'⚡ ' + t('workflow.toolbar.skill')}</button>
+              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'mcpNode', t('workflow.toolbar.mcp'))} onClick={() => addNode('mcpNode', t('workflow.toolbar.mcp'))} title={t('workflow.toolbar.mcpTitle')}>{'🔌 ' + t('workflow.toolbar.mcp')}</button>
+              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'variableNode', t('workflow.toolbar.variable'))} onClick={() => addNode('variableNode', t('workflow.toolbar.variable'))} title={t('workflow.toolbar.variableTitle')}>{'📦 ' + t('workflow.toolbar.variable')}</button>
+              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'calculateNode', t('workflow.toolbar.calc'))} onClick={() => addNode('calculateNode', t('workflow.toolbar.calc'))} title={t('workflow.toolbar.calcTitle')}>{'🧮 ' + t('workflow.toolbar.calc')}</button>
+              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'conditionNode', t('workflow.toolbar.cond'))} onClick={() => addNode('conditionNode', t('workflow.toolbar.cond'))} title={t('workflow.toolbar.condTitle')}>{'🔀 ' + t('workflow.toolbar.cond')}</button>
+              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'endNode', t('workflow.toolbar.end'))} onClick={() => addNode('endNode', t('workflow.toolbar.end'))} title={t('workflow.toolbar.endTitle')}>{'⏹️ ' + t('workflow.toolbar.end')}</button>
+              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'swimlaneNode', t('workflow.toolbar.swimLane'))} onClick={() => addNode('swimlaneNode', t('workflow.toolbar.swimLane'))} title={t('workflow.toolbar.swimLaneTitle')}>{'🏊 ' + t('workflow.toolbar.swimLane')}</button>
+              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'noteNode', t('workflow.toolbar.note'))} onClick={() => addNode('noteNode', t('workflow.toolbar.note'))} title={t('workflow.toolbar.noteTitle')}>{'📝 ' + t('workflow.toolbar.note')}</button>
+              <button className="wf-toolbar-btn" draggable onDragStart={(e) => onDragStart(e, 'basicNode', t('workflow.toolbar.basic'))} onClick={() => addNode('basicNode', t('workflow.toolbar.basic'))} title={t('workflow.toolbar.basicTitle')}>{'📄 ' + t('workflow.toolbar.basic')}</button>
             </aside>
           )}
           <div

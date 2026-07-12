@@ -2,9 +2,17 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Kill Port 39999",
+      "label": "Kill Port 38999 and 39999",
       "type": "shell",
-      "command": "lsof -ti:39999 | xargs kill -9 2>/dev/null; echo 'Port 39999 freed'",
+      "command": "lsof -ti:39999 | xargs kill -9 2>/dev/null; echo 'Port 39999 freed' && lsof -ti:38999 | xargs kill -9 2>/dev/null; echo 'Port 38999 freed'",
+      "presentation": {
+        "group": "eiva"
+      }
+    },
+    {
+      "label": "Kill Port 38999",
+      "type": "shell",
+      "command": "lsof -ti:38999 | xargs kill -9 2>/dev/null; echo 'Port 38999 freed'",
       "presentation": {
         "group": "eiva"
       }

@@ -44,6 +44,8 @@ pub(crate) struct GatewayCli {
 pub(crate) enum GatewayCommands {
     /// Run the gateway (default when no subcommand is given)
     Run(RunArgs),
+    /// Initialize the database tables
+    Init,
     /// Show gateway status
     Status {
         /// Output JSON

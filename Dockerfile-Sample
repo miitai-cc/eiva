@@ -36,28 +36,9 @@ RUN strip /build/eiva-gateway
 # ── Stage 2: Runtime ────────────────────────────────────────────────────────
 FROM alpine:3.21
 
-# Runtime essentials + Node.js LTS + Python 3 + PDF tools
 RUN apk add --no-cache \
     ca-certificates \
-    curl \
-    nodejs \
-    npm \
-    python3 \
-    py3-pip \
-    py3-virtualenv \
-    poppler-utils
-
-# Python data processing packages: Excel, Word, PDF, numpy, pandas
-RUN pip3 install --break-system-packages --no-cache-dir \
-    numpy \
-    pandas \
-    openpyxl \
-    python-docx \
-    PyPDF2 \
-    pdfplumber \
-    xlrd \
-    xlsxwriter \
-    tabulate
+    curl
 
 # Create non-root user
 RUN addgroup -S eiva && adduser -S -G eiva -h /home/eiva eiva
@@ -76,4 +57,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -sf http://localhost:3000/health || exit 1
 
 ENTRYPOINT ["eiva-gateway"]
-CMD ["run", "--ssh-listen", "0.0.0.0:3000"]
+CMD ["run", "--ssh-listen", "0.0.0.0:39999"]

@@ -13,7 +13,7 @@
       "name": "Debug Backend Gateway (CodeLLDB)",
       "type": "lldb",
       "request": "launch",
-      "preLaunchTask": "Kill Port 39999",
+      "preLaunchTask": "Kill Port 38999 and 39999",
       "cargo": {
         "args": [
           "build",

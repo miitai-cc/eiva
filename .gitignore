@@ -3,3 +3,7 @@ backend/target/**/*
 backend/target/**/**
 frontend/node_modules/**/**
 frontend/package-lock.json
+
+# Environment variables (contains secrets)
+.env
+backend/.env

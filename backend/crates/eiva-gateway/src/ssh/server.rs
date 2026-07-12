@@ -218,9 +218,11 @@ impl Handler for SshHandler {
         _modes: &[(russh::Pty, u32)],
         session: &mut Session,
     ) -> Result<(), Self::Error> {
+        tracing::debug!(channel_id = ?channel, term = ?_term, col_width = _col_width, row_height = _row_height, "Step 1: Received PTY request");
         // Acknowledge PTY allocation so OpenSSH clients don't block
         // waiting for a success/failure reply.
         session.channel_success(channel)?;
+        tracing::debug!("Result: PTY request accepted");
         Ok(())
     }
 
@@ -229,9 +231,11 @@ impl Handler for SshHandler {
         channel: ChannelId,
         session: &mut Session,
     ) -> Result<(), Self::Error> {
+        tracing::debug!(channel_id = ?channel, "Step 1: Received Shell request");
         // We don't provide an interactive shell, but must explicitly
         // acknowledge the request to avoid client-side hangs.
         session.channel_success(channel)?;
+        tracing::debug!("Result: Shell request accepted (dummy)");
         Ok(())
     }
 
@@ -241,9 +245,11 @@ impl Handler for SshHandler {
         _data: &[u8],
         session: &mut Session,
     ) -> Result<(), Self::Error> {
+        tracing::debug!(channel_id = ?channel, data_len = _data.len(), "Step 1: Received Exec request");
         // TUI uses an exec-style request (`ssh host eiva-gateway --ssh-stdio`).
         // Accept it and continue using channel data as raw framed transport.
         session.channel_success(channel)?;
+        tracing::debug!("Result: Exec request accepted");
         Ok(())
     }
 
@@ -253,13 +259,17 @@ impl Handler for SshHandler {
         _name: &str,
         session: &mut Session,
     ) -> Result<(), Self::Error> {
+        tracing::debug!(channel_id = ?channel, name = ?_name, "Step 1: Received Subsystem request");
         // Accept subsystem requests for compatibility with OpenSSH subsystem mode.
         session.channel_success(channel)?;
+        tracing::debug!("Result: Subsystem request accepted");
         Ok(())
     }
 
     async fn auth_password(&mut self, user: &str, _password: &str) -> Result<Auth, Self::Error> {
+        tracing::debug!(user = ?user, "Step 1: Received Password Auth request");
         warn!(user = user, "Password auth attempted but not supported");
+        tracing::debug!("Result: Password Auth rejected");
         Ok(Auth::Reject {
             proceed_with_methods: Some(russh::MethodSet::from(&[russh::MethodKind::PublicKey][..])),
             partial_success: false,
@@ -272,12 +282,15 @@ impl Handler for SshHandler {
         public_key: &PublicKey,
     ) -> Result<Auth, Self::Error> {
         let fingerprint = key_fingerprint(public_key);
+        tracing::debug!("Step 1: Start SSH auth_publickey process");
+        tracing::debug!(user = user, fingerprint = %fingerprint, "Step 2: Processing public key auth attempt");
         debug!(user = user, fingerprint = %fingerprint, "Public key auth attempt");
 
         let mut clients = self.authorized_clients.lock().await;
 
         // Bootstrap mode: first connecting key is persisted and trusted.
         if clients.is_empty() {
+            tracing::debug!("Step 3: Authorized clients is empty, bootstrapping new key");
             let comment = {
                 let c = public_key.comment();
                 if c.is_empty() {
@@ -298,11 +311,11 @@ impl Handler for SshHandler {
                 comment: comment.clone(),
             });
 
-            warn!(
+            tracing::debug!("Result: Bootstrapped new key successfully, Auth Accept");
+            info!(
                 user = user,
                 fingerprint = %fingerprint,
-                path = %self.authorized_clients_path.display(),
-                "Bootstrapped first SSH client key into authorized_clients"
+                "Trust on first use: Saved initial authorized key"
             );
 
             self.authenticated_username = Some(user.to_string());
@@ -310,8 +323,10 @@ impl Handler for SshHandler {
             return Ok(Auth::Accept);
         }
 
+        tracing::debug!("Step 3: Iterating authorized_clients to find matching key");
         for client in clients.iter() {
-            if &client.key == public_key {
+            if key_fingerprint(&client.key) == fingerprint {
+                tracing::debug!("Result: Found matching key, Auth Accept");
                 info!(
                     user = user,
                     fingerprint = %fingerprint,
@@ -341,6 +356,8 @@ impl Handler for SshHandler {
         channel: Channel<Msg>,
         _session: &mut Session,
     ) -> Result<bool, Self::Error> {
+        tracing::debug!("Step 1: Start SSH channel_open_session process");
+        tracing::debug!(channel_id = ?channel.id(), "Step 2: Processing session channel open");
         debug!(channel = ?channel.id(), "Session channel opened");
 
         // Create channels for data transfer
@@ -371,10 +388,12 @@ impl Handler for SshHandler {
 
         // Send to acceptor
         if self.connection_tx.send(transport).await.is_err() {
+            tracing::debug!("Result: Rejecting session channel open (connection_tx dropped)");
             warn!("Failed to send transport to acceptor");
             return Ok(false);
         }
 
+        tracing::debug!("Result: Session channel open accepted");
         Ok(true)
     }
 
@@ -384,6 +403,7 @@ impl Handler for SshHandler {
         data: &[u8],
         _session: &mut Session,
     ) -> Result<(), Self::Error> {
+        tracing::debug!(channel_id = ?channel, data_len = data.len(), "Step 1: Received Data request");
         // Never await while holding the session map lock.
         let tx = {
             let sessions = self.sessions.lock().await;
@@ -391,6 +411,9 @@ impl Handler for SshHandler {
         };
         if let Some(tx) = tx {
             let _ = tx.send(data.to_vec()).await;
+            tracing::debug!("Result: Data forwarded to session");
+        } else {
+            tracing::debug!("Result: No session found for data, discarded");
         }
         Ok(())
     }
@@ -400,9 +423,11 @@ impl Handler for SshHandler {
         channel: ChannelId,
         _session: &mut Session,
     ) -> Result<(), Self::Error> {
+        tracing::debug!(channel_id = ?channel, "Step 1: Received Channel EOF");
         debug!(channel = ?channel, "Channel EOF");
         let mut sessions = self.sessions.lock().await;
         sessions.remove(&channel);
+        tracing::debug!("Result: Channel EOF processed");
         Ok(())
     }
 }
