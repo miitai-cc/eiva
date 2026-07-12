@@ -487,9 +487,11 @@ pub async fn call_with_tools(
     match req.provider.as_str() {
         "anthropic" => call_anthropic_with_tools(http, req, writer).await,
         "google" => call_google_with_tools(http, req).await,
+        "native_llama" => native_llama::call_native_llama_with_tools(req, writer).await,
         _ => call_openai_with_tools(http, req, writer).await,
     }
 }
 
 #[cfg(test)]
 mod tests;
+pub mod native_llama;

@@ -13,6 +13,26 @@
       "name": "Debug Backend Gateway (CodeLLDB)",
       "type": "lldb",
       "request": "launch",
+      "cargo": {
+        "args": [
+          "build",
+          "--manifest-path",
+          "${workspaceFolder}/backend/Cargo.toml",
+          "-p",
+          "eiva-gateway"
+        ]
+      },
+      "args": [
+        "run",
+        "--ssh-listen",
+        "0.0.0.0:3000"
+      ],
+      "cwd": "${workspaceFolder}/backend"
+    },
+    {
+      "name": "Debug Backend Gateway (CodeLLDB)-02",
+      "type": "lldb",
+      "request": "launch",
       "preLaunchTask": "Kill Port 38999 and 39999",
       "cargo": {
         "args": [
@@ -29,6 +49,40 @@
         "0.0.0.0:3000"
       ],
       "cwd": "${workspaceFolder}/backend"
+    },
+    {
+      "name": "Run llama-server",
+      "type": "lldb",
+      "request": "launch",
+      "program": "/opt/homebrew/bin/llama-server",
+      "args": [
+        "--model",
+        "${workspaceFolder}/.eiva/models/NuExtract-tiny-Q3_K_M.gguf",
+        "--port",
+        "18080",
+        "--host",
+        "127.0.0.1"
+      ],
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Run llama-server-2",
+      "type": "lldb",
+      "request": "launch",
+      "program": "/opt/homebrew/bin/llama-server",
+      "args": [
+        "--model",
+        "${workspaceFolder}/.eiva/models/MiniCPM5-1B-Claude-Opus-Fable5-Thinking-Q4_K_M.gguf",
+        "--port",
+        "28080",
+        "--host",
+        "127.0.0.1",
+        "-c",
+        "12800",
+        "-b",
+        "1024"
+      ],
+      "cwd": "${workspaceFolder}"
     }
   ],
   "compounds": [

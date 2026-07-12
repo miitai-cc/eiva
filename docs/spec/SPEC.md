@@ -173,6 +173,11 @@ docker compose down
 | `RUSTYCLAW_VAULT_PASSWORD` | — | 加密 vault 密碼（由 launcher 注入，讀入後自動清除） |
 | `RUSTYCLAW_MODEL_API_KEY` | — | LLM 提供者 API 金鑰（由 launcher 注入，讀入後自動清除） |
 | `RUSTYCLAW_RATE_LIMIT` | `0` | 每次請求的最大工具呼叫次數（0 = 無限制） |
+| `AGENT_MODE` | `inner` | Agent 執行模式：`inner`（內建 Rust agent loop，直接使用設定的模型提供者）、`codex`（OpenAI Codex CLI）、`gemini`（Google Gemini CLI）、`opencode`（opencode CLI）。詳見 §5.7 |
+| `CODEX_CLI_COMMAND` | `codex` | Codex CLI 可執行檔路徑（僅 `AGENT_MODE=codex` 時使用） |
+| `CODEX_SANDBOX` | `workspace-write` | Codex CLI sandbox 模式：`read-only` 或 `workspace-write` |
+| `GEMINI_CLI_COMMAND` | `gemini` | Gemini CLI 可執行檔路徑（僅 `AGENT_MODE=gemini` 時使用） |
+| `OPENCODE_CLI_COMMAND` | `opencode` | opencode CLI 可執行檔路徑（僅 `AGENT_MODE=opencode` 時使用） |
 | `SSH_USER` | — | SSH 認證時回報的使用者名稱 |
 | `OPENAI_API_KEY` | — | OpenAI API 金鑰 |
 | `ANTHROPIC_API_KEY` | — | Anthropic API 金鑰 |
@@ -230,7 +235,35 @@ eiva-gateway init
 
 若資料庫已存在舊版表格（JSON blob 格式），會自動遷移至新版結構化欄位。
 
-### 5.7. 通訊埠一覽
+### 5.7. 外部 CLI Agent 模式
+
+當 `AGENT_MODE` 設為 `codex`、`gemini` 或 `opencode` 時，Gateway 會跳過內建的 LLM provider 迴圈，將使用者提示詞直接轉發給外部 CLI 工具執行。
+
+#### 5.7.1. 行為概述
+
+| 模式 | CLI 指令 | 預設可執行檔 | 可用環境變數覆蓋 |
+|------|----------|-------------|-----------------|
+| `codex` | `codex exec -C <workspace> -c 'approval_policy="never"' --sandbox <sandbox> --skip-git-repo-check <prompt>` | `codex` | `CODEX_CLI_COMMAND`, `CODEX_SANDBOX` |
+| `gemini` | `gemini -p <prompt>` | `gemini` | `GEMINI_CLI_COMMAND` |
+| `opencode` | `opencode -p <prompt>` | `opencode` | `OPENCODE_CLI_COMMAND` |
+
+#### 5.7.2. 執行流程
+
+1. **訊息組裝**：Gateway 依照一般流程組裝完整對話上下文（系統提示、歷史記錄、記憶上下文）。
+2. **模式判斷**：在 `handle_chat_frame` 中，若 `config.agent_mode` 為外部 CLI 模式，跳過 `dispatch_text_message`。
+3. **CLI 呼叫**：呼叫 `dispatch_to_external_cli` 函數，使用 `tokio::process::Command` 非同步 spawn 子行程。
+4. **串流回傳**：子行程 stdout 逐行讀取，透過 `Chunk` frame 即時串流回客戶端。
+5. **錯誤處理**：stderr 由背景 task 記錄至 tracing；非零結束碼會透過 `Chunk` frame 通知客戶端。
+6. **完成通知**：子行程結束後發送 `ResponseDone` frame。
+
+#### 5.7.3. 限制
+
+- 外部 CLI 模式不支援工具迴圈（tool loop），CLI 自行決定工具使用。
+- `codex` 模式使用 `approval_policy="never"` 以避免互動式確認。
+- CLI 可執行檔必須在 PATH 中或透過環境變數指定完整路徑。
+- 工作目錄設定為 `workspace_dir`（預設 `<settings_dir>/workspace`）。
+
+### 5.8. 通訊埠一覽
 
 | Port | 服務 | 開發環境 | Docker 容器 |
 | --- | --- | --- | --- |
@@ -238,7 +271,7 @@ eiva-gateway init
 | `39999` | HTTP API + WebSocket (Salvo) | 直接使用 | 對外映射 `39999:39999` |
 | `38999` | Vite 前端開發伺服器 | 本機 Chrome 連線 | 僅本機開發使用 |
 
-### 5.7. 系統目錄結構
+### 5.9. 系統目錄結構
 
 ```
 eiva/

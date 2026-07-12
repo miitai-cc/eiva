@@ -7,3 +7,7 @@ frontend/package-lock.json
 # Environment variables (contains secrets)
 .env
 backend/.env
+
+# Local model weights (large binaries, must not be committed)
+.eiva/models/**
+*.gguf

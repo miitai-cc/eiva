@@ -194,6 +194,18 @@ pub struct Config {
     /// gateway at startup when built with the `mcp` feature.
     #[serde(default)]
     pub mcp: crate::mcp::McpConfig,
+    /// Agent execution mode: `"inner"` (built-in Rust agent loop, uses the
+    /// configured model provider directly — no external CLI required),
+    /// `"codex"` (OpenAI Codex CLI), `"gemini"` (Google Gemini CLI),
+    /// or `"opencode"` (opencode CLI). Defaults to `"inner"`.
+    /// Can be overridden by the `AGENT_MODE` environment variable.
+    #[serde(default = "Config::default_agent_mode")]
+    pub agent_mode: String,
+    
+    /// API URL for the native GGUF model API server for local inner execution.
+    /// Overridden by `NATIVE_LLAMA_API_URL` env var.
+    #[serde(default)]
+    pub native_llama_api_url: Option<String>,
 }
 
 /// Configuration for a messenger backend.
@@ -350,6 +362,8 @@ impl Default for Config {
             engines: HashMap::new(),
             custom_providers: Vec::new(),
             mcp: crate::mcp::McpConfig::default(),
+            agent_mode: Self::default_agent_mode(),
+            native_llama_api_url: None,
         }
     }
 }
@@ -365,6 +379,10 @@ impl Config {
 
     fn default_tab_width() -> u16 {
         5
+    }
+
+    fn default_agent_mode() -> String {
+        "inner".to_string()
     }
 
     // ── Derived path helpers (mirrors openclaw layout) ───────────

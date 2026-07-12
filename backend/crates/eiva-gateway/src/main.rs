@@ -182,6 +182,34 @@ async fn main() -> Result<()> {
 
     let protocol_stdio = args.ssh_stdio;
 
+    // AGENT_MODE env var overrides config file value
+    if let Ok(mode) = std::env::var("AGENT_MODE") {
+        let mode = mode.trim().to_lowercase();
+        match mode.as_str() {
+            "inner" | "codex" | "gemini" | "opencode" => {
+                config.agent_mode = mode;
+            }
+            other => {
+                eprintln!(
+                    "{} Unknown AGENT_MODE '{}', falling back to 'inner'. Valid: inner, codex, gemini, opencode",
+                    t::icon_fail("⚠"), other
+                );
+            }
+        }
+    }
+
+    // NATIVE_LLAMA_API_URL env var
+    if let Ok(url) = std::env::var("NATIVE_LLAMA_API_URL") {
+        config.native_llama_api_url = Some(url.trim().to_string());
+    }
+    if !protocol_stdio {
+        println!(
+            "  {} Agent mode: {}",
+            t::icon_ok(""),
+            t::info(&config.agent_mode)
+        );
+    }
+
     let host = match args.bind {
         GatewayBind::Loopback => "127.0.0.1",
         GatewayBind::Lan => "0.0.0.0",

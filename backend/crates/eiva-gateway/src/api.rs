@@ -24,7 +24,7 @@ pub mod proto {
 }
 
 static TASK_MGR: OnceLock<Arc<TaskManager>> = OnceLock::new();
-static WORKFLOW_DB: OnceLock<crate::db::WorkflowDb> = OnceLock::new();
+pub static WORKFLOW_DB: OnceLock<crate::db::WorkflowDb> = OnceLock::new();
 
 static CLIENT_SESSIONS: OnceLock<RwLock<HashMap<String, Arc<GatewayClient>>>> = OnceLock::new();
 
@@ -142,13 +142,26 @@ async fn create_task(req: &mut Request, res: &mut Response) {
                                         });
                                     }
                                     eiva_core::gateway::GatewayEvent::AuthFailed { message, .. } |
-                                    eiva_core::gateway::GatewayEvent::ModelError { message } => {
+                                    eiva_core::gateway::GatewayEvent::ModelError { message } |
+                                    eiva_core::gateway::GatewayEvent::Error { message } => {
                                         let _ = tx.send(proto::ServerMessage {
                                             payload: Some(proto::server_message::Payload::TaskFailed(
                                                 proto::TaskFailedEvent {
                                                     task_id: task_id_clone.clone(),
                                                     error: message,
                                                     at: chrono::Utc::now().to_rfc3339(),
+                                                }
+                                            ))
+                                        });
+                                        break; // End the task loop on error
+                                    }
+                                    eiva_core::gateway::GatewayEvent::StreamStart |
+                                    eiva_core::gateway::GatewayEvent::ThinkingStart => {
+                                        let _ = tx.send(proto::ServerMessage {
+                                            payload: Some(proto::server_message::Payload::TaskStatus(
+                                                proto::TaskStatusEvent {
+                                                    task_id: task_id_clone.clone(),
+                                                    status: "running".to_string(),
                                                 }
                                             ))
                                         });

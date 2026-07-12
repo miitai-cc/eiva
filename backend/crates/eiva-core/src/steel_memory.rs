@@ -282,12 +282,16 @@ impl SteelMemory {
     }
 
     async fn embed(&self, text: &str) -> Result<Vec<f32>, SteelMemoryError> {
+        info!("Embedding text: {}", text);
         self.ensure_embedding().await?;
+        info!("Embedding model loaded");
 
         let embedding = self.embedding.clone();
         let text_owned = text.to_string();
-
-        run_blocking(move || do_embed(embedding, text_owned)).await
+        info!("Embedding text: {}", text);
+        let result = run_blocking(move || do_embed(embedding, text_owned)).await;
+        info!("Embedding result: {:#?}", result);
+        result
     }
 
     // =========================================================================
@@ -301,9 +305,11 @@ impl SteelMemory {
         max_results: usize,
         min_score: Option<f32>,
     ) -> Result<Vec<SearchResult>, SteelMemoryError> {
-        debug!(query, max_results, "Searching steel-memory");
+        debug!(query, max_results, "Step 1/3: Searching steel-memory");
 
         let query_vec = self.embed(query).await?;
+        debug!("Step 2/3: Query embedded, retrieving relevant results...");
+        
         let db_path = self.db_path.clone();
         let min_score = min_score.unwrap_or(0.3);
         let limit = max_results * 2;
@@ -311,6 +317,7 @@ impl SteelMemory {
         let results: Vec<SteelSearchResult> =
             run_blocking(move || do_search(db_path, query_vec, limit)).await?;
 
+        debug!("Step 3/3: Search complete, filtering results");
         Ok(results
             .into_iter()
             .filter(|r| r.similarity >= min_score)
@@ -327,7 +334,9 @@ impl SteelMemory {
         room: &str,
         source_file: Option<&str>,
     ) -> Result<String, SteelMemoryError> {
+        debug!("Step 1/3: Preparing to add memory to palace");
         let vec = self.embed(content).await?;
+        debug!("Step 2/3: Content embedded, preparing drawer storage...");
         let id = uuid::Uuid::new_v4().to_string();
 
         let drawer = Drawer {
@@ -351,7 +360,7 @@ impl SteelMemory {
         let db_path = self.db_path.clone();
         run_blocking(move || do_add_drawer(db_path, drawer, vec)).await?;
 
-        debug!(id = %id, wing, room, "Added memory to steel-memory");
+        debug!(id = %id, wing, room, "Step 3/3: Memory successfully added to steel-memory");
         Ok(id)
     }
 

@@ -1,7 +1,7 @@
 # ── Stage 1: Build ──────────────────────────────────────────────────────────
 FROM rust:1.86-alpine AS builder
 
-RUN apk add --no-cache build-base musl-dev openssl-dev cmake perl
+RUN apk add --no-cache build-base musl-dev openssl-dev cmake perl git
 
 WORKDIR /build
 
@@ -33,6 +33,15 @@ RUN cargo build --release -p eiva-gateway && \
 # Strip debug symbols
 RUN strip /build/eiva-gateway
 
+# ── Build llama.cpp ─────────────────────────────────────────────────────────
+WORKDIR /tmp
+RUN git clone --depth 1 https://github.com/ggml-org/llama.cpp.git && \
+    cd llama.cpp && \
+    cmake -B build -DGGML_NATIVE=OFF -DLLAMA_CURL=OFF -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build build --config Release -j$(nproc) && \
+    cp build/bin/llama-server /build/llama-server && \
+    rm -rf /tmp/llama.cpp
+
 # ── Stage 2: Runtime ────────────────────────────────────────────────────────
 FROM alpine:3.21
 
@@ -45,7 +54,8 @@ RUN apk add --no-cache \
     python3 \
     py3-pip \
     py3-virtualenv \
-    poppler-utils
+    poppler-utils \
+    bash
 
 # Python data processing packages: Excel, Word, PDF, numpy, pandas
 RUN pip3 install --break-system-packages --no-cache-dir \
@@ -59,10 +69,65 @@ RUN pip3 install --break-system-packages --no-cache-dir \
     xlsxwriter \
     tabulate
 
+# AI coding assistant CLIs
+RUN npm install -g opencode @openai/codex
+
+# ── Environment Variables ────────────────────────────────────────────────────
+# Agent Mode:
+#   AGENT_MODE          inner|codex|gemini|opencode (default: inner)
+#
+# llama.cpp:
+#   LLAMA_MODEL_DIR     Model directory (default: /home/eiva/.config/eiva/models)
+#   LLAMA_HOST          Bind address  (default: 0.0.0.0)
+#   LLAMA_PORT          Bind port     (default: 8080)
+#   LLAMA_EXTRA_ARGS    Extra args    (e.g. "-ngl 99 -c 4096")
+#
+# Gateway:
+#   RUST_LOG            Log filter    (e.g. eiva=debug)
+#   RUSTYCLAW_VAULT_PASSWORD  Vault password (cleared after read)
+#   RUSTYCLAW_MODEL_API_KEY   LLM API key    (cleared after read)
+#   RUSTYCLAW_RATE_LIMIT      Max tool calls per request (0 = unlimited)
+#   OPENAI_API_KEY             OpenAI key
+#   ANTHROPIC_API_KEY          Anthropic key
+#   GOOGLE_API_KEY             Google AI key
+
 # Create non-root user
 RUN addgroup -S eiva && adduser -S -G eiva -h /home/eiva eiva
 
 COPY --from=builder /build/eiva-gateway /usr/local/bin/eiva-gateway
+COPY --from=builder /build/llama-server /usr/local/bin/llama-server
+
+# Entrypoint script: starts llama-server in background, then eiva-gateway
+COPY <<'EOF' /usr/local/bin/start.sh
+#!/bin/bash
+set -e
+
+# Start llama-server if AGENT_MODE=inner or unset, and model dir exists
+MODEL_DIR="${LLAMA_MODEL_DIR:-/home/eiva/.config/eiva/models}"
+HOST="${LLAMA_HOST:-0.0.0.0}"
+PORT="${LLAMA_PORT:-8080}"
+
+if command -v llama-server >/dev/null 2>&1 && [ -d "$MODEL_DIR" ]; then
+    echo "  Starting llama-server on ${HOST}:${PORT} (model dir: ${MODEL_DIR})"
+    llama-server \
+        --host "$HOST" \
+        --port "$PORT" \
+        --model-dir "$MODEL_DIR" \
+        ${LLAMA_EXTRA_ARGS:-} &
+    LLAMA_PID=$!
+    # Wait briefly for server to start
+    sleep 2
+    if kill -0 $LLAMA_PID 2>/dev/null; then
+        echo "  llama-server started (PID: $LLAMA_PID)"
+    else
+        echo "  llama-server failed to start"
+    fi
+fi
+
+# Start eiva-gateway
+exec eiva-gateway "$@"
+EOF
+RUN chmod +x /usr/local/bin/start.sh
 
 RUN mkdir -p /home/eiva/.config/eiva && \
     chown -R eiva:eiva /home/eiva
@@ -71,9 +136,10 @@ USER eiva
 WORKDIR /home/eiva
 
 EXPOSE 3000
+EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -sf http://localhost:3000/health || exit 1
 
-ENTRYPOINT ["eiva-gateway"]
+ENTRYPOINT ["/usr/local/bin/start.sh"]
 CMD ["run", "--ssh-listen", "0.0.0.0:3000"]
