@@ -498,13 +498,14 @@ async fn run_workflow(req: &mut Request, res: &mut Response) {
                             ))
                         });
 
+                        let task_id_for_spawn = task_id.clone();
                         tokio::spawn(async move {
                             match runner.run(ctx).await {
                                 Ok(_) => {
                                     let _ = tx.send(proto::ServerMessage {
                                         payload: Some(proto::server_message::Payload::TaskCompleted(
                                             proto::TaskCompletedEvent {
-                                                task_id: task_id.clone(),
+                                                task_id: task_id_for_spawn.clone(),
                                                 result: "Workflow finished successfully".to_string(),
                                                 at: chrono::Utc::now().to_rfc3339(),
                                             }
@@ -515,7 +516,7 @@ async fn run_workflow(req: &mut Request, res: &mut Response) {
                                     let _ = tx.send(proto::ServerMessage {
                                         payload: Some(proto::server_message::Payload::TaskFailed(
                                             proto::TaskFailedEvent {
-                                                task_id: task_id.clone(),
+                                                task_id: task_id_for_spawn.clone(),
                                                 error: format!("Workflow failed: {}", e),
                                                 at: chrono::Utc::now().to_rfc3339(),
                                             }
