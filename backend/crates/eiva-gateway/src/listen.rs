@@ -375,12 +375,17 @@ pub async fn run_gateway(
     let task_mgr_api = task_mgr.clone();
     let workflow_db_api = workflow_db.clone();
     let api_cancel = cancel.child_token();
+    let api_port = std::env::var("EIVA_GATEWAY_PORT")
+        .ok()
+        .and_then(|value| value.trim().parse::<u16>().ok())
+        .unwrap_or(39999);
+
     tokio::spawn(async move {
         tokio::select! {
             _ = api_cancel.cancelled() => {
                 info!("Salvo API server shutting down");
             }
-            result = crate::api::run_server(task_mgr_api, workflow_db_api, 39999) => {
+            result = crate::api::run_server(task_mgr_api, workflow_db_api, api_port) => {
                 if let Err(e) = result {
                     error!(error = %e, "Salvo API server error");
                 }
@@ -388,7 +393,7 @@ pub async fn run_gateway(
         }
     });
 
-    info!(address = %bind_addr, api_port = 39999, "Gateway started — SSH on {bind_addr}, API on 0.0.0.0:39999");
+    info!(address = %bind_addr, api_port, "Gateway started — SSH on {bind_addr}, API on 0.0.0.0:{api_port}");
     if messenger_mgr.is_some() {
         info!("Messenger polling enabled");
     }

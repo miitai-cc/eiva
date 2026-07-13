@@ -1508,6 +1508,19 @@ async fn run_workflow(req: &mut Request, res: &mut Response) {
                             eiva_core::workflow::runner::WorkflowRunner::new(workflow_data);
                         let ctx = eiva_core::workflow::context::WorkflowContext::new();
                         let task_id = uuid::Uuid::new_v4().to_string();
+                        let created_at = chrono::Utc::now().to_rfc3339();
+                        let requirement = format!("執行工作流程：{}", id);
+
+                        save_task_record(
+                            &task_id,
+                            &requirement,
+                            "queued",
+                            None,
+                            None,
+                            None,
+                            &created_at,
+                        )
+                        .await;
 
                         // Broadcast TaskCreated
                         let tx = get_broadcaster();
@@ -1521,16 +1534,51 @@ async fn run_workflow(req: &mut Request, res: &mut Response) {
                         });
 
                         let task_id_for_spawn = task_id.clone();
+                        let requirement_for_spawn = requirement.clone();
+                        let created_at_for_spawn = created_at.clone();
+                        let workflow_id_for_spawn = id.clone();
                         tokio::spawn(async move {
+                            save_task_record(
+                                &task_id_for_spawn,
+                                &requirement_for_spawn,
+                                "running",
+                                None,
+                                None,
+                                None,
+                                &created_at_for_spawn,
+                            )
+                            .await;
+                            let _ = tx.send(proto::ServerMessage {
+                                payload: Some(proto::server_message::Payload::TaskStatus(
+                                    proto::TaskStatusEvent {
+                                        task_id: task_id_for_spawn.clone(),
+                                        status: "running".to_string(),
+                                    },
+                                )),
+                            });
+
                             match runner.run(ctx).await {
                                 Ok(_) => {
+                                    let result = format!(
+                                        "Workflow {} finished successfully",
+                                        workflow_id_for_spawn
+                                    );
+                                    save_task_record(
+                                        &task_id_for_spawn,
+                                        &requirement_for_spawn,
+                                        "completed",
+                                        Some(result.clone()),
+                                        None,
+                                        None,
+                                        &created_at_for_spawn,
+                                    )
+                                    .await;
                                     let _ = tx.send(proto::ServerMessage {
                                         payload: Some(
                                             proto::server_message::Payload::TaskCompleted(
                                                 proto::TaskCompletedEvent {
                                                     task_id: task_id_for_spawn.clone(),
-                                                    result: "Workflow finished successfully"
-                                                        .to_string(),
+                                                    result,
                                                     at: chrono::Utc::now().to_rfc3339(),
                                                 },
                                             ),
@@ -1538,11 +1586,22 @@ async fn run_workflow(req: &mut Request, res: &mut Response) {
                                     });
                                 }
                                 Err(e) => {
+                                    let error = format!("Workflow failed: {}", e);
+                                    save_task_record(
+                                        &task_id_for_spawn,
+                                        &requirement_for_spawn,
+                                        "failed",
+                                        None,
+                                        Some(error.clone()),
+                                        None,
+                                        &created_at_for_spawn,
+                                    )
+                                    .await;
                                     let _ = tx.send(proto::ServerMessage {
                                         payload: Some(proto::server_message::Payload::TaskFailed(
                                             proto::TaskFailedEvent {
                                                 task_id: task_id_for_spawn.clone(),
-                                                error: format!("Workflow failed: {}", e),
+                                                error,
                                                 at: chrono::Utc::now().to_rfc3339(),
                                             },
                                         )),

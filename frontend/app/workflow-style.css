@@ -70,6 +70,38 @@
   background-color: var(--c-bg, #f8fafc);
 }
 
+.workflow-editor-container .react-flow__handle {
+  width: 18px;
+  height: 18px;
+  border: 3px solid #ffffff;
+  background: var(--c-primary, #2563eb);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.24), 0 2px 8px rgba(15, 23, 42, 0.18);
+  transition: box-shadow 0.12s ease, background-color 0.12s ease;
+}
+
+.workflow-editor-container .react-flow__handle:hover,
+.workflow-editor-container .react-flow__handle.connectingfrom,
+.workflow-editor-container .react-flow__handle.connectingto {
+  background: #0f766e;
+  box-shadow: 0 0 0 5px rgba(15, 118, 110, 0.18), 0 3px 10px rgba(15, 23, 42, 0.22);
+}
+
+.workflow-editor-container .react-flow__handle-top {
+  top: -9px;
+}
+
+.workflow-editor-container .react-flow__handle-right {
+  right: -9px;
+}
+
+.workflow-editor-container .react-flow__handle-bottom {
+  bottom: -9px;
+}
+
+.workflow-editor-container .react-flow__handle-left {
+  left: -9px;
+}
+
 /* ── Custom Node ────────────────────────────────────────────────────────── */
 .custom-node {
   background-color: var(--c-surface, #ffffff);

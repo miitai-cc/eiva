@@ -127,13 +127,15 @@ function loadHistory() {
     const parsed = JSON.parse(localStorage.getItem('Eiva-history') || '[]');
     if (!Array.isArray(parsed)) return [];
 
-    return parsed.map((item) => {
-      const { status: _status, ...rest } = item;
-      return {
-        ...rest,
-        processLogs: (item.processLogs || item.logs || []).filter((log) => !isHiddenLogMessage(log.message))
-      };
-    });
+    return parsed
+      .map((item) => {
+        const { status: _status, ...rest } = item;
+        return {
+          ...rest,
+          processLogs: (item.processLogs || item.logs || []).filter((log) => !isHiddenLogMessage(log.message))
+        };
+      })
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   } catch {
     return [];
   }
@@ -308,6 +310,10 @@ function taskToHistoryItem(task) {
     createdAt: task.createdAt,
     completedAt: task.completedAt || ''
   };
+}
+
+function isWorkflowTask(task) {
+  return task?.requirement?.startsWith('執行工作流程：');
 }
 
 function mergeHistoryItems(localHistory, apiTasks) {
@@ -505,6 +511,7 @@ function App() {
     setHistory((current) => {
       const next = mergeHistoryItems(current, payload.tasks);
       saveHistory(next);
+      setSelectedHistoryId(next[0]?.id || '');
       return next;
     });
   }
@@ -537,8 +544,14 @@ function App() {
     window.location.hash = view;
     if (view === 'history') {
       refreshHistoryFromApi().catch(() => { });
+      setSelectedHistoryId((current) => history[0]?.id || current);
     }
   };
+
+  useEffect(() => {
+    if (activeView !== 'history') return;
+    setSelectedHistoryId(history[0]?.id || '');
+  }, [activeView]);
 
   function updateSystemSetting(key, value) {
     setSystemSettings((current) => {
@@ -923,6 +936,7 @@ function App() {
         if (!task?.requirement) return;
 
         const isScheduledTask = Boolean(task.sourceScheduleId);
+        const isWorkflowRun = isWorkflowTask(task);
         if (isScheduledTask) {
           scheduledTaskIdsRef.current.add(nextTaskId);
         }
@@ -934,7 +948,7 @@ function App() {
           return next;
         });
 
-        if (isScheduledTask) return;
+        if (isScheduledTask || isWorkflowRun) return;
 
         setSubmittedRequirement(task.requirement);
         setActiveView('current');
@@ -1168,13 +1182,13 @@ function App() {
         statusLogRef.current.scrollTop = statusLogRef.current.scrollHeight;
       }
 
-      if (logRef.current) {
+      if (activeView === 'current' && logRef.current) {
         logRef.current.scrollTop = logRef.current.scrollHeight;
       }
     });
 
     return () => cancelAnimationFrame(frameId);
-  }, [logs]);
+  }, [logs, activeView]);
 
   useEffect(() => {
     if (!composerRef.current) return;

@@ -16,6 +16,8 @@ import '@xyflow/react/dist/style.css';
 import './workflow-style.css';
 import { useI18n } from './i18n/index.jsx';
 
+const API_BASE = `${window.location.protocol}//${window.location.hostname}:39999/eiva/backend/api/ver-0.95`;
+
 const initialEdges = [];
 
 // --- Custom Nodes ---
@@ -285,7 +287,7 @@ export default function WorkflowEditor() {
   const editorContainerRef = useRef(null);
 
   const fetchWorkflowList = useCallback(() => {
-    fetch('http://localhost:39999/eiva/backend/api/ver-0.95/workflows')
+    fetch(`${API_BASE}/workflows`)
       .then(res => res.json())
       .then(data => {
         if (data.workflows) {
@@ -317,7 +319,7 @@ export default function WorkflowEditor() {
   }, [setNodes]);
 
   const loadWorkflowData = useCallback(() => {
-    fetch(`http://localhost:39999/eiva/backend/api/ver-0.95/workflow/${workflowId}`)
+    fetch(`${API_BASE}/workflow/${workflowId}`)
       .then(res => res.json())
       .then(saved => {
         if (saved && saved.nodes && saved.edges) {
@@ -369,7 +371,7 @@ export default function WorkflowEditor() {
 
     const workflowData = { nodes: nodesToSave, edges };
 
-    fetch(`http://localhost:39999/eiva/backend/api/ver-0.95/workflow/${workflowId}`, {
+    fetch(`${API_BASE}/workflow/${workflowId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -392,7 +394,7 @@ export default function WorkflowEditor() {
   };
 
   const handleRun = () => {
-    fetch(`http://localhost:39999/eiva/backend/api/ver-0.95/workflow/${workflowId}/run`)
+    fetch(`${API_BASE}/workflow/${workflowId}/run`)
       .then(res => res.json())
       .then(data => {
         if (data.ok) {
@@ -435,7 +437,7 @@ export default function WorkflowEditor() {
       return;
     }
     if (confirm(t('workflow.confirmDeleteWorkflow', { name: workflowId }))) {
-      fetch(`http://localhost:39999/eiva/backend/api/ver-0.95/workflow/${workflowId}`, {
+      fetch(`${API_BASE}/workflow/${workflowId}`, {
         method: 'DELETE'
       })
         .then(res => res.json())
@@ -910,19 +912,19 @@ export default function WorkflowEditor() {
         <div className="wf-header-row">
           <div className="wf-header-left">
             <div>
-              <div className="wf-api-info">
-                API: GET http://localhost:39999/eiva/backend/api/ver-0.95/workflow/&#123;workflow-name&#125;/run
-              </div>
+	              <div className="wf-api-info">
+	                API: GET {API_BASE}/workflow/&#123;workflow-name&#125;/run
+	              </div>
               <div className="wf-api-link">
                 <span>👉 實際: GET</span>
                 <a
-                  href={`http://localhost:39999/eiva/backend/api/ver-0.95/workflow/${workflowId}/run`}
+                  href={`${API_BASE}/workflow/${workflowId}/run`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  title={t('workflow.clickToRun')}
-                >
-                  http://localhost:39999/eiva/backend/api/ver-0.95/workflow/{workflowId}/run
-                </a>
+	                  title={t('workflow.clickToRun')}
+	                >
+	                  {API_BASE}/workflow/{workflowId}/run
+	                </a>
               </div>
             </div>
             <div className="wf-header-right">
