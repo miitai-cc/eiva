@@ -11,3 +11,4 @@ backend/.env
 # Local model weights (large binaries, must not be committed)
 .eiva/models/**
 *.gguf
+.DS_Store

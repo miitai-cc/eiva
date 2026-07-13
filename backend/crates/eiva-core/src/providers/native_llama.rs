@@ -67,6 +67,8 @@ pub async fn call_native_llama_with_tools(
         .await
         .context("Failed to parse native llama API response as JSON")?;
 
+    tracing::debug!("Native llama response: {:?}", res_json);
+
     // Surface HTTP errors with the upstream body for easier debugging.
     if !status.is_success() {
         let detail = res_json

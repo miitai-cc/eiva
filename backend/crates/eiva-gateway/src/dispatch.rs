@@ -770,7 +770,7 @@ pub(crate) async fn dispatch_text_message(
         );
         if !model_resp.text.is_empty()
             && resolved.provider != "anthropic"
-            && resolved.provider == "google"
+            && (resolved.provider == "google" || resolved.provider == "native_llama")
         {
             trace!(chars = model_resp.text.len(), "Sending chunk to TUI");
             providers::send_chunk(writer, &model_resp.text).await?;

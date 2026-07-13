@@ -57,7 +57,7 @@
       "program": "/opt/homebrew/bin/llama-server",
       "args": [
         "--model",
-        "${workspaceFolder}/.eiva/models/NuExtract-tiny-Q3_K_M.gguf",
+        "${workspaceFolder}/.eiva/models/MiniCPM5-1B-Claude-Opus-Fable5-Thinking-F16.gguf",
         "--port",
         "18080",
         "--host",

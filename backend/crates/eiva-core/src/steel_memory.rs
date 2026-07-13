@@ -282,15 +282,15 @@ impl SteelMemory {
     }
 
     async fn embed(&self, text: &str) -> Result<Vec<f32>, SteelMemoryError> {
-        info!("Embedding text: {}", text);
+        info!("Embedding text(prefix Step 1/3): {}", text);
         self.ensure_embedding().await?;
         info!("Embedding model loaded");
 
         let embedding = self.embedding.clone();
         let text_owned = text.to_string();
-        info!("Embedding text: {}", text);
+        info!("Embedding text(prefix Step 2/3): {}", text);
         let result = run_blocking(move || do_embed(embedding, text_owned)).await;
-        info!("Embedding result: {:#?}", result);
+        info!("Embedding result(prefix Step 3/3): {:#?}", result);
         result
     }
 

@@ -1,0 +1,1 @@
+NuExtract-tiny-Q3_K_M.gguf。 NuExtract 是一個專門用來「從文本中提取結構化資料 (JSON)」的特殊用途模型

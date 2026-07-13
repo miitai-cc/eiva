@@ -469,6 +469,18 @@ export default function WorkflowEditor() {
     event.stopPropagation();
     setMenu({
       id: node.id,
+      type: 'node',
+      clientX: event.clientX,
+      clientY: event.clientY,
+    });
+  }, [setMenu]);
+
+  const onEdgeContextMenu = useCallback((event, edge) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setMenu({
+      id: edge.id,
+      type: 'edge',
       clientX: event.clientX,
       clientY: event.clientY,
     });
@@ -495,10 +507,14 @@ export default function WorkflowEditor() {
 
   const contextMenuDelete = useCallback(() => {
     if (!menu) return;
-    setNodes((nds) => nds.filter((n) => n.id !== menu.id));
-    setEdges((eds) => eds.filter((e) => e.source !== menu.id && e.target !== menu.id));
-    if (propertyModalNodeId && propertyModalNodeId === menu.id) {
-      setPropertyModalNodeId(null);
+    if (!menu.type || menu.type === 'node') {
+      setNodes((nds) => nds.filter((n) => n.id !== menu.id));
+      setEdges((eds) => eds.filter((e) => e.source !== menu.id && e.target !== menu.id));
+      if (propertyModalNodeId && propertyModalNodeId === menu.id) {
+        setPropertyModalNodeId(null);
+      }
+    } else if (menu.type === 'edge') {
+      setEdges((eds) => eds.filter((e) => e.id !== menu.id));
     }
     setMenu(null);
   }, [menu, propertyModalNodeId, setNodes, setEdges]);
@@ -972,6 +988,7 @@ export default function WorkflowEditor() {
             onConnect={onConnect}
             onNodeClick={onNodeClick}
             onNodeContextMenu={onNodeContextMenu}
+            onEdgeContextMenu={onEdgeContextMenu}
             onPaneClick={onPaneClick}
             onPaneContextMenu={onPaneContextMenu}
             onInit={setReactFlowInstance}
@@ -1002,11 +1019,15 @@ export default function WorkflowEditor() {
 
           {menu && createPortal(
             <div className="workflow-context-menu" style={{ position: 'fixed', top: menu.clientY, left: menu.clientX, zIndex: 9999 }}>
-              <div className="menu-item" onClick={() => changeNodeZIndex('up')}>{t('workflow.contextMenu.moveUp')}</div>
-              <div className="menu-item" onClick={() => changeNodeZIndex('down')}>{t('workflow.contextMenu.moveDown')}</div>
-              <div className="menu-item" onClick={() => changeNodeZIndex('front')}>{t('workflow.contextMenu.moveFront')}</div>
-              <div className="menu-item" onClick={() => changeNodeZIndex('back')}>{t('workflow.contextMenu.moveBack')}</div>
-              <div className="workflow-context-menu-separator"></div>
+              {(!menu.type || menu.type === 'node') && (
+                <>
+                  <div className="menu-item" onClick={() => changeNodeZIndex('up')}>{t('workflow.contextMenu.moveUp')}</div>
+                  <div className="menu-item" onClick={() => changeNodeZIndex('down')}>{t('workflow.contextMenu.moveDown')}</div>
+                  <div className="menu-item" onClick={() => changeNodeZIndex('front')}>{t('workflow.contextMenu.moveFront')}</div>
+                  <div className="menu-item" onClick={() => changeNodeZIndex('back')}>{t('workflow.contextMenu.moveBack')}</div>
+                  <div className="workflow-context-menu-separator"></div>
+                </>
+              )}
               <div className="menu-item delete" onClick={contextMenuDelete}>{t('workflow.contextMenu.delete')}</div>
             </div>,
             document.body
