@@ -69,6 +69,7 @@ pub mod types;
 pub mod ui;
 pub mod user_prompt_types;
 pub mod workspace_context;
+pub mod workflow;
 
 // Re-export messenger types at crate root for convenience
 pub use messengers::{

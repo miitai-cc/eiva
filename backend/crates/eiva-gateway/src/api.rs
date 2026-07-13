@@ -479,11 +479,63 @@ async fn run_workflow(req: &mut Request, res: &mut Response) {
     
     if let Some(db) = WORKFLOW_DB.get() {
         match db.get_workflow(id.clone()).await {
-            Ok(Some(_data)) => {
-                res.render(Json(serde_json::json!({
-                    "ok": true,
-                    "message": format!("Workflow {} is now running.", id)
-                })));
+            Ok(Some(data)) => {
+                let parsed_data: Result<eiva_core::workflow::models::WorkflowData, _> = serde_json::from_str(&data);
+                match parsed_data {
+                    Ok(workflow_data) => {
+                        let runner = eiva_core::workflow::runner::WorkflowRunner::new(workflow_data);
+                        let ctx = eiva_core::workflow::context::WorkflowContext::new();
+                        let task_id = uuid::Uuid::new_v4().to_string();
+                        
+                        // Broadcast TaskCreated
+                        let tx = get_broadcaster();
+                        let _ = tx.send(proto::ServerMessage {
+                            payload: Some(proto::server_message::Payload::TaskCreated(
+                                proto::TaskCreatedEvent {
+                                    task_id: task_id.clone(),
+                                    status: "queued".to_string(),
+                                }
+                            ))
+                        });
+
+                        tokio::spawn(async move {
+                            match runner.run(ctx).await {
+                                Ok(_) => {
+                                    let _ = tx.send(proto::ServerMessage {
+                                        payload: Some(proto::server_message::Payload::TaskCompleted(
+                                            proto::TaskCompletedEvent {
+                                                task_id: task_id.clone(),
+                                                result: "Workflow finished successfully".to_string(),
+                                                at: chrono::Utc::now().to_rfc3339(),
+                                            }
+                                        ))
+                                    });
+                                }
+                                Err(e) => {
+                                    let _ = tx.send(proto::ServerMessage {
+                                        payload: Some(proto::server_message::Payload::TaskFailed(
+                                            proto::TaskFailedEvent {
+                                                task_id: task_id.clone(),
+                                                error: format!("Workflow failed: {}", e),
+                                                at: chrono::Utc::now().to_rfc3339(),
+                                            }
+                                        ))
+                                    });
+                                }
+                            }
+                        });
+
+                        res.render(Json(serde_json::json!({
+                            "ok": true,
+                            "taskId": task_id,
+                            "message": format!("Workflow {} is now running in background.", id)
+                        })));
+                    }
+                    Err(e) => {
+                        res.status_code(StatusCode::BAD_REQUEST);
+                        res.render(Json(serde_json::json!({"error": format!("Invalid workflow data: {}", e)})));
+                    }
+                }
             }
             Ok(None) => {
                 res.status_code(StatusCode::NOT_FOUND);

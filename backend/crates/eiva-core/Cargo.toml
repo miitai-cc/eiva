@@ -121,6 +121,8 @@ genai = "0.6.5"
 # AST-grep — structural code search and rewrite via tree-sitter
 ast-grep-core = "0.42.3"
 ast-grep-language = "0.42.3"
+minijinja = "2.21.0"
+evalexpr = "13.1.0"
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
