@@ -83,6 +83,7 @@ const validIntervalUnitValues = ['minutes', 'hours'];
 const validFixedFrequencyValues = ['daily', 'weekly', 'monthly'];
 const localScheduleIdPrefix = 'local-schedule-';
 const scheduleRefreshIntervalMs = 10000;
+const API_BASE = `${window.location.protocol}//${window.location.hostname}:39999/eiva/backend/api/ver-0.95`;
 
 function RobotIcon() {
   return (
@@ -148,6 +149,7 @@ function saveHistory(history) {
 
 function loadSchedulePrompts() {
   try {
+    const deletedIds = loadDeletedScheduleIds();
     const parsed = JSON.parse(localStorage.getItem('Eiva-schedule-prompts') || '[]');
     if (!Array.isArray(parsed)) return [];
 
@@ -155,6 +157,7 @@ function loadSchedulePrompts() {
       .filter((item) => (
         item
         && typeof item.id === 'string'
+        && !deletedIds.has(item.id)
         && typeof item.requirement === 'string'
         && item.requirement.trim()
       ))
@@ -261,11 +264,14 @@ function isFutureScheduleTime(sendAt) {
 
 function mergeSchedulePrompts(localPrompts, apiPrompts) {
   const merged = new Map();
+  const deletedIds = loadDeletedScheduleIds();
 
   apiPrompts.forEach((item) => {
+    if (deletedIds.has(item.id)) return;
     merged.set(item.id, item);
   });
   localPrompts.forEach((item) => {
+    if (deletedIds.has(item.id)) return;
     const existing = merged.get(item.id);
     if (!existing && !isLocalSchedulePromptId(item.id)) return;
     if (!existing || shouldUseLocalSchedulePrompt(item, existing)) {
@@ -335,10 +341,52 @@ function normalizeIntegerText(value, fallback, min, max) {
 
 function saveSchedulePrompts(prompts) {
   try {
-    localStorage.setItem('Eiva-schedule-prompts', JSON.stringify(prompts.slice(0, 30)));
+    const deletedIds = loadDeletedScheduleIds();
+    const visiblePrompts = prompts.filter((item) => !deletedIds.has(item.id));
+    localStorage.setItem('Eiva-schedule-prompts', JSON.stringify(visiblePrompts.slice(0, 30)));
   } catch {
     // Schedule prompts are local convenience data; the rest of the app should keep working.
   }
+}
+
+function loadDeletedScheduleIds() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem('Eiva-deleted-schedule-ids') || '[]');
+    return new Set(Array.isArray(parsed) ? parsed.filter((id) => typeof id === 'string') : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveDeletedScheduleIds(ids) {
+  try {
+    localStorage.setItem('Eiva-deleted-schedule-ids', JSON.stringify(Array.from(ids).slice(-100)));
+  } catch {
+    // Deletion tombstones are best-effort UI state.
+  }
+}
+
+async function readApiError(response, fallbackMessage) {
+  const contentType = response.headers.get('content-type') || '';
+  let detail = '';
+
+  if (contentType.includes('application/json')) {
+    const payload = await response.json().catch(() => ({}));
+    detail = payload.error || payload.message || '';
+  } else {
+    detail = await response.text().catch(() => '');
+  }
+
+  const statusText = response.statusText ? ` ${response.statusText}` : '';
+  const suffix = detail ? `\n${detail}` : '';
+  return `${fallbackMessage}\nHTTP ${response.status}${statusText}${suffix}`;
+}
+
+function readNetworkError(error, fallbackMessage) {
+  const detail = error instanceof Error && error.message
+    ? error.message
+    : '無法連線到後端 API';
+  return `${fallbackMessage}\n${detail}\nAPI：${API_BASE}`;
 }
 
 const systemSettingKeys = ['prefixPrompt', 'suffixPrompt', 'roleDefinition', 'shortDescription', 'usageTiming'];
@@ -403,9 +451,6 @@ function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const navigateTo = (view) => {
-    window.location.hash = view;
-  };
   const [status, setStatus] = useState('idle');
   const [history, setHistory] = useState(() => loadHistory());
   const [selectedHistoryId, setSelectedHistoryId] = useState('');
@@ -416,6 +461,7 @@ function App() {
   const [logs, setLogs] = useState([]);
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
+  const [copyableError, setCopyableError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
   const [systemSidebarOpen, setSystemSidebarOpen] = useState(true);
@@ -426,11 +472,74 @@ function App() {
   const statusLogRef = useRef(null);
   const composerRef = useRef(null);
   const isTaskRunning = status === 'queued' || status === 'running';
+  const taskIdRef = useRef('');
+  const scheduledTaskIdsRef = useRef(new Set());
   const canStopTask = isTaskRunning && Boolean(taskId);
   const canUseComposer = activeView === 'current';
   const shouldShowComposer = canUseComposer;
   const shouldShowComposerStatus = status !== 'idle';
   const shortcutLabel = 'Enter';
+
+  useEffect(() => {
+    taskIdRef.current = taskId;
+  }, [taskId]);
+
+  function showCopyableError(message) {
+    setCopyableError(message);
+  }
+
+  async function copyErrorMessage() {
+    if (!copyableError) return;
+    try {
+      await navigator.clipboard.writeText(copyableError);
+    } catch {
+      // The text remains selectable in the dialog when clipboard permission is unavailable.
+    }
+  }
+
+  async function refreshHistoryFromApi() {
+    const response = await fetch(`${API_BASE}/tasks?limit=30`);
+    if (!response.ok) return;
+    const payload = await response.json();
+    if (!Array.isArray(payload.tasks)) return;
+    setHistory((current) => {
+      const next = mergeHistoryItems(current, payload.tasks);
+      saveHistory(next);
+      return next;
+    });
+  }
+
+  async function loadSchedulesFromApiOnce() {
+    const response = await fetch(`${API_BASE}/schedules`);
+    if (!response.ok) return;
+    const payload = await response.json();
+    if (!Array.isArray(payload.schedules)) return;
+    const apiPrompts = payload.schedules.map(normalizeSchedulePrompt);
+    const localNewerPrompts = [];
+    setSchedulePrompts((current) => {
+      const apiById = new Map(apiPrompts.map((item) => [item.id, item]));
+      current.forEach((item) => {
+        const apiItem = apiById.get(item.id);
+        if (shouldPersistLocalSchedulePrompt(item, apiItem)) {
+          localNewerPrompts.push(item);
+        }
+      });
+      const next = mergeSchedulePrompts(current, apiPrompts);
+      saveSchedulePrompts(next);
+      return next;
+    });
+    queueMicrotask(() => {
+      localNewerPrompts.forEach((item) => persistAndReconcileSchedulePrompt(item));
+    });
+  }
+
+  const navigateTo = (view) => {
+    window.location.hash = view;
+    if (view === 'history') {
+      refreshHistoryFromApi().catch(() => { });
+    }
+  };
+
   function updateSystemSetting(key, value) {
     setSystemSettings((current) => {
       const next = { ...current, [key]: value };
@@ -529,7 +638,7 @@ function App() {
   async function addSchedulePrompt(promptItem) {
     let nextItem = promptItem;
     try {
-      const response = await fetch('/eiva/backend/api/ver-0.95/schedules', {
+      const response = await fetch(`${API_BASE}/schedules`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(schedulePromptToPayload(promptItem))
@@ -542,6 +651,9 @@ function App() {
     }
 
     setSchedulePrompts((current) => {
+      const deletedIds = loadDeletedScheduleIds();
+      deletedIds.delete(nextItem.id);
+      saveDeletedScheduleIds(deletedIds);
       const next = [nextItem, ...current];
       saveSchedulePrompts(next);
       return next;
@@ -596,6 +708,9 @@ function App() {
 
     const persistedItem = await persistSchedulePrompt(updatedItem, { showError: true });
     if (persistedItem) {
+      const deletedIds = loadDeletedScheduleIds();
+      deletedIds.delete(persistedItem.id);
+      saveDeletedScheduleIds(deletedIds);
       setSchedulePrompts((current) => {
         const next = current.map((item) => (
           item.id === updatedItem.id ? persistedItem : item
@@ -604,7 +719,8 @@ function App() {
         return next;
       });
     }
-    cancelEditingSchedulePrompt();
+    setEditingSchedulePromptId('');
+    setEditingSchedulePromptValue('');
   }
 
   function updateEditingSchedulePromptDraft(value) {
@@ -614,10 +730,17 @@ function App() {
   async function updateSchedulePromptTiming(id, patch) {
     const currentItem = schedulePrompts.find((item) => item.id === id);
     if (!currentItem) return;
+    const editingDraft = editingSchedulePromptId === id
+      ? editingSchedulePromptValue.trim()
+      : '';
 
     const nextCandidate = normalizeSchedulePrompt({
       ...currentItem,
       ...patch,
+      ...(editingDraft ? {
+        requirement: editingDraft,
+        name: editingDraft.slice(0, 40)
+      } : {}),
       updatedAt: new Date().toISOString()
     });
 
@@ -633,9 +756,33 @@ function App() {
     }
 
     if (patch.enabled === true) {
+      setSchedulePrompts((current) => {
+        const next = current.map((item) => (
+          item.id === id ? nextCandidate : item
+        ));
+        saveSchedulePrompts(next);
+        return next;
+      });
       setSavingScheduleIds((current) => new Set(current).add(id));
       try {
-        await persistAndReconcileSchedulePrompt(nextCandidate, { showError: true });
+        const persistedItem = await persistAndReconcileSchedulePrompt(nextCandidate, { showError: true });
+        if (!persistedItem) {
+          setSchedulePrompts((current) => {
+            const next = current.map((item) => (
+              item.id === id ? currentItem : item
+            ));
+            saveSchedulePrompts(next);
+            return next;
+          });
+          return;
+        }
+        if (persistedItem && editingSchedulePromptId === id) {
+          const deletedIds = loadDeletedScheduleIds();
+          deletedIds.delete(persistedItem.id);
+          saveDeletedScheduleIds(deletedIds);
+          setEditingSchedulePromptId('');
+          setEditingSchedulePromptValue('');
+        }
       } finally {
         setSavingScheduleIds((current) => {
           const next = new Set(current);
@@ -662,7 +809,11 @@ function App() {
     }
   }
 
-  function deleteSchedulePrompt(id) {
+  async function deleteSchedulePrompt(id) {
+    const deletedIds = loadDeletedScheduleIds();
+    deletedIds.add(id);
+    saveDeletedScheduleIds(deletedIds);
+
     setSchedulePrompts((current) => {
       const next = current.filter((item) => item.id !== id);
       saveSchedulePrompts(next);
@@ -673,7 +824,21 @@ function App() {
       cancelEditingSchedulePrompt();
     }
 
-    fetch(`/eiva/backend/api/ver-0.95/schedules/${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => { });
+    try {
+      const response = await fetch(`${API_BASE}/schedules/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (!response.ok && response.status !== 404) {
+        const message = await readApiError(response, t('chat.deleteError'));
+        deletedIds.delete(id);
+        saveDeletedScheduleIds(deletedIds);
+        showCopyableError(message);
+        loadSchedulesFromApiOnce().catch(() => { });
+      }
+    } catch (error) {
+      deletedIds.delete(id);
+      saveDeletedScheduleIds(deletedIds);
+      showCopyableError(readNetworkError(error, t('chat.deleteError')));
+      loadSchedulesFromApiOnce().catch(() => { });
+    }
   }
 
   async function persistSchedulePrompt(item, { showError = false } = {}) {
@@ -681,8 +846,8 @@ function App() {
 
     const isLocalSchedule = isLocalSchedulePromptId(item.id);
     const endpoint = isLocalSchedule
-      ? '/eiva/backend/api/ver-0.95/schedules'
-      : `/eiva/backend/api/ver-0.95/schedules/${encodeURIComponent(item.id)}`;
+      ? `${API_BASE}/schedules`
+      : `${API_BASE}/schedules/${encodeURIComponent(item.id)}`;
     const method = isLocalSchedule ? 'POST' : 'PATCH';
 
     try {
@@ -692,13 +857,17 @@ function App() {
         body: JSON.stringify(schedulePromptToPayload(item))
       });
       if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        if (showError && payload.error) window.alert(payload.error);
+        if (showError) {
+          showCopyableError(await readApiError(response, t('chat.saveScheduleError')));
+        }
         return null;
       }
       return normalizeSchedulePrompt(await response.json());
-    } catch {
+    } catch (error) {
       // Local changes remain available; they can be retried on the next edit.
+      if (showError) {
+        showCopyableError(readNetworkError(error, t('chat.saveScheduleError')));
+      }
       return null;
     }
   }
@@ -742,6 +911,51 @@ function App() {
       }
     };
 
+    const shouldUpdateCurrentTaskView = (nextTaskId) => (
+      taskIdRef.current === nextTaskId && !scheduledTaskIdsRef.current.has(nextTaskId)
+    );
+
+    const hydrateTaskFromApi = async (nextTaskId) => {
+      try {
+        const response = await fetch(`${API_BASE}/tasks/${encodeURIComponent(nextTaskId)}`);
+        if (!response.ok) return;
+        const task = await response.json();
+        if (!task?.requirement) return;
+
+        const isScheduledTask = Boolean(task.sourceScheduleId);
+        if (isScheduledTask) {
+          scheduledTaskIdsRef.current.add(nextTaskId);
+        }
+
+        const historyItem = taskToHistoryItem(task);
+        setHistory((current) => {
+          const next = mergeHistoryItems(current, [task]);
+          saveHistory(next);
+          return next;
+        });
+
+        if (isScheduledTask) return;
+
+        setSubmittedRequirement(task.requirement);
+        setActiveView('current');
+        taskIdRef.current = nextTaskId;
+        if (task.status === 'completed') {
+          setTaskId(nextTaskId);
+          setStatus('completed');
+          setResult(task.result || '');
+        } else if (task.status === 'failed') {
+          setTaskId(nextTaskId);
+          setStatus('failed');
+          setError(task.error || t('chat.taskFailed'));
+        } else if (historyItem.taskId === nextTaskId) {
+          setTaskId(nextTaskId);
+          setStatus('running');
+        }
+      } catch {
+        // The task may not be persisted yet; websocket events still update state.
+      }
+    };
+
     const connectWs = () => {
       if (!isMounted) return;
 
@@ -776,14 +990,11 @@ function App() {
 
           if (payloadType === 'taskCreated') {
             const ev = serverMsg.taskCreated;
-            setTaskId(ev.taskId);
-            updateLatestHistory({ taskId: ev.taskId });
-            setRequirement('');
-            setLogs([{ at: new Date().toISOString(), message: t('chat.taskCreated') }]);
-            setStatus('queued');
             setIsSubmitting(false);
+            hydrateTaskFromApi(ev.taskId);
           } else if (payloadType === 'taskStatus') {
             const ev = serverMsg.taskStatus;
+            if (!shouldUpdateCurrentTaskView(ev.taskId)) return;
             if (ev.status === 'stopping') setIsStopping(true);
             else if (ev.status === 'running') {
               setIsStopping(false);
@@ -792,10 +1003,16 @@ function App() {
             }
           } else if (payloadType === 'taskLog') {
             const ev = serverMsg.taskLog;
+            if (!shouldUpdateCurrentTaskView(ev.taskId)) return;
             const shouldRecordLog = !ev.message?.startsWith('已訂閱任務 ');
             appendLog({ taskId: ev.taskId, message: ev.message, at: ev.at }, { addToHistory: shouldRecordLog });
           } else if (payloadType === 'taskCompleted') {
             const ev = serverMsg.taskCompleted;
+            if (!shouldUpdateCurrentTaskView(ev.taskId)) {
+              updateHistoryByTaskId(ev.taskId, { result: ev.result, completedAt: ev.at });
+              hydrateTaskFromApi(ev.taskId);
+              return;
+            }
             setIsStopping(false);
             setStatus('completed');
             setResult(ev.result);
@@ -803,6 +1020,11 @@ function App() {
             appendLog({ taskId: ev.taskId, message: t('chat.taskCompleted'), at: ev.at }, { addToHistory: true });
           } else if (payloadType === 'taskFailed') {
             const ev = serverMsg.taskFailed;
+            if (!shouldUpdateCurrentTaskView(ev.taskId)) {
+              updateHistoryByTaskId(ev.taskId, { error: ev.error || t('chat.taskFailed'), completedAt: ev.at });
+              hydrateTaskFromApi(ev.taskId);
+              return;
+            }
             setIsStopping(false);
             setStatus('failed');
             setError(ev.error || t('chat.taskFailed'));
@@ -810,6 +1032,11 @@ function App() {
             appendLog({ taskId: ev.taskId, message: ev.error || t('chat.taskFailed'), at: ev.at }, { addToHistory: true });
           } else if (payloadType === 'taskInterrupted') {
             const ev = serverMsg.taskInterrupted;
+            if (!shouldUpdateCurrentTaskView(ev.taskId)) {
+              updateHistoryByTaskId(ev.taskId, { error: ev.error || t('chat.taskStopped'), completedAt: ev.at });
+              hydrateTaskFromApi(ev.taskId);
+              return;
+            }
             setIsStopping(false);
             setStatus('interrupted');
             setError(ev.error || t('chat.taskStopped'));
@@ -842,27 +1069,8 @@ function App() {
 
     async function loadSchedulesFromApi() {
       try {
-        const response = await fetch('/eiva/backend/api/ver-0.95/schedules');
-        if (!response.ok) return;
-        const payload = await response.json();
-        if (!isMounted || !Array.isArray(payload.schedules)) return;
-        const apiPrompts = payload.schedules.map(normalizeSchedulePrompt);
-        const localNewerPrompts = [];
-        setSchedulePrompts((current) => {
-          const apiById = new Map(apiPrompts.map((item) => [item.id, item]));
-          current.forEach((item) => {
-            const apiItem = apiById.get(item.id);
-            if (shouldPersistLocalSchedulePrompt(item, apiItem)) {
-              localNewerPrompts.push(item);
-            }
-          });
-          const next = mergeSchedulePrompts(current, apiPrompts);
-          saveSchedulePrompts(next);
-          return next;
-        });
-        queueMicrotask(() => {
-          localNewerPrompts.forEach((item) => persistAndReconcileSchedulePrompt(item));
-        });
+        if (!isMounted) return;
+        await loadSchedulesFromApiOnce();
       } catch {
         // Keep localStorage cache if SQLite API is unavailable.
       }
@@ -882,15 +1090,8 @@ function App() {
 
     async function loadHistoryFromApi() {
       try {
-        const response = await fetch('/eiva/backend/api/ver-0.95/tasks?limit=30');
-        if (!response.ok) return;
-        const payload = await response.json();
-        if (!isMounted || !Array.isArray(payload.tasks)) return;
-        setHistory((current) => {
-          const next = mergeHistoryItems(current, payload.tasks);
-          saveHistory(next);
-          return next;
-        });
+        if (!isMounted) return;
+        await refreshHistoryFromApi();
       } catch {
         // Keep localStorage history if SQLite API is unavailable.
       }
@@ -914,7 +1115,7 @@ function App() {
     async function syncPendingHistory() {
       const updates = await Promise.all(pendingItems.map(async (item) => {
         try {
-          const response = await fetch(`/eiva/backend/api/ver-0.95/tasks/${encodeURIComponent(item.taskId)}`);
+          const response = await fetch(`${API_BASE}/tasks/${encodeURIComponent(item.taskId)}`);
           if (response.status === 404) {
             return {
               taskId: item.taskId,
@@ -1016,7 +1217,7 @@ function App() {
     setSelectedHistoryId('');
 
     try {
-      const apiUrl = `${window.location.protocol}//${window.location.hostname}:39999/eiva/backend/api/ver-0.95/tasks`;
+      const apiUrl = `${API_BASE}/tasks`;
       const payload = { requirement: trimmed, systemSettings, files: attachedFiles };
       console.log(`[API Call] POST ${apiUrl}`, payload);
       
@@ -1032,8 +1233,31 @@ function App() {
       if (!response.ok) {
         throw new Error(data.error || 'Failed to create task');
       }
+
+      if (data.taskId) {
+        const createdAt = new Date().toISOString();
+        taskIdRef.current = data.taskId;
+        setTaskId(data.taskId);
+        setRequirement('');
+        setStatus(data.status || 'queued');
+        setIsSubmitting(false);
+        setLogs([{ at: createdAt, message: t('chat.taskCreated') }]);
+        updateLatestHistory({
+          taskId: data.taskId,
+          processLogs: [{ at: createdAt, message: t('chat.taskCreated') }]
+        });
+      }
+
+      if (data.schedule) {
+        const savedSchedule = normalizeSchedulePrompt(data.schedule);
+        setSchedulePrompts((current) => {
+          const next = mergeSchedulePrompts(current, [savedSchedule]);
+          saveSchedulePrompts(next);
+          return next;
+        });
+      }
+
       setAttachedFiles([]);
-      // The socket will receive taskCreated and update state accordingly
     } catch (err) {
       setIsSubmitting(false);
       setStatus('failed');
@@ -1051,7 +1275,7 @@ function App() {
     appendProcessLogToHistory(taskId, entry);
 
     try {
-      const apiUrl = `${window.location.protocol}//${window.location.hostname}:39999/eiva/backend/api/ver-0.95/tasks/${encodeURIComponent(taskId)}/stop`;
+      const apiUrl = `${API_BASE}/tasks/${encodeURIComponent(taskId)}/stop`;
       console.log(`[API Call] POST ${apiUrl}`);
       
       const response = await fetch(apiUrl, { method: 'POST' });
@@ -1707,6 +1931,44 @@ function App() {
           </form>
         )}
       </section>
+
+      {copyableError && (
+        <div className="copyable-error-backdrop" role="presentation">
+          <section
+            className="copyable-error-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="copyable-error-title"
+          >
+            <div className="copyable-error-header">
+              <h2 id="copyable-error-title">錯誤訊息</h2>
+              <button
+                className="copyable-error-close"
+                type="button"
+                onClick={() => setCopyableError('')}
+                aria-label="關閉錯誤訊息"
+              >
+                ×
+              </button>
+            </div>
+            <textarea
+              className="copyable-error-text"
+              readOnly
+              value={copyableError}
+              onFocus={(event) => event.target.select()}
+              aria-label="可複製的錯誤訊息"
+            />
+            <div className="copyable-error-actions">
+              <button type="button" className="schedule-text-button" onClick={() => setCopyableError('')}>
+                關閉
+              </button>
+              <button type="button" className="schedule-text-button primary" onClick={copyErrorMessage}>
+                複製錯誤
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }

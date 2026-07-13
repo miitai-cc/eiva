@@ -611,6 +611,77 @@ textarea::placeholder { color: var(--c-text-faint); }
 .error-message .message-title { color: var(--c-danger); }
 .error-message .message-body p { color: var(--c-danger); }
 
+.copyable-error-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(17, 24, 39, 0.42);
+}
+
+.copyable-error-dialog {
+  width: min(680px, 100%);
+  padding: 20px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  background: var(--c-surface);
+  box-shadow: 0 24px 80px rgba(17, 24, 39, 0.24);
+}
+
+.copyable-error-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.copyable-error-header h2 {
+  margin: 0;
+  color: var(--c-text);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.copyable-error-close {
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--c-text-muted);
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.copyable-error-close:hover { background: var(--c-surface-alt); }
+
+.copyable-error-text {
+  width: 100%;
+  min-height: 140px;
+  padding: 12px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  background: var(--c-surface-alt);
+  color: var(--c-text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.copyable-error-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
 pre {
   margin: 0;
   overflow-wrap: anywhere;
@@ -661,15 +732,22 @@ pre {
   gap: 8px;
 }
 
-.schedule-group { display: grid; gap: 8px; }
+.schedule-group { display: grid; gap: 10px; }
 
 .schedule-group h2 {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
   margin: 0;
-  color: var(--c-text-muted);
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  padding: 8px 12px;
+  border: 1px solid var(--c-border);
+  border-left: 4px solid var(--c-primary);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--c-primary) 8%, var(--c-surface));
+  color: var(--c-text);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0;
 }
 
 .schedule-prompt-list { display: grid; gap: 10px; }

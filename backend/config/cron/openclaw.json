@@ -1,0 +1,10 @@
+{
+  "type": "Openclaw",
+  "description": "Delegate due schedules to an OpenClaw-compatible endpoint or outbox.",
+  "dispatch": {
+    "method": "outbox",
+    "webhookUrl": "",
+    "bearerTokenEnv": "OPENCLAW_WEB_CODEX_TOKEN",
+    "outboxPath": "data/cron-outbox/openclaw.jsonl"
+  }
+}

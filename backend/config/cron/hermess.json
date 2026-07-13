@@ -1,0 +1,10 @@
+{
+  "type": "hermess",
+  "description": "Delegate due schedules to a hermess-compatible endpoint or outbox.",
+  "dispatch": {
+    "method": "outbox",
+    "webhookUrl": "",
+    "bearerTokenEnv": "HERMESS_CRON_TOKEN",
+    "outboxPath": "data/cron-outbox/hermess.jsonl"
+  }
+}

@@ -83,10 +83,7 @@ fn generic_messenger_config(
                 name,
                 server: config.server.clone().context("IRC requires 'server'")?,
                 port: config.port.unwrap_or(6697),
-                nick: config
-                    .nick
-                    .clone()
-                    .unwrap_or_else(|| "Eiva".to_string()),
+                nick: config.nick.clone().unwrap_or_else(|| "Eiva".to_string()),
                 channels: config.irc_channels.clone(),
                 tls: config.use_tls.unwrap_or(false),
             },
@@ -164,10 +161,7 @@ fn build_irc_messenger(config: &MessengerConfig, name: String) -> Result<Box<dyn
         name,
         config.server.clone().context("IRC requires 'server'")?,
         config.port.unwrap_or(6697),
-        config
-            .nick
-            .clone()
-            .unwrap_or_else(|| "Eiva".to_string()),
+        config.nick.clone().unwrap_or_else(|| "Eiva".to_string()),
     );
     if !config.irc_channels.is_empty() {
         messenger = messenger.with_channels(config.irc_channels.clone());
@@ -232,11 +226,7 @@ fn build_teams_messenger(config: &MessengerConfig, name: String) -> Result<Box<d
     if let (Some(app_id), Some(app_password)) = (config.app_id.clone(), config.app_password.clone())
     {
         return Ok(Box::new(
-            eiva_core::messengers::TeamsMessenger::with_bot_framework(
-                name,
-                app_id,
-                app_password,
-            ),
+            eiva_core::messengers::TeamsMessenger::with_bot_framework(name, app_id, app_password),
         ));
     }
 

@@ -56,10 +56,7 @@ pub async fn exec_gw_skill_list(
         .filter(|s| match filter {
             "enabled" => s.enabled,
             "disabled" => !s.enabled,
-            "registry" => matches!(
-                s.source,
-                eiva_core::skills::SkillSource::Registry { .. }
-            ),
+            "registry" => matches!(s.source, eiva_core::skills::SkillSource::Registry { .. }),
             _ => true, // "all"
         })
         .collect();

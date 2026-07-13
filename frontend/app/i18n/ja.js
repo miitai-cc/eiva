@@ -123,6 +123,8 @@ export default {
     cancel: 'キャンセル',
     edit: '編集',
     delete: '削除',
+    deleteError: 'スケジュール削除中にエラーが発生しました。後でもう一度お試しください。',
+    saveScheduleError: 'スケジュールをバックエンドに保存できませんでした。後でもう一度お試しください。',
     fixedFrequency: '固定頻度',
     dayOfWeek: '曜日',
     dayOfMonth: '日',

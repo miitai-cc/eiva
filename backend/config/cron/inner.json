@@ -1,0 +1,7 @@
+{
+  "type": "Inner",
+  "description": "Use Eiva's built-in SQLite-backed scheduler.",
+  "dispatch": {
+    "method": "inner"
+  }
+}

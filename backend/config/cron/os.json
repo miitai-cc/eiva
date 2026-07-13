@@ -1,0 +1,9 @@
+{
+  "type": "OS",
+  "description": "Prepare due schedules for OS-level scheduler integration.",
+  "dispatch": {
+    "method": "outbox",
+    "osScheduler": "launchd",
+    "outboxPath": "data/cron-outbox/os.jsonl"
+  }
+}

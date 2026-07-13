@@ -123,6 +123,8 @@ export default {
     cancel: 'Cancel',
     edit: 'Edit',
     delete: 'Delete',
+    deleteError: 'An error occurred while deleting the schedule. Please try again later.',
+    saveScheduleError: 'Failed to save the schedule to the backend. Please try again later.',
     fixedFrequency: 'Fixed Frequency',
     dayOfWeek: 'Day of Week',
     dayOfMonth: 'Day of Month',

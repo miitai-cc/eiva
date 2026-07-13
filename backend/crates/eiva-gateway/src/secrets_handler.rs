@@ -10,9 +10,7 @@ use eiva_core::gateway::protocol::server::{
     send_secrets_verify_totp_result, send_vault_unlocked,
 };
 use eiva_core::gateway::{ClientPayload, SecretEntryDto, transport};
-use eiva_core::secrets::{
-    AccessContext, AccessPolicy, CredentialValue, SecretEntry, SecretKind,
-};
+use eiva_core::secrets::{AccessContext, AccessPolicy, CredentialValue, SecretEntry, SecretKind};
 
 use super::SharedVault;
 

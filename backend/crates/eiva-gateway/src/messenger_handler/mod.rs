@@ -19,9 +19,7 @@ use crate::providers;
 use crate::secrets_handler;
 use crate::skills_handler;
 use crate::{SharedSkillManager, SharedVault};
-use eiva_core::gateway::{
-    ChatMessage, MediaRef, ModelContext, ProviderRequest, ToolCallResult,
-};
+use eiva_core::gateway::{ChatMessage, MediaRef, ModelContext, ProviderRequest, ToolCallResult};
 
 mod builders;
 mod media;

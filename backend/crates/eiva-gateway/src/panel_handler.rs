@@ -748,8 +748,7 @@ async fn mcp_connect(
                 "URL-based MCP transports are not yet supported — use a stdio command".into(),
             );
         }
-        let mgr =
-            eiva_core::runtime_ctx::get_mcp_manager().ok_or("MCP manager not initialised")?;
+        let mgr = eiva_core::runtime_ctx::get_mcp_manager().ok_or("MCP manager not initialised")?;
 
         // An explicit command defines (and persists) the server; otherwise
         // the name must refer to a configured server.
@@ -820,8 +819,7 @@ async fn mcp_connect(
 #[cfg(feature = "mcp")]
 async fn mcp_disconnect(name: String) -> ServerFrame {
     let result: Result<(), String> = async {
-        let mgr =
-            eiva_core::runtime_ctx::get_mcp_manager().ok_or("MCP manager not initialised")?;
+        let mgr = eiva_core::runtime_ctx::get_mcp_manager().ok_or("MCP manager not initialised")?;
         let mgr = mgr.lock().await;
         mgr.disconnect(&name).await.map_err(|e| e.to_string())
     }

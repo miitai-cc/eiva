@@ -453,9 +453,7 @@ pub(crate) async fn dispatch_text_message(
     // the vault.  This handles the case where a key was stored after
     // the gateway started (e.g. user entered it via the TUI dialog).
     if resolved.api_key.is_none() {
-        if let Some(key_name) =
-            eiva_core::providers::secret_key_for_provider(&resolved.provider)
-        {
+        if let Some(key_name) = eiva_core::providers::secret_key_for_provider(&resolved.provider) {
             let mut v = vault.lock().await;
             if let Ok(Some(key)) = v.get_secret(key_name, true) {
                 resolved.api_key = Some(key);

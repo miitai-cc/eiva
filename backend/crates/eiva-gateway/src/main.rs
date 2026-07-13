@@ -6,13 +6,13 @@
 
 mod admin;
 mod api;
-mod workspace;
 mod auth;
 mod canvas_handler;
 mod chat;
 mod cli;
 mod command_wrapper;
 mod concurrent;
+mod cron_dispatch;
 pub mod db;
 mod dispatch;
 mod engine_handler;
@@ -37,6 +37,7 @@ mod task_handler;
 mod thread_handler;
 mod thread_updates;
 mod tool_executor;
+mod workspace;
 
 use std::io::IsTerminal;
 use std::sync::Arc;
@@ -48,8 +49,8 @@ use anyhow::Result;
 use clap::Parser;
 use eiva_core::config::Config;
 use eiva_core::daemon;
-use eiva_core::logging;
 use eiva_core::gateway::{CopilotSession, GatewayOptions, ModelContext};
+use eiva_core::logging;
 use eiva_core::secrets::SecretsManager;
 use eiva_core::skills::SkillManager;
 use eiva_core::theme as t;
@@ -121,14 +122,13 @@ async fn main() -> Result<()> {
                     if trimmed.is_empty() || trimmed.starts_with('#') {
                         continue;
                     }
-                    if let Some((key, value)) = trimmed.split_once('=') {
+                    if let Some((key, _value)) = trimmed.split_once('=') {
                         tracing::debug!(
                             line = i + 1,
                             key = %key.trim(),
-                            value = %value.trim(),
                             ".env entry"
                         );
-                        println!("     {}={}", key.trim(), value.trim());
+                        println!("     {}=<loaded>", key.trim());
                     }
                 }
             }
@@ -164,7 +164,10 @@ async fn main() -> Result<()> {
             let workflow_db = crate::db::WorkflowDb::new(db_path.clone());
             match workflow_db.init() {
                 Ok(()) => {
-                    println!("{}", t::icon_ok(&format!("Database initialized: {}", db_path.display())));
+                    println!(
+                        "{}",
+                        t::icon_ok(&format!("Database initialized: {}", db_path.display()))
+                    );
                     println!("  Tables: workflows, mcp_servers, ai_skills");
                 }
                 Err(e) => {
@@ -192,7 +195,8 @@ async fn main() -> Result<()> {
             other => {
                 eprintln!(
                     "{} Unknown AGENT_MODE '{}', falling back to 'inner'. Valid: inner, codex, gemini, opencode",
-                    t::icon_fail("⚠"), other
+                    t::icon_fail("⚠"),
+                    other
                 );
             }
         }

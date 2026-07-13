@@ -124,6 +124,8 @@ export default {
     cancel: '取消',
     edit: '編輯',
     delete: '刪除',
+    deleteError: '刪除排程時發生錯誤，請稍後再試。',
+    saveScheduleError: '排程儲存失敗，尚未寫入後端，請稍後再試。',
     fixedFrequency: '固定頻率',
     dayOfWeek: '星期',
     dayOfMonth: '日期',

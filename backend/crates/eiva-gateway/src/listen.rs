@@ -58,8 +58,7 @@ pub async fn run_gateway(
     let task_mgr = task_mgr.unwrap_or_else(|| Arc::new(eiva_core::tasks::TaskManager::new()));
 
     // Create model registry if not provided
-    let model_registry =
-        model_registry.unwrap_or_else(eiva_core::models::create_model_registry);
+    let model_registry = model_registry.unwrap_or_else(eiva_core::models::create_model_registry);
 
     // Populate the registry from the configured provider's live model
     // list so the catalog is a single source of truth (same data the

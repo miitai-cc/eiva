@@ -3,10 +3,18 @@ backend/target/**/*
 backend/target/**/**
 frontend/node_modules/**/**
 frontend/package-lock.json
+node_modules/**/*
 
 # Environment variables (contains secrets)
 .env
 backend/.env
+
+# Local runtime data
+backend/data/
+
+# Frontend local build outputs
+frontend/builds/
+frontend/dist/
 
 # Local model weights (large binaries, must not be committed)
 .eiva/models/**

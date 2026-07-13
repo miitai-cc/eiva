@@ -27,8 +27,8 @@ use crate::{
     SharedConfig, SharedCopilotSession, SharedModelCtx, SharedObserver, SharedSkillManager,
     SharedTaskManager, SharedVault, ToolCancelFlag, providers, system_prompt,
 };
-use protocol::server::send_frame;
 use eiva_core::gateway::protocol;
+use protocol::server::send_frame;
 
 /// Handle a client `Chat` frame: bookkeeping, context assembly, dispatch.
 #[allow(clippy::too_many_arguments)]
@@ -100,10 +100,7 @@ pub(crate) async fn handle_chat_frame(
                 && (thread.label.is_empty()
                     || thread.label.starts_with("Session #")
                     || thread.label == "Main");
-            thread.add_message(
-                eiva_core::threads::MessageRole::User,
-                &last_user.content,
-            );
+            thread.add_message(eiva_core::threads::MessageRole::User, &last_user.content);
             did_append_user_message = true;
             if is_first_message {
                 // Set a temporary auto-label as fallback
@@ -139,10 +136,10 @@ pub(crate) async fn handle_chat_frame(
 
     // Re-read model_ctx from shared state for each dispatch
     let current_model_ctx = shared_model_ctx.read().await.clone();
-    
+
     // Collect all available models into a fallback queue
     let mut model_queue = Vec::new();
-    
+
     // 1. If DB has models, put them in queue
     let mut db_enabled_models = Vec::new();
     let mut db_disabled_models = Vec::new();
@@ -150,19 +147,37 @@ pub(crate) async fn handle_chat_frame(
         if let Ok(models_json_str) = db.list_ai_models().await {
             for json_str in models_json_str {
                 if let Ok(model_val) = serde_json::from_str::<serde_json::Value>(&json_str) {
-                    let provider = model_val.get("provider").and_then(|v| v.as_str()).unwrap_or("").to_string();
-                    let name = model_val.get("name").and_then(|v| v.as_str()).unwrap_or("").to_string();
-                    let api_key = model_val.get("api_key").and_then(|v| v.as_str()).map(|s| s.to_string());
-                    let base_url = model_val.get("base_url").and_then(|v| v.as_str()).unwrap_or("").to_string();
-                    let enabled = model_val.get("enabled").and_then(|v| v.as_bool()).unwrap_or(false);
-                    
+                    let provider = model_val
+                        .get("provider")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string();
+                    let name = model_val
+                        .get("name")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string();
+                    let api_key = model_val
+                        .get("api_key")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
+                    let base_url = model_val
+                        .get("base_url")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("")
+                        .to_string();
+                    let enabled = model_val
+                        .get("enabled")
+                        .and_then(|v| v.as_bool())
+                        .unwrap_or(false);
+
                     let ctx = std::sync::Arc::new(eiva_core::gateway::ModelContext {
                         provider,
                         model: name,
                         api_key,
                         base_url,
                     });
-                    
+
                     if enabled {
                         db_enabled_models.push(ctx);
                     } else {
@@ -172,13 +187,15 @@ pub(crate) async fn handle_chat_frame(
             }
         }
     }
-    
+
     model_queue.extend(db_enabled_models);
 
     // 2. OPENCODE Env vars
     if let Ok(api_key) = std::env::var("OPENCODE_API_KEY") {
-        let base_url = std::env::var("OPENCODE_BASE_URL").unwrap_or_else(|_| "https://opencode.ai/zen/go/v1/".to_string());
-        let model = std::env::var("OPENCODE_MODEL").unwrap_or_else(|_| "deepseek-v4-flash".to_string());
+        let base_url = std::env::var("OPENCODE_BASE_URL")
+            .unwrap_or_else(|_| "https://opencode.ai/zen/go/v1/".to_string());
+        let model =
+            std::env::var("OPENCODE_MODEL").unwrap_or_else(|_| "deepseek-v4-flash".to_string());
         model_queue.push(std::sync::Arc::new(eiva_core::gateway::ModelContext {
             provider: "opencode_go".to_string(), // Use 'opencode_go' adapter for OpenCode platform
             model,
@@ -191,7 +208,7 @@ pub(crate) async fn handle_chat_frame(
     if let Some(ctx) = shared_model_ctx.read().await.clone() {
         model_queue.push(ctx);
     }
-    
+
     // 4. DB disabled models as last resort
     model_queue.extend(db_disabled_models);
 
@@ -207,23 +224,29 @@ pub(crate) async fn handle_chat_frame(
                 api_key: None,
                 base_url: "local".to_string(),
             }));
-            tracing::info!("Agent mode 'inner' enabled with native llama API URL. Overriding model queue.");
+            tracing::info!(
+                "Agent mode 'inner' enabled with native llama API URL. Overriding model queue."
+            );
         }
     }
-    
+
     if model_queue.is_empty() {
         tracing::warn!("No AI Model Context resolved in queue!");
     }
 
     if let Some(ctx) = &current_model_ctx {
-        let masked_key = ctx.api_key.as_ref().map(|k| {
-            if k.len() > 8 {
-                format!("{}...{}", &k[..4], &k[k.len() - 4..])
-            } else {
-                "***".to_string()
-            }
-        }).unwrap_or_else(|| "None".to_string());
-        
+        let masked_key = ctx
+            .api_key
+            .as_ref()
+            .map(|k| {
+                if k.len() > 8 {
+                    format!("{}...{}", &k[..4], &k[k.len() - 4..])
+                } else {
+                    "***".to_string()
+                }
+            })
+            .unwrap_or_else(|| "None".to_string());
+
         tracing::info!(
             provider = %ctx.provider,
             model = %ctx.model,
@@ -403,7 +426,10 @@ pub(crate) async fn handle_chat_frame(
     // ── External CLI agent mode (codex / gemini / opencode) ────────
     // When agent_mode is set to an external CLI, bypass the built-in
     // LLM provider loop and forward the prompt directly to the CLI.
-    if config.agent_mode == "codex" || config.agent_mode == "gemini" || config.agent_mode == "opencode" {
+    if config.agent_mode == "codex"
+        || config.agent_mode == "gemini"
+        || config.agent_mode == "opencode"
+    {
         tracing::info!(mode = %config.agent_mode, "Dispatching to external CLI agent");
 
         let mut stream_writer = ScopedTransportWriter::new(writer, stream_id);
@@ -440,7 +466,7 @@ pub(crate) async fn handle_chat_frame(
     };
 
     tracing::debug!("Step 4: LLM context fully prepared, dispatching request to provider...");
-    
+
     let mut last_error = None;
 
     for current_model_ctx in model_queue {
@@ -468,16 +494,30 @@ pub(crate) async fn handle_chat_frame(
                 auto_start: true,
                 ..Default::default()
             };
-            let engine_cfg = config.engines.get(&current_model_ctx.provider).unwrap_or(&default_cfg);
+            let engine_cfg = config
+                .engines
+                .get(&current_model_ctx.provider)
+                .unwrap_or(&default_cfg);
 
-            tracing::debug!("Checking local engine '{}' availability for model '{}'...", engine.id(), current_model_ctx.model);
+            tracing::debug!(
+                "Checking local engine '{}' availability for model '{}'...",
+                engine.id(),
+                current_model_ctx.model
+            );
             let status = engine.status(engine_cfg).await;
-            
+
             let needs_load = match status.run_status {
                 eiva_core::engines::EngineRunStatus::Running { .. } => {
                     if let Ok(models) = engine.list_models(engine_cfg).await {
-                        if !models.iter().any(|m| m.name == current_model_ctx.model && m.loaded) {
-                            tracing::debug!("Engine '{}' is running, but model '{}' is not loaded.", engine.id(), current_model_ctx.model);
+                        if !models
+                            .iter()
+                            .any(|m| m.name == current_model_ctx.model && m.loaded)
+                        {
+                            tracing::debug!(
+                                "Engine '{}' is running, but model '{}' is not loaded.",
+                                engine.id(),
+                                current_model_ctx.model
+                            );
                             true
                         } else {
                             false
@@ -487,28 +527,47 @@ pub(crate) async fn handle_chat_frame(
                     }
                 }
                 _ => {
-                    tracing::debug!("Engine '{}' is NOT running. Will attempt to start and load...", engine.id());
+                    tracing::debug!(
+                        "Engine '{}' is NOT running. Will attempt to start and load...",
+                        engine.id()
+                    );
                     true
                 }
             };
 
             if needs_load {
-                tracing::debug!("Loading local model '{}' via engine '{}'...", current_model_ctx.model, engine.id());
+                tracing::debug!(
+                    "Loading local model '{}' via engine '{}'...",
+                    current_model_ctx.model,
+                    engine.id()
+                );
                 if let Err(e) = engine.load(&current_model_ctx.model, engine_cfg).await {
-                    tracing::warn!("Failed to load local model '{}' on engine '{}': {}", current_model_ctx.model, engine.id(), e);
+                    tracing::warn!(
+                        "Failed to load local model '{}' on engine '{}': {}",
+                        current_model_ctx.model,
+                        engine.id(),
+                        e
+                    );
                 } else {
-                    tracing::debug!("Successfully loaded local model '{}'.", current_model_ctx.model);
+                    tracing::debug!(
+                        "Successfully loaded local model '{}'.",
+                        current_model_ctx.model
+                    );
                     // Give it a tiny bit of time to bind the port fully
                     tokio::time::sleep(std::time::Duration::from_millis(500)).await;
                 }
             } else {
-                tracing::debug!("Local engine '{}' is already running with model '{}'.", engine.id(), current_model_ctx.model);
+                tracing::debug!(
+                    "Local engine '{}' is already running with model '{}'.",
+                    engine.id(),
+                    current_model_ctx.model
+                );
             }
         }
         // --- End Auto-start ---
 
         let mut stream_writer = ScopedTransportWriter::new(writer, stream_id);
-        
+
         let res = dispatch_text_message(
             http,
             &chat_request,
@@ -539,8 +598,15 @@ pub(crate) async fn handle_chat_frame(
             }
             Err(err) => {
                 let err_str = err.to_string();
-                if err_str.contains("401") || err_str.contains("AuthError") || err_str.contains("ModelError") || err_str.contains("not supported") {
-                    tracing::warn!("Model failed with Auth/Model Error: {}, retrying with next available model...", err_str);
+                if err_str.contains("401")
+                    || err_str.contains("AuthError")
+                    || err_str.contains("ModelError")
+                    || err_str.contains("not supported")
+                {
+                    tracing::warn!(
+                        "Model failed with Auth/Model Error: {}, retrying with next available model...",
+                        err_str
+                    );
                     last_error = Some(err);
                     continue; // Try next model
                 } else {
@@ -601,7 +667,10 @@ async fn dispatch_to_external_cli(
         .unwrap_or("");
 
     if prompt.is_empty() {
-        tracing::debug!(mode = agent_mode, "No user prompt to forward to CLI agent, returning early");
+        tracing::debug!(
+            mode = agent_mode,
+            "No user prompt to forward to CLI agent, returning early"
+        );
         protocol::server::send_info(writer, "No user prompt to forward to CLI agent.").await?;
         protocol::server::send_response_done(writer, true).await?;
         return Ok(());
@@ -615,8 +684,10 @@ async fn dispatch_to_external_cli(
 
     let (command, args) = match agent_mode {
         "codex" => {
-            let codex_cmd = std::env::var("CODEX_CLI_COMMAND").unwrap_or_else(|_| "codex".to_string());
-            let sandbox = std::env::var("CODEX_SANDBOX").unwrap_or_else(|_| "workspace-write".to_string());
+            let codex_cmd =
+                std::env::var("CODEX_CLI_COMMAND").unwrap_or_else(|_| "codex".to_string());
+            let sandbox =
+                std::env::var("CODEX_SANDBOX").unwrap_or_else(|_| "workspace-write".to_string());
             tracing::debug!(
                 codex_cmd = %codex_cmd,
                 sandbox = %sandbox,
@@ -638,26 +709,16 @@ async fn dispatch_to_external_cli(
             )
         }
         "gemini" => {
-            let gemini_cmd = std::env::var("GEMINI_CLI_COMMAND").unwrap_or_else(|_| "gemini".to_string());
+            let gemini_cmd =
+                std::env::var("GEMINI_CLI_COMMAND").unwrap_or_else(|_| "gemini".to_string());
             tracing::debug!(gemini_cmd = %gemini_cmd, "Building gemini arguments");
-            (
-                gemini_cmd,
-                vec![
-                    "-p".to_string(),
-                    prompt.to_string(),
-                ],
-            )
+            (gemini_cmd, vec!["-p".to_string(), prompt.to_string()])
         }
         "opencode" => {
-            let opencode_cmd = std::env::var("OPENCODE_CLI_COMMAND").unwrap_or_else(|_| "opencode".to_string());
+            let opencode_cmd =
+                std::env::var("OPENCODE_CLI_COMMAND").unwrap_or_else(|_| "opencode".to_string());
             tracing::debug!(opencode_cmd = %opencode_cmd, "Building opencode arguments");
-            (
-                opencode_cmd,
-                vec![
-                    "-p".to_string(),
-                    prompt.to_string(),
-                ],
-            )
+            (opencode_cmd, vec!["-p".to_string(), prompt.to_string()])
         }
         other => {
             anyhow::bail!("Unsupported external CLI agent mode: {other}");
@@ -672,15 +733,38 @@ async fn dispatch_to_external_cli(
         "Spawning external CLI agent process"
     );
 
+    if command.contains(std::path::MAIN_SEPARATOR) {
+        let command_path = std::path::Path::new(&command);
+        std::fs::metadata(command_path).with_context(|| {
+            format!(
+                "CLI agent path '{}' is not accessible from the gateway process",
+                command_path.display()
+            )
+        })?;
+    }
+
+    std::fs::create_dir_all(workspace_dir).with_context(|| {
+        format!(
+            "CLI agent workspace '{}' could not be created or accessed",
+            workspace_dir.display()
+        )
+    })?;
+
     let mut child = Command::new(&command)
         .args(&args)
         .current_dir(workspace_dir)
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
         .spawn()
-        .with_context(|| format!("Failed to spawn CLI agent '{command}'. Is it installed and in PATH?"))?;
+        .with_context(|| {
+            format!("Failed to spawn CLI agent '{command}'. Is it installed and in PATH?")
+        })?;
 
-    tracing::debug!(mode = agent_mode, pid = child.id(), "CLI agent process spawned successfully");
+    tracing::debug!(
+        mode = agent_mode,
+        pid = child.id(),
+        "CLI agent process spawned successfully"
+    );
 
     let stdout = child
         .stdout
@@ -704,11 +788,19 @@ async fn dispatch_to_external_cli(
     let mut line_count: u64 = 0;
     while let Some(line_result) = reader.next_line().await? {
         line_count += 1;
-        tracing::trace!(mode = agent_mode, line = line_count, "CLI agent stdout line");
+        tracing::trace!(
+            mode = agent_mode,
+            line = line_count,
+            "CLI agent stdout line"
+        );
         let _ = protocol::server::send_chunk(writer, &line_result).await;
     }
 
-    tracing::debug!(mode = agent_mode, total_lines = line_count, "CLI agent stdout stream finished");
+    tracing::debug!(
+        mode = agent_mode,
+        total_lines = line_count,
+        "CLI agent stdout stream finished"
+    );
 
     let status = child
         .wait()
@@ -727,12 +819,14 @@ async fn dispatch_to_external_cli(
     let ok = status.success();
     if !ok {
         let code = status.code().unwrap_or(-1);
-        tracing::error!(mode = agent_mode, exit_code = code, "CLI agent exited with error");
-        let _ = protocol::server::send_chunk(
-            writer,
-            &format!("\n[CLI agent exited with code {code}]"),
-        )
-        .await;
+        tracing::error!(
+            mode = agent_mode,
+            exit_code = code,
+            "CLI agent exited with error"
+        );
+        let _ =
+            protocol::server::send_chunk(writer, &format!("\n[CLI agent exited with code {code}]"))
+                .await;
     }
 
     protocol::server::send_response_done(writer, ok).await?;

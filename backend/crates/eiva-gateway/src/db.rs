@@ -20,6 +20,21 @@ impl WorkflowDb {
             )",
             [],
         )?;
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS schedules (
+                id TEXT PRIMARY KEY,
+                data TEXT NOT NULL
+            )",
+            [],
+        )?;
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS tasks (
+                id TEXT PRIMARY KEY,
+                data TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )",
+            [],
+        )?;
         // MCP servers: create with structured columns
         conn.execute(
             "CREATE TABLE IF NOT EXISTS mcp_servers (
@@ -48,7 +63,7 @@ impl WorkflowDb {
             [],
         )?;
         Self::migrate_ai_skills(&conn)?;
-        
+
         // AI Models table
         conn.execute(
             "CREATE TABLE IF NOT EXISTS ai_models (
@@ -62,15 +77,13 @@ impl WorkflowDb {
             )",
             [],
         )?;
-        
+
         Ok(())
     }
 
     /// Detect old mcp_servers table (only id + data columns) and migrate data.
     fn migrate_mcp_servers(conn: &Connection) -> anyhow::Result<()> {
-        let has_data_col: bool = conn
-            .prepare("SELECT data FROM mcp_servers LIMIT 0")
-            .is_ok();
+        let has_data_col: bool = conn.prepare("SELECT data FROM mcp_servers LIMIT 0").is_ok();
         if !has_data_col {
             return Ok(()); // already new schema or empty
         }
@@ -120,9 +133,7 @@ impl WorkflowDb {
 
     /// Detect old ai_skills table (only id + data columns) and migrate data.
     fn migrate_ai_skills(conn: &Connection) -> anyhow::Result<()> {
-        let has_data_col: bool = conn
-            .prepare("SELECT data FROM ai_skills LIMIT 0")
-            .is_ok();
+        let has_data_col: bool = conn.prepare("SELECT data FROM ai_skills LIMIT 0").is_ok();
         if !has_data_col {
             return Ok(());
         }
@@ -150,7 +161,8 @@ impl WorkflowDb {
             if let Ok(v) = serde_json::from_str::<serde_json::Value>(data) {
                 let name = v["name"].as_str().unwrap_or("");
                 let description = v["description"].as_str().unwrap_or("");
-                let instructions = v["instructions"].as_str()
+                let instructions = v["instructions"]
+                    .as_str()
                     .or_else(|| v["prompt"].as_str())
                     .unwrap_or("");
                 let enabled = v["enabled"].as_bool().unwrap_or(true) as i32;
@@ -215,6 +227,110 @@ impl WorkflowDb {
             let conn = Connection::open(&path)?;
             conn.execute("DELETE FROM workflows WHERE id = ?1", params![id])?;
             Ok(())
+        })
+        .await?
+    }
+
+    pub async fn get_schedule(&self, id: String) -> anyhow::Result<Option<String>> {
+        let path = self.path.clone();
+        tokio::task::spawn_blocking(move || {
+            let conn = Connection::open(&path)?;
+            let mut stmt = conn.prepare("SELECT data FROM schedules WHERE id = ?1")?;
+            let mut rows = stmt.query(params![id])?;
+            if let Some(row) = rows.next()? {
+                Ok(Some(row.get(0)?))
+            } else {
+                Ok(None)
+            }
+        })
+        .await?
+    }
+
+    pub async fn save_schedule(&self, id: String, data: String) -> anyhow::Result<()> {
+        let path = self.path.clone();
+        tokio::task::spawn_blocking(move || {
+            let conn = Connection::open(&path)?;
+            conn.execute(
+                "INSERT INTO schedules (id, data) VALUES (?1, ?2)
+                 ON CONFLICT(id) DO UPDATE SET data = excluded.data",
+                params![id, data],
+            )?;
+            Ok(())
+        })
+        .await?
+    }
+
+    pub async fn list_schedules(&self) -> anyhow::Result<Vec<String>> {
+        let path = self.path.clone();
+        tokio::task::spawn_blocking(move || {
+            let conn = Connection::open(&path)?;
+            let mut stmt = conn.prepare("SELECT data FROM schedules ORDER BY id DESC")?;
+            let rows = stmt.query_map([], |row| row.get(0))?;
+            let mut schedules = Vec::new();
+            for row in rows {
+                schedules.push(row?);
+            }
+            Ok(schedules)
+        })
+        .await?
+    }
+
+    pub async fn delete_schedule(&self, id: String) -> anyhow::Result<()> {
+        let path = self.path.clone();
+        tokio::task::spawn_blocking(move || {
+            let conn = Connection::open(&path)?;
+            conn.execute("DELETE FROM schedules WHERE id = ?1", params![id])?;
+            Ok(())
+        })
+        .await?
+    }
+
+    pub async fn get_task(&self, id: String) -> anyhow::Result<Option<String>> {
+        let path = self.path.clone();
+        tokio::task::spawn_blocking(move || {
+            let conn = Connection::open(&path)?;
+            let mut stmt = conn.prepare("SELECT data FROM tasks WHERE id = ?1")?;
+            let mut rows = stmt.query(params![id])?;
+            if let Some(row) = rows.next()? {
+                Ok(Some(row.get(0)?))
+            } else {
+                Ok(None)
+            }
+        })
+        .await?
+    }
+
+    pub async fn save_task(
+        &self,
+        id: String,
+        data: String,
+        created_at: String,
+    ) -> anyhow::Result<()> {
+        let path = self.path.clone();
+        tokio::task::spawn_blocking(move || {
+            let conn = Connection::open(&path)?;
+            conn.execute(
+                "INSERT INTO tasks (id, data, created_at) VALUES (?1, ?2, ?3)
+                 ON CONFLICT(id) DO UPDATE SET data = excluded.data",
+                params![id, data, created_at],
+            )?;
+            Ok(())
+        })
+        .await?
+    }
+
+    pub async fn list_tasks(&self, limit: usize) -> anyhow::Result<Vec<String>> {
+        let path = self.path.clone();
+        tokio::task::spawn_blocking(move || {
+            let conn = Connection::open(&path)?;
+            let mut stmt =
+                conn.prepare("SELECT data FROM tasks ORDER BY created_at DESC LIMIT ?1")?;
+            let rows = stmt.query_map(params![limit as i64], |row| row.get(0))?;
+            let mut tasks = Vec::new();
+            for row in rows {
+                tasks.push(row?);
+            }
+            Ok(tasks)
         })
         .await?
     }
@@ -481,7 +597,8 @@ impl WorkflowDb {
         enabled: i32,
         extra_params: String,
     ) -> String {
-        let extra_val: serde_json::Value = serde_json::from_str(&extra_params).unwrap_or(serde_json::json!({}));
+        let extra_val: serde_json::Value =
+            serde_json::from_str(&extra_params).unwrap_or(serde_json::json!({}));
         let obj = serde_json::json!({
             "id": id,
             "provider": provider,
@@ -505,7 +622,13 @@ impl WorkflowDb {
             let mut rows = stmt.query(params![id])?;
             if let Some(row) = rows.next()? {
                 Ok(Some(Self::ai_model_row_to_json(
-                    row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?, row.get(5)?, row.get(6)?
+                    row.get(0)?,
+                    row.get(1)?,
+                    row.get(2)?,
+                    row.get(3)?,
+                    row.get(4)?,
+                    row.get(5)?,
+                    row.get(6)?,
                 )))
             } else {
                 Ok(None)
@@ -555,7 +678,13 @@ impl WorkflowDb {
             )?;
             let rows = stmt.query_map([], |row| {
                 Ok(Self::ai_model_row_to_json(
-                    row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?, row.get(5)?, row.get(6)?
+                    row.get(0)?,
+                    row.get(1)?,
+                    row.get(2)?,
+                    row.get(3)?,
+                    row.get(4)?,
+                    row.get(5)?,
+                    row.get(6)?,
                 ))
             })?;
             let mut result = Vec::new();
