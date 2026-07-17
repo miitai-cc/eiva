@@ -1,34 +1,25 @@
 [package]
 name = "eiva-be-workflow"
 description = "Backend workflow engine for Eiva using rust-langgraph"
-workspace = "../../../../backend"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-license.workspace = true
-homepage.workspace = true
-repository.workspace = true
-rust-version.workspace = true
-
-[lints]
-workspace = true
+version = "0.1.0"
+edition = "2021"
 
 [features]
 mcp = []
 
 [dependencies]
-eiva-claw-core = { workspace = true }
+eiva-claw-core = { path = "../../ai/eiva-claw-core" }
 rust-langgraph = "0.1.1"
 # Wait, eiva-be-workflow might need some types from eiva-claw-core if there's any circular reference or shared types.
 # Actually, eiva-gateway needs eiva-be-workflow. If eiva-be-workflow needs gateway types, we might have an issue.
 # In original eiva-claw-core/src/workflow/nodes.rs, it uses `crate::gateway::ChatMessage` and `crate::runtime_ctx::get_model_info`.
 # It seems workflow was deeply integrated into eiva-claw-core.
 # Let's add the workspace dependencies that eiva-claw-core had.
-serde.workspace = true
-serde_json.workspace = true
-anyhow.workspace = true
-async-trait.workspace = true
-tracing.workspace = true
-reqwest.workspace = true
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+async-trait = "0.1"
+tracing = "0.1"
+reqwest = "0.12"
 minijinja = "2.21.0"
 evalexpr = "13.1.0"

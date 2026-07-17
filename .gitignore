@@ -20,3 +20,4 @@ frontend/dist/
 .eiva/models/**
 *.gguf
 .DS_Store
+lib/react/**/node_modules/**/*

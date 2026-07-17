@@ -1,5 +1,4 @@
 use crate::types::*;
-use async_trait::async_trait;
 
 pub struct KeycloakClient {
     config: SsoConfig,
