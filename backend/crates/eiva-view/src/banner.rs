@@ -6,7 +6,7 @@
 //! own notification widget and dispatch [`BannerActionKind`]s back to
 //! their own handlers.
 
-use eiva_core::ui::ConnectionStatus;
+use eiva_claw_core::ui::ConnectionStatus;
 
 use crate::tone::Tone;
 

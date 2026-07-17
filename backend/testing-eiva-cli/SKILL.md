@@ -26,13 +26,13 @@ target/debug/eiva
 
 ```bash
 # Full test suite:
-cargo test -p eiva-core
+cargo test -p eiva-claw-core
 
 # Focused error module tests:
-cargo test -p eiva-core -- gateway::errors::tests --nocapture
+cargo test -p eiva-claw-core -- gateway::errors::tests --nocapture
 
 # Clippy (treat warnings as errors):
-cargo clippy -p eiva-core -- -D warnings -A clippy::needless_option_as_deref
+cargo clippy -p eiva-claw-core -- -D warnings -A clippy::needless_option_as_deref
 ```
 
 ## Swarm Commands
@@ -50,7 +50,7 @@ eiva swarm stop <SWARM>     # Stop a swarm
 
 ## Gateway Error Handling Architecture
 
-The gateway error system lives in `crates/eiva-core/src/gateway/errors.rs`.
+The gateway error system lives in `crates/eiva-claw-core/src/gateway/errors.rs`.
 
 ### GatewayError Enum
 
@@ -90,7 +90,7 @@ API key providers get the `CredentialRequest` dialog instead.
 
 When verifying error handling changes without a live gateway:
 
-1. **Unit tests**: Run `cargo test -p eiva-core -- gateway::errors::tests` to verify:
+1. **Unit tests**: Run `cargo test -p eiva-claw-core -- gateway::errors::tests` to verify:
    - `ErrorKind` string tags (`as_str()` method)
    - `Display` impl output for each variant
    - `is_non_fatal()` classification
@@ -99,13 +99,13 @@ When verifying error handling changes without a live gateway:
 2. **Code contract verification**: Grep to confirm routing:
    ```bash
    # Verify which handler uses send_info vs send_error:
-   grep -n 'send_info\|send_error' crates/eiva-core/src/gateway/errors.rs
+   grep -n 'send_info\|send_error' crates/eiva-claw-core/src/gateway/errors.rs
    
    # Verify call site uses correct variant:
-   grep -n 'GatewayError::' crates/eiva-core/src/gateway/mod.rs
+   grep -n 'GatewayError::' crates/eiva-claw-core/src/gateway/mod.rs
    
    # Verify device flow is called from both Auth and TokenRefresh handlers:
-   grep -n 'handle_device_flow' crates/eiva-core/src/gateway/errors.rs
+   grep -n 'handle_device_flow' crates/eiva-claw-core/src/gateway/errors.rs
    ```
 
 3. **Build verification**: TUI build confirms all call sites compile:

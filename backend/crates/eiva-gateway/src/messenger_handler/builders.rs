@@ -5,10 +5,10 @@
 
 use anyhow::{Context, Result};
 use chat_system::config as chat_system_config;
-use eiva_core::config::MessengerConfig;
+use eiva_claw_core::config::MessengerConfig;
 #[cfg(feature = "matrix")]
-use eiva_core::messengers::MatrixMessenger;
-use eiva_core::messengers::{GenericMessenger, Messenger};
+use eiva_claw_core::messengers::MatrixMessenger;
+use eiva_claw_core::messengers::{GenericMessenger, Messenger};
 
 /// Create a single messenger from config.
 pub(crate) async fn create_messenger(config: &MessengerConfig) -> Result<Box<dyn Messenger>> {
@@ -157,7 +157,7 @@ fn whatsapp_state_dir(name: &str) -> Result<std::path::PathBuf> {
 }
 
 fn build_irc_messenger(config: &MessengerConfig, name: String) -> Result<Box<dyn Messenger>> {
-    let mut messenger = eiva_core::messengers::IrcMessenger::new(
+    let mut messenger = eiva_claw_core::messengers::IrcMessenger::new(
         name,
         config.server.clone().context("IRC requires 'server'")?,
         config.port.unwrap_or(6697),
@@ -176,7 +176,7 @@ fn build_irc_messenger(config: &MessengerConfig, name: String) -> Result<Box<dyn
 }
 
 fn build_slack_messenger(config: &MessengerConfig, name: String) -> Result<Box<dyn Messenger>> {
-    let mut messenger = eiva_core::messengers::SlackMessenger::new(
+    let mut messenger = eiva_claw_core::messengers::SlackMessenger::new(
         name,
         config.token.clone().context("Slack requires 'token'")?,
     );
@@ -200,7 +200,7 @@ fn build_google_chat_messenger(
             );
         }
         return Ok(Box::new(
-            eiva_core::messengers::GoogleChatMessenger::with_credentials(
+            eiva_claw_core::messengers::GoogleChatMessenger::with_credentials(
                 name,
                 credentials_path,
                 config.spaces.clone(),
@@ -210,7 +210,7 @@ fn build_google_chat_messenger(
 
     if let (Some(token), Some(space_id)) = (config.token.clone(), config.spaces.first().cloned()) {
         let mut messenger =
-            eiva_core::messengers::GoogleChatMessenger::new_api(name, token, space_id);
+            eiva_claw_core::messengers::GoogleChatMessenger::new_api(name, token, space_id);
         if config.spaces.len() > 1 {
             messenger = messenger.with_spaces(config.spaces[1..].to_vec());
         }
@@ -226,7 +226,7 @@ fn build_teams_messenger(config: &MessengerConfig, name: String) -> Result<Box<d
     if let (Some(app_id), Some(app_password)) = (config.app_id.clone(), config.app_password.clone())
     {
         return Ok(Box::new(
-            eiva_core::messengers::TeamsMessenger::with_bot_framework(name, app_id, app_password),
+            eiva_claw_core::messengers::TeamsMessenger::with_bot_framework(name, app_id, app_password),
         ));
     }
 
@@ -242,7 +242,7 @@ fn build_imessage_messenger(config: &MessengerConfig, name: String) -> Result<Bo
         );
     }
 
-    let mut messenger = eiva_core::messengers::IMessageMessenger::new(name);
+    let mut messenger = eiva_claw_core::messengers::IMessageMessenger::new(name);
     if let Some(path) = config.server.clone() {
         if path.contains("://") {
             anyhow::bail!(
@@ -292,7 +292,7 @@ fn build_matrix_messenger(config: &MessengerConfig, name: String) -> Result<Box<
 
     // Set DM config if present
     if let Some(ref dm) = config.dm {
-        use eiva_core::messengers::MatrixDmConfig;
+        use eiva_claw_core::messengers::MatrixDmConfig;
         let dm_config = MatrixDmConfig {
             enabled: dm.enabled,
             policy: dm.policy.clone().unwrap_or_else(|| "allowlist".to_string()),

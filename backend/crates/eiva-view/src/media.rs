@@ -22,9 +22,9 @@ pub struct MediaData {
     pub has_data: bool,
 }
 
-impl From<&eiva_core::gateway::protocol::frames::MediaPayload> for MediaData {
-    fn from(p: &eiva_core::gateway::protocol::frames::MediaPayload) -> Self {
-        use eiva_core::gateway::protocol::frames::MediaKind as PK;
+impl From<&eiva_claw_core::gateway::protocol::frames::MediaPayload> for MediaData {
+    fn from(p: &eiva_claw_core::gateway::protocol::frames::MediaPayload) -> Self {
+        use eiva_claw_core::gateway::protocol::frames::MediaKind as PK;
         let kind = match p.kind {
             PK::Image => MediaKind::Image,
             PK::Audio => MediaKind::Audio,

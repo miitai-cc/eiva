@@ -6,12 +6,12 @@
 //! for completion; `dead_code` is allowed here until the manager is wired in.
 #![allow(dead_code)]
 
-use eiva_core::tools::error::ToolResult;
+use eiva_claw_core::tools::error::ToolResult;
 #[cfg(feature = "mcp")]
 use tracing::{debug, instrument, warn};
 
 #[cfg(feature = "mcp")]
-use eiva_core::mcp::McpManager;
+use eiva_claw_core::mcp::McpManager;
 #[cfg(feature = "mcp")]
 use std::sync::Arc;
 #[cfg(feature = "mcp")]
@@ -44,7 +44,7 @@ pub async fn execute_mcp_tool(
             if result.success {
                 Ok(result.to_llm_string())
             } else {
-                Err(eiva_core::tools::error::ToolError::msg(
+                Err(eiva_claw_core::tools::error::ToolError::msg(
                     result
                         .error
                         .unwrap_or_else(|| "Unknown MCP error".to_string()),
@@ -53,7 +53,7 @@ pub async fn execute_mcp_tool(
         }
         Err(e) => {
             warn!(tool = name, error = %e, "MCP tool call failed");
-            Err(eiva_core::tools::error::ToolError::msg(e.to_string()))
+            Err(eiva_claw_core::tools::error::ToolError::msg(e.to_string()))
         }
     }
 }

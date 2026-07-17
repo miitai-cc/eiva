@@ -13,8 +13,8 @@ pub struct McpServerData {
     pub health_ok: Option<bool>,
 }
 
-impl From<&eiva_core::gateway::protocol::frames::McpServerDto> for McpServerData {
-    fn from(dto: &eiva_core::gateway::protocol::frames::McpServerDto) -> Self {
+impl From<&eiva_claw_core::gateway::protocol::frames::McpServerDto> for McpServerData {
+    fn from(dto: &eiva_claw_core::gateway::protocol::frames::McpServerDto) -> Self {
         Self {
             name: dto.name.clone(),
             status: dto.status.clone(),

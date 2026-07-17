@@ -1,0 +1,10 @@
+{
+  "name": "@eiva/common",
+  "version": "0.1.0",
+  "description": "Shared protocols and utilities for Eiva",
+  "main": "src/index.js",
+  "type": "module",
+  "peerDependencies": {
+    "protobufjs": "^7.3.2"
+  }
+}

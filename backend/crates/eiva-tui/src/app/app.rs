@@ -15,12 +15,12 @@ use eiva_view::anyhow::Result;
 use eiva_view::{tokio, tracing, url};
 use std::sync::mpsc as sync_mpsc;
 
-use eiva_core::commands::{CommandContext, CommandResponse, handle_command};
-use eiva_core::config::Config;
-use eiva_core::gateway::{EngineActionKind, GatewayClient, GatewayCommand};
-use eiva_core::secrets::SecretsManager;
-use eiva_core::skills::SkillManager;
-use eiva_core::soul::SoulManager;
+use eiva_claw_core::commands::{CommandContext, CommandResponse, handle_command};
+use eiva_claw_core::config::Config;
+use eiva_claw_core::gateway::{EngineActionKind, GatewayClient, GatewayCommand};
+use eiva_claw_core::secrets::SecretsManager;
+use eiva_claw_core::skills::SkillManager;
+use eiva_claw_core::soul::SoulManager;
 use eiva_view::{PromptAttachment, build_prompt_with_attachments};
 
 use crate::gateway_client;
@@ -47,7 +47,7 @@ pub(crate) enum UserInput {
     UserPromptResponse {
         id: String,
         dismissed: bool,
-        value: eiva_core::user_prompt_types::PromptResponseValue,
+        value: eiva_claw_core::user_prompt_types::PromptResponseValue,
     },
     /// User responded to a credential request
     CredentialResponse {
@@ -60,7 +60,7 @@ pub(crate) enum UserInput {
     /// Pause/resume/stop/kill the process behind the running tool call.
     ProcessControl {
         pid: u32,
-        action: eiva_core::exec_status::ProcessControlAction,
+        action: eiva_claw_core::exec_status::ProcessControlAction,
     },
     /// Feed back the completed assistant response for conversation history tracking.
     AssistantResponse(String),
@@ -389,7 +389,7 @@ impl App {
                 }
                 Ok(UserInput::FetchModelCompletions { provider }) => {
                     let base_url = config.model.as_ref().and_then(|m| m.base_url.clone());
-                    let api_key = eiva_core::providers::secret_key_for_provider(&provider)
+                    let api_key = eiva_claw_core::providers::secret_key_for_provider(&provider)
                         .and_then(|key_name| {
                             secrets_manager
                                 .get_secret(key_name, true)
@@ -399,7 +399,7 @@ impl App {
                         });
                     let gw_tx2 = gw_tx.clone();
                     tokio::spawn(async move {
-                        match eiva_core::providers::fetch_models(
+                        match eiva_claw_core::providers::fetch_models(
                             &provider,
                             api_key.as_deref(),
                             base_url.as_deref(),
@@ -413,7 +413,7 @@ impl App {
                             Err(e) => {
                                 let _ = gw_tx2.send(GwEvent::Warning {
                                     summary: format!("Failed to load model completions: {:#}", e),
-                                    details: Some(eiva_core::error_details::render_extended(
+                                    details: Some(eiva_claw_core::error_details::render_extended(
                                         &e,
                                     )),
                                 });
@@ -476,7 +476,7 @@ impl App {
                     config.tool_permissions.insert(name.clone(), next);
                     let _ = config.save(None);
                     // Re-send updated tool perms list
-                    let tool_names = eiva_core::tools::all_tool_names();
+                    let tool_names = eiva_claw_core::tools::all_tool_names();
                     let tools: Vec<_> = tool_names
                         .iter()
                         .map(|tn| {
@@ -488,7 +488,7 @@ impl App {
                             eiva_view::ToolPermInfoData {
                                 name: tn.to_string(),
                                 permission: perm.badge().to_string(),
-                                summary: eiva_core::tools::tool_summary(tn).to_string(),
+                                summary: eiva_claw_core::tools::tool_summary(tn).to_string(),
                             }
                         })
                         .collect();
@@ -500,7 +500,7 @@ impl App {
                 }) => {
                     // Cycle OPEN → ASK → AUTH → SKILL → OPEN, then translate
                     // to the wire vocabulary of SecretsSetPolicy.
-                    use eiva_core::secrets::AccessPolicy;
+                    use eiva_claw_core::secrets::AccessPolicy;
                     let next_policy = match AccessPolicy::from_badge(&current_policy)
                         .map(|p| p.cycled())
                         .unwrap_or_default()
@@ -571,7 +571,7 @@ impl App {
                     let soul_path = config.soul_path();
                     // Build personalised SOUL.md: heading with name, then optional
                     // personality section, then the default template body.
-                    let default_body = eiva_core::soul::DEFAULT_SOUL_CONTENT
+                    let default_body = eiva_claw_core::soul::DEFAULT_SOUL_CONTENT
                         .trim_start_matches("# SOUL.md - Who You Are")
                         .trim_start_matches('\n');
                     let content = if let Some(ref p) = personality {
@@ -588,19 +588,19 @@ impl App {
                 Ok(UserInput::SelectProvider(provider_id)) => {
                     // User picked a provider from the selector dialog.
                     // Check if auth is needed and route accordingly.
-                    let def = eiva_core::providers::provider_by_id(&provider_id);
+                    let def = eiva_claw_core::providers::provider_by_id(&provider_id);
                     if let Some(def) = def {
                         match def.auth_method {
-                            eiva_core::providers::AuthMethod::None => {
+                            eiva_claw_core::providers::AuthMethod::None => {
                                 // No auth needed — go straight to model fetch.
                                 // Update config first.
                                 let existing_model =
                                     config.model.as_ref().and_then(|m| m.model.clone());
-                                config.model = Some(eiva_core::config::ModelProvider {
+                                config.model = Some(eiva_claw_core::config::ModelProvider {
                                     provider: provider_id.clone(),
                                     model: existing_model,
                                     base_url:
-                                        eiva_core::providers::base_url_override_for_switch(
+                                        eiva_claw_core::providers::base_url_override_for_switch(
                                             &provider_id,
                                             config.model.as_ref().map(|m| m.provider.as_str()),
                                             config.model.as_ref().and_then(|m| m.base_url.clone()),
@@ -619,7 +619,7 @@ impl App {
                                 let gw_tx2 = gw_tx.clone();
                                 let base = config.model.as_ref().and_then(|m| m.base_url.clone());
                                 tokio::spawn(async move {
-                                    match eiva_core::providers::fetch_models(
+                                    match eiva_claw_core::providers::fetch_models(
                                         &pid,
                                         None,
                                         base.as_deref(),
@@ -637,7 +637,7 @@ impl App {
                                             let _ = gw_tx2.send(GwEvent::Error {
                                                 summary: format!("Failed to fetch models: {:#}", e),
                                                 details: Some(
-                                                    eiva_core::error_details::render_extended(
+                                                    eiva_claw_core::error_details::render_extended(
                                                         &e,
                                                     ),
                                                 ),
@@ -646,8 +646,8 @@ impl App {
                                     }
                                 });
                             }
-                            eiva_core::providers::AuthMethod::ApiKey
-                            | eiva_core::providers::AuthMethod::OptionalApiKey => {
+                            eiva_claw_core::providers::AuthMethod::ApiKey
+                            | eiva_claw_core::providers::AuthMethod::OptionalApiKey => {
                                 // Check if we already have a key stored
                                 let has_key = def.secret_key.and_then(|sk| {
                                     secrets_manager
@@ -657,16 +657,16 @@ impl App {
                                         .or_else(|| std::env::var(sk).ok())
                                 });
                                 let is_optional = def.auth_method
-                                    == eiva_core::providers::AuthMethod::OptionalApiKey;
+                                    == eiva_claw_core::providers::AuthMethod::OptionalApiKey;
                                 if has_key.is_some() || is_optional {
                                     // Key exists, or key is optional — set provider and fetch models
                                     let existing_model =
                                         config.model.as_ref().and_then(|m| m.model.clone());
-                                    config.model = Some(eiva_core::config::ModelProvider {
+                                    config.model = Some(eiva_claw_core::config::ModelProvider {
                                         provider: provider_id.clone(),
                                         model: existing_model,
                                         base_url:
-                                            eiva_core::providers::base_url_override_for_switch(
+                                            eiva_claw_core::providers::base_url_override_for_switch(
                                                 &provider_id,
                                                 config.model.as_ref().map(|m| m.provider.as_str()),
                                                 config
@@ -688,7 +688,7 @@ impl App {
                                     let base =
                                         config.model.as_ref().and_then(|m| m.base_url.clone());
                                     tokio::spawn(async move {
-                                        match eiva_core::providers::fetch_models(
+                                        match eiva_claw_core::providers::fetch_models(
                                             &pid,
                                             key.as_deref(),
                                             base.as_deref(),
@@ -705,7 +705,7 @@ impl App {
                                             Err(e) => {
                                                 let _ = gw_tx2.send(GwEvent::Error {
                                                 summary: format!("Failed to fetch models: {:#}", e),
-                                                details: Some(eiva_core::error_details::render_extended(&e)),
+                                                details: Some(eiva_claw_core::error_details::render_extended(&e)),
                                             });
                                             }
                                         }
@@ -720,7 +720,7 @@ impl App {
                                     });
                                 }
                             }
-                            eiva_core::providers::AuthMethod::DeviceFlow => {
+                            eiva_claw_core::providers::AuthMethod::DeviceFlow => {
                                 // Check if we already have a token stored
                                 let has_token = def.secret_key.and_then(|sk| {
                                     secrets_manager
@@ -733,11 +733,11 @@ impl App {
                                     // Token exists — set provider and fetch models
                                     let existing_model =
                                         config.model.as_ref().and_then(|m| m.model.clone());
-                                    config.model = Some(eiva_core::config::ModelProvider {
+                                    config.model = Some(eiva_claw_core::config::ModelProvider {
                                         provider: provider_id.clone(),
                                         model: existing_model,
                                         base_url:
-                                            eiva_core::providers::base_url_override_for_switch(
+                                            eiva_claw_core::providers::base_url_override_for_switch(
                                                 &provider_id,
                                                 config.model.as_ref().map(|m| m.provider.as_str()),
                                                 config
@@ -759,7 +759,7 @@ impl App {
                                     let base =
                                         config.model.as_ref().and_then(|m| m.base_url.clone());
                                     tokio::spawn(async move {
-                                        match eiva_core::providers::fetch_models(
+                                        match eiva_claw_core::providers::fetch_models(
                                             &pid,
                                             token.as_deref(),
                                             base.as_deref(),
@@ -776,7 +776,7 @@ impl App {
                                             Err(e) => {
                                                 let _ = gw_tx2.send(GwEvent::Error {
                                                 summary: format!("Failed to fetch models: {:#}", e),
-                                                details: Some(eiva_core::error_details::render_extended(&e)),
+                                                details: Some(eiva_claw_core::error_details::render_extended(&e)),
                                             });
                                             }
                                         }
@@ -792,7 +792,7 @@ impl App {
                                             display
                                         )));
                                         tokio::spawn(async move {
-                                            match eiva_core::providers::start_device_flow(
+                                            match eiva_claw_core::providers::start_device_flow(
                                                 df_config,
                                             )
                                             .await
@@ -821,7 +821,7 @@ impl App {
                                                             ));
                                                             break;
                                                         }
-                                                        match eiva_core::providers::poll_device_token(
+                                                        match eiva_claw_core::providers::poll_device_token(
                                                             df_config, &auth_resp.device_code,
                                                         ).await {
                                                             Ok(Some(token)) => {
@@ -842,7 +842,7 @@ impl App {
                                                                 let _ = gw_tx2.send(GwEvent::DeviceFlowDone);
                                                                 let _ = gw_tx2.send(GwEvent::Error {
                                                                     summary: format!("Device flow failed: {:#}", e),
-                                                                    details: Some(eiva_core::error_details::render_extended(&e)),
+                                                                    details: Some(eiva_claw_core::error_details::render_extended(&e)),
                                                                 });
                                                                 break;
                                                             }
@@ -852,7 +852,7 @@ impl App {
                                                 Err(e) => {
                                                     let _ = gw_tx2.send(GwEvent::Error {
                                                 summary: format!("Failed to start device flow: {:#}", e),
-                                                details: Some(eiva_core::error_details::render_extended(&e)),
+                                                details: Some(eiva_claw_core::error_details::render_extended(&e)),
                                             });
                                                 }
                                             }
@@ -871,10 +871,10 @@ impl App {
                 Ok(UserInput::SubmitApiKey { provider, key }) => {
                     // Store the API key in the secrets vault
                     let secret_key_name =
-                        eiva_core::providers::secret_key_for_provider(&provider)
+                        eiva_claw_core::providers::secret_key_for_provider(&provider)
                             .unwrap_or("API_KEY");
                     let display =
-                        eiva_core::providers::display_name_for_provider(&provider).to_string();
+                        eiva_claw_core::providers::display_name_for_provider(&provider).to_string();
                     match secrets_manager.store_secret(secret_key_name, &key) {
                         Ok(()) => {
                             let _ = gw_tx.send(GwEvent::Success(format!(
@@ -891,10 +891,10 @@ impl App {
                     }
                     // Update config with the new provider
                     let existing_model = config.model.as_ref().and_then(|m| m.model.clone());
-                    config.model = Some(eiva_core::config::ModelProvider {
+                    config.model = Some(eiva_claw_core::config::ModelProvider {
                         provider: provider.clone(),
                         model: existing_model,
-                        base_url: eiva_core::providers::base_url_override_for_switch(
+                        base_url: eiva_claw_core::providers::base_url_override_for_switch(
                             &provider,
                             config.model.as_ref().map(|m| m.provider.as_str()),
                             config.model.as_ref().and_then(|m| m.base_url.clone()),
@@ -913,7 +913,7 @@ impl App {
                     let api_key = Some(key);
                     let base = config.model.as_ref().and_then(|m| m.base_url.clone());
                     tokio::spawn(async move {
-                        match eiva_core::providers::fetch_models(
+                        match eiva_claw_core::providers::fetch_models(
                             &pid,
                             api_key.as_deref(),
                             base.as_deref(),
@@ -930,7 +930,7 @@ impl App {
                             Err(e) => {
                                 let _ = gw_tx2.send(GwEvent::Error {
                                     summary: format!("Failed to fetch models: {:#}", e),
-                                    details: Some(eiva_core::error_details::render_extended(
+                                    details: Some(eiva_claw_core::error_details::render_extended(
                                         &e,
                                     )),
                                 });
@@ -940,7 +940,7 @@ impl App {
                 }
                 Ok(UserInput::SelectModel { provider, model }) => {
                     // Update config with the selected model
-                    config.model = Some(eiva_core::config::ModelProvider {
+                    config.model = Some(eiva_claw_core::config::ModelProvider {
                         provider: provider.clone(),
                         model: Some(model.clone()),
                         base_url: config.model.as_ref().and_then(|m| m.base_url.clone()),
@@ -949,7 +949,7 @@ impl App {
                         let _ = gw_tx.send(GwEvent::error(format!("Failed to save config: {}", e)));
                     } else {
                         let display =
-                            eiva_core::providers::display_name_for_provider(&provider);
+                            eiva_claw_core::providers::display_name_for_provider(&provider);
                         let _ = gw_tx.send(GwEvent::Info(format!(
                             "Model set to {} / {}. Reloading gateway…",
                             display, model,

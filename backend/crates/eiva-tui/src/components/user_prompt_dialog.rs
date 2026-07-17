@@ -2,7 +2,7 @@
 
 use crate::theme;
 use iocraft::prelude::*;
-use eiva_core::user_prompt_types::PromptType;
+use eiva_claw_core::user_prompt_types::PromptType;
 
 #[derive(Default, Props)]
 pub struct UserPromptDialogProps {

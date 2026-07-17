@@ -1,13 +1,13 @@
 //! Shared conversation display models used by UI renderers.
 
-use eiva_core::types::MessageRole;
-use eiva_core::ui::{StreamingState, ThreadInfo};
+use eiva_claw_core::types::MessageRole;
+use eiva_claw_core::ui::{StreamingState, ThreadInfo};
 
 use crate::{MessageBubbleData, ToolCallData};
 
 /// A renderer-facing message row with optional extended details payload.
 ///
-/// This model is intentionally separate from `eiva_core::ui::ChatMessage`:
+/// This model is intentionally separate from `eiva_claw_core::ui::ChatMessage`:
 /// it carries only what frontends need for display and details overlays.
 #[derive(Clone, Debug, PartialEq)]
 pub struct DisplayMessageData {
@@ -105,7 +105,7 @@ impl DisplayMessageData {
     pub fn append_tool_output(&mut self, id: &str, chunk: &str) -> bool {
         for tc in &mut self.tool_calls {
             if tc.id == id && tc.result.is_none() {
-                eiva_core::ui::append_terminal_chunk(&mut tc.live_output, chunk);
+                eiva_claw_core::ui::append_terminal_chunk(&mut tc.live_output, chunk);
                 return true;
             }
         }
@@ -139,7 +139,7 @@ impl DisplayMessageData {
     pub fn set_tool_live_status(
         &mut self,
         id: &str,
-        status: eiva_core::ui::ToolLiveStatus,
+        status: eiva_claw_core::ui::ToolLiveStatus,
     ) -> bool {
         for tc in &mut self.tool_calls {
             if tc.id == id && tc.result.is_none() {
@@ -193,8 +193,8 @@ impl DisplayMessageData {
 /// Convert a wire `ChatMessage` (as carried in `ThreadHistoryReply`) into a
 /// renderer-facing `DisplayMessageData`. Unknown roles fall back to
 /// `MessageRole::System` so the message is still surfaced.
-impl From<&eiva_core::gateway::protocol::types::ChatMessage> for DisplayMessageData {
-    fn from(msg: &eiva_core::gateway::protocol::types::ChatMessage) -> Self {
+impl From<&eiva_claw_core::gateway::protocol::types::ChatMessage> for DisplayMessageData {
+    fn from(msg: &eiva_claw_core::gateway::protocol::types::ChatMessage) -> Self {
         let role = msg.to_core_message_role();
         let mut data = Self::new(role, msg.content.clone());
         // Surface tool calls embedded in an assistant turn so the
@@ -233,7 +233,7 @@ impl From<&eiva_core::gateway::protocol::types::ChatMessage> for DisplayMessageD
 /// stream rendered them. Tool results without a matching call are kept
 /// as standalone `ToolResult` messages.
 pub fn convert_history(
-    msgs: &[eiva_core::gateway::protocol::types::ChatMessage],
+    msgs: &[eiva_claw_core::gateway::protocol::types::ChatMessage],
 ) -> Vec<DisplayMessageData> {
     let mut out: Vec<DisplayMessageData> = Vec::with_capacity(msgs.len());
     for m in msgs {

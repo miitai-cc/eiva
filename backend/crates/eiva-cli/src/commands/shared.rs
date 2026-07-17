@@ -2,8 +2,8 @@
 //! interactive password prompting.
 
 use anyhow::{Context, Result};
-use eiva_core::config::Config;
-use eiva_core::secrets::SecretsManager;
+use eiva_claw_core::config::Config;
+use eiva_claw_core::secrets::SecretsManager;
 
 /// Extract the vault password for the gateway daemon.
 ///
@@ -16,7 +16,7 @@ pub(crate) fn extract_vault_password(config: &Config) -> Option<String> {
     }
     match prompt_password(&format!(
         "{} Vault password (for gateway): ",
-        eiva_core::theme::info("🔑"),
+        eiva_claw_core::theme::info("🔑"),
     )) {
         Ok(pw) if !pw.is_empty() => Some(pw),
         _ => None,

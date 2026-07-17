@@ -2,7 +2,7 @@
 
 本文說明 Eiva 後端 agent 收到使用者 prompt 後，如何組裝上下文、呼叫哪些模組/程式，以及請求與回應的流轉過程。重點聚焦於 **prompt 的傳入（傳遞）方式**。
 
-> 適用範圍：Rust 後端 `eiva-gateway` + `eiva-core`（`backend/crates/...`）。
+> 適用範圍：Rust 後端 `eiva-gateway` + `eiva-claw-core`（`backend/crates/...`）。
 > Node.js 後端（`backend/node.js`）僅負責 task 排程與 Vite 前端 host，不直接處理聊天 prompt。
 
 ---
@@ -35,7 +35,7 @@ eiva-gateway/src/dispatch.rs  dispatch_text_message()
    │  providers::resolve_request()  → ProviderRequest
    │  agentic tool loop (最多 500 輪)
    ▼
-eiva-core/src/providers/mod.rs  call_with_tools()          ← provider 分派
+eiva-claw-core/src/providers/mod.rs  call_with_tools()          ← provider 分派
    │  match provider:
    │    "anthropic" → genai_backend::call_anthropic_with_tools
    │    "google"    → genai_backend::call_google_with_tools
@@ -58,7 +58,7 @@ eiva-core/src/providers/mod.rs  call_with_tools()          ← provider 分派
 | frame 分派 | `eiva-gateway/src/server.rs:537` `crate::chat::handle_chat_frame()` | 依 frame type 轉發聊天請求 |
 | 聊天處理 | `eiva-gateway/src/chat.rs` `handle_chat_frame()` | **prompt 主要處理邏輯所在** |
 
-前端送來的是 `ChatRequest`（`eiva-core/src/gateway/types.rs:55`）：
+前端送來的是 `ChatRequest`（`eiva-claw-core/src/gateway/types.rs:55`）：
 
 ```rust
 pub struct ChatRequest {
@@ -88,7 +88,7 @@ tokio::spawn(async move {
     }
 });
 ```
-每則使用者訊息會透過 `eiva_core::steel_memory::SteelMemory` 做 **本地 fastembed 向量化**（`AllMiniLML6V2`），寫入 `.steel-memory/palace.sqlite3`。
+每則使用者訊息會透過 `eiva_claw_core::steel_memory::SteelMemory` 做 **本地 fastembed 向量化**（`AllMiniLML6V2`），寫入 `.steel-memory/palace.sqlite3`。
 
 ### 3.2 System prompt 建構
 ```rust
@@ -159,7 +159,7 @@ pub struct ProviderRequest {
 ```
 
 ### 5.2 call_with_tools（單一分派點）
-`eiva-core/src/providers/mod.rs:482`：
+`eiva-claw-core/src/providers/mod.rs:482`：
 ```rust
 match req.provider.as_str() {
     "anthropic"     => call_anthropic_with_tools(http, req, writer),
@@ -172,10 +172,10 @@ match req.provider.as_str() {
 ### 5.3 各 provider 模組
 | Provider | 模組 | 備註 |
 |----------|------|------|
-| anthropic | `eiva-core/src/providers/genai_backend.rs` | 經由 genai crate |
-| google | `eiva-core/src/providers/genai_backend.rs` | 強制非串流 |
-| openai / 其他 | `eiva-core/src/providers/genai_backend.rs` | OpenAI-compatible |
-| native_llama | `eiva-core/src/providers/native_llama.rs` | 本地 GGUF server（inner mode） |
+| anthropic | `eiva-claw-core/src/providers/genai_backend.rs` | 經由 genai crate |
+| google | `eiva-claw-core/src/providers/genai_backend.rs` | 強制非串流 |
+| openai / 其他 | `eiva-claw-core/src/providers/genai_backend.rs` | OpenAI-compatible |
+| native_llama | `eiva-claw-core/src/providers/native_llama.rs` | 本地 GGUF server（inner mode） |
 
 ### 5.4 native_llama 的呼叫邏輯（`native_llama.rs`）
 - 由 `req.model` 取出 **base URL**，轉換成 chat/completions 端點：
@@ -186,7 +186,7 @@ match req.provider.as_str() {
 - 若有 `api_key` 則帶 `Authorization: Bearer`。
 - 解析 OpenAI-compatible 回應：`choices[0].message.content` 與 `tool_calls`，並擷取 `finish_reason` 與 `usage`。
 
-> **歷史 bug（已修正）**：舊程式直接把 `req.model`（base URL，如 `http://localhost:8080/v1`）當成請求位址 POST，server 回傳 model list / error object，導致所有解析分支落空，出現 `Invalid response format from API`；該錯誤文字之後又被當成一般文字餵回 Steel Memory（見 3.1），於是 log 中出現 `INFO eiva_core::steel_memory: Embedding text: Error: Invalid response format from API`。修正方式是改 POST 到正確的 `/chat/completions` 端點並加強錯誤處理。
+> **歷史 bug（已修正）**：舊程式直接把 `req.model`（base URL，如 `http://localhost:8080/v1`）當成請求位址 POST，server 回傳 model list / error object，導致所有解析分支落空，出現 `Invalid response format from API`；該錯誤文字之後又被當成一般文字餵回 Steel Memory（見 3.1），於是 log 中出現 `INFO eiva_claw_core::steel_memory: Embedding text: Error: Invalid response format from API`。修正方式是改 POST 到正確的 `/chat/completions` 端點並加強錯誤處理。
 
 ### 5.5 Agentic tool loop
 `dispatch.rs` 的 `dispatch_text_message()` 跑一個最多 500 輪的迴圈：
@@ -230,10 +230,10 @@ match req.provider.as_str() {
 | ModelContext / 模型佇列 | `eiva-gateway/src/chat.rs:144-212` |
 | system prompt 建構 | `eiva-gateway/src/system_prompt.rs` |
 | 分派與 tool loop | `eiva-gateway/src/dispatch.rs` |
-| request 解析 / provider 分派 | `eiva-gateway/src/providers/mod.rs`, `eiva-core/src/providers/mod.rs` |
-| native_llama 呼叫 | `eiva-core/src/providers/native_llama.rs` |
-| OpenAI/Anthropic/Google 呼叫 | `eiva-core/src/providers/genai_backend.rs` |
-| 請求/回應型別 | `eiva-core/src/gateway/types.rs`, `eiva-core/src/gateway/protocol/types.rs` |
-| Steel Memory | `eiva-core/src/steel_memory.rs` |
-| 配置（native_llama_api_url） | `eiva-core/src/config.rs`, `eiva-gateway/src/main.rs` |
-| 串流回傳 | `eiva-core/src/gateway/protocol/server.rs` |
+| request 解析 / provider 分派 | `eiva-gateway/src/providers/mod.rs`, `eiva-claw-core/src/providers/mod.rs` |
+| native_llama 呼叫 | `eiva-claw-core/src/providers/native_llama.rs` |
+| OpenAI/Anthropic/Google 呼叫 | `eiva-claw-core/src/providers/genai_backend.rs` |
+| 請求/回應型別 | `eiva-claw-core/src/gateway/types.rs`, `eiva-claw-core/src/gateway/protocol/types.rs` |
+| Steel Memory | `eiva-claw-core/src/steel_memory.rs` |
+| 配置（native_llama_api_url） | `eiva-claw-core/src/config.rs`, `eiva-gateway/src/main.rs` |
+| 串流回傳 | `eiva-claw-core/src/gateway/protocol/server.rs` |

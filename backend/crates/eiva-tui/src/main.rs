@@ -21,8 +21,8 @@ use clap::Parser;
 use eiva_view::anyhow::Result;
 use eiva_view::{dirs, tokio};
 
-use eiva_core::args::CommonArgs;
-use eiva_core::config::Config;
+use eiva_claw_core::args::CommonArgs;
+use eiva_claw_core::config::Config;
 
 use app::App;
 
@@ -58,10 +58,10 @@ async fn main() -> Result<()> {
     if let Some(parent) = log_path.parent() {
         let _ = std::fs::create_dir_all(parent);
     }
-    eiva_core::logging::init_for_tui(&log_path);
+    eiva_claw_core::logging::init_for_tui(&log_path);
 
     // Initialise colour output (respects --no-color / NO_COLOR).
-    eiva_core::theme::init_color(cli.common.no_color);
+    eiva_claw_core::theme::init_color(cli.common.no_color);
 
     let config_path = cli.common.config_path();
     let mut config = Config::load(config_path)?;

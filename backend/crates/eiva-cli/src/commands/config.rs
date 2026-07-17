@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use clap::Subcommand;
-use eiva_core::config::Config;
+use eiva_claw_core::config::Config;
 
 /// `eiva config` subcommands.
 #[derive(Debug, Subcommand)]
@@ -73,7 +73,7 @@ pub(crate) fn config_set(config: &mut Config, path: &str, value: &str) -> Result
         "model.provider" | "provider" => {
             let m = config
                 .model
-                .get_or_insert_with(|| eiva_core::config::ModelProvider {
+                .get_or_insert_with(|| eiva_claw_core::config::ModelProvider {
                     provider: String::new(),
                     model: None,
                     base_url: None,
@@ -83,7 +83,7 @@ pub(crate) fn config_set(config: &mut Config, path: &str, value: &str) -> Result
         "model.model" | "model" => {
             let m = config
                 .model
-                .get_or_insert_with(|| eiva_core::config::ModelProvider {
+                .get_or_insert_with(|| eiva_claw_core::config::ModelProvider {
                     provider: String::new(),
                     model: None,
                     base_url: None,

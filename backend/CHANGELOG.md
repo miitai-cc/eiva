@@ -224,7 +224,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   OpenAI / Anthropic / Google HTTP clients
   (`eiva-gateway/src/providers/{openai,anthropic,google}.rs`) are replaced
   by a single [`genai`](https://crates.io/crates/genai)-backed dispatch in
-  **`eiva-core`** (`providers/genai_backend.rs`). It lives in core so the
+  **`eiva-claw-core`** (`providers/genai_backend.rs`). It lives in core so the
   gateway and the client crates share one genai instance. Request building, tool
   calling, and SSE streaming (including Anthropic extended-thinking deltas) are
   now handled by genai; Eiva still owns provider selection, credentials /

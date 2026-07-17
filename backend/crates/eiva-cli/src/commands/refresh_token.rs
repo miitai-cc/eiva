@@ -3,7 +3,7 @@
 
 use anyhow::{Context, Result};
 use clap::Args;
-use eiva_core::config::Config;
+use eiva_claw_core::config::Config;
 use std::path::PathBuf;
 
 use crate::commands::shared::open_secrets;

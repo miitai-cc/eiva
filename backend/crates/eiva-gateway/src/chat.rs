@@ -15,8 +15,8 @@ use tokio::process::Command;
 use tokio::sync::Mutex;
 use tracing::warn;
 
-use eiva_core::config::Config;
-use eiva_core::gateway::{
+use eiva_claw_core::config::Config;
+use eiva_claw_core::gateway::{
     ChatMessage, ChatRequest, ScopedTransportWriter, ServerFrame, ServerFrameType, ServerPayload,
     transport,
 };
@@ -27,7 +27,7 @@ use crate::{
     SharedConfig, SharedCopilotSession, SharedModelCtx, SharedObserver, SharedSkillManager,
     SharedTaskManager, SharedVault, ToolCancelFlag, providers, system_prompt,
 };
-use eiva_core::gateway::protocol;
+use eiva_claw_core::gateway::protocol;
 use protocol::server::send_frame;
 
 /// Handle a client `Chat` frame: bookkeeping, context assembly, dispatch.
@@ -52,13 +52,13 @@ pub(crate) async fn handle_chat_frame(
             tokio::sync::mpsc::Receiver<(
                 String,
                 bool,
-                eiva_core::user_prompt_types::PromptResponseValue,
+                eiva_claw_core::user_prompt_types::PromptResponseValue,
             )>,
         >,
     >,
     credential_rx: &Arc<Mutex<tokio::sync::mpsc::Receiver<(String, bool, Option<String>)>>>,
     dom_query_rx: &Arc<Mutex<tokio::sync::mpsc::Receiver<(String, String, bool)>>>,
-    thread_mgr: &mut eiva_core::threads::ThreadManager,
+    thread_mgr: &mut eiva_claw_core::threads::ThreadManager,
     threads_path: &std::path::Path,
 ) -> Result<()> {
     // Check for auto-switch: find better matching thread
@@ -100,7 +100,7 @@ pub(crate) async fn handle_chat_frame(
                 && (thread.label.is_empty()
                     || thread.label.starts_with("Session #")
                     || thread.label == "Main");
-            thread.add_message(eiva_core::threads::MessageRole::User, &last_user.content);
+            thread.add_message(eiva_claw_core::threads::MessageRole::User, &last_user.content);
             did_append_user_message = true;
             if is_first_message {
                 // Set a temporary auto-label as fallback
@@ -125,7 +125,7 @@ pub(crate) async fn handle_chat_frame(
         let ws = config.workspace_dir().to_path_buf();
         let text = last_user.content.clone();
         tokio::spawn(async move {
-            if let Ok(mem) = eiva_core::steel_memory::SteelMemory::new(&ws) {
+            if let Ok(mem) = eiva_claw_core::steel_memory::SteelMemory::new(&ws) {
                 let _ = mem.add_memory(&text, "conversations", "user", None).await;
             }
         });
@@ -171,7 +171,7 @@ pub(crate) async fn handle_chat_frame(
                         .and_then(|v| v.as_bool())
                         .unwrap_or(false);
 
-                    let ctx = std::sync::Arc::new(eiva_core::gateway::ModelContext {
+                    let ctx = std::sync::Arc::new(eiva_claw_core::gateway::ModelContext {
                         provider,
                         model: name,
                         api_key,
@@ -196,7 +196,7 @@ pub(crate) async fn handle_chat_frame(
             .unwrap_or_else(|_| "https://opencode.ai/zen/go/v1/".to_string());
         let model =
             std::env::var("OPENCODE_MODEL").unwrap_or_else(|_| "deepseek-v4-flash".to_string());
-        model_queue.push(std::sync::Arc::new(eiva_core::gateway::ModelContext {
+        model_queue.push(std::sync::Arc::new(eiva_claw_core::gateway::ModelContext {
             provider: "opencode_go".to_string(), // Use 'opencode_go' adapter for OpenCode platform
             model,
             api_key: Some(api_key),
@@ -218,7 +218,7 @@ pub(crate) async fn handle_chat_frame(
     if config.agent_mode == "inner" {
         if let Some(ref api_url) = config.native_llama_api_url {
             model_queue.clear();
-            model_queue.push(std::sync::Arc::new(eiva_core::gateway::ModelContext {
+            model_queue.push(std::sync::Arc::new(eiva_claw_core::gateway::ModelContext {
                 provider: "native_llama".to_string(),
                 model: api_url.clone(),
                 api_key: None,
@@ -313,7 +313,7 @@ pub(crate) async fn handle_chat_frame(
                     .as_deref()
                     .map(|c| c.provider.as_str())
                     .unwrap_or("openai");
-                let history_slice: Vec<eiva_core::threads::ThreadMessage> =
+                let history_slice: Vec<eiva_claw_core::threads::ThreadMessage> =
                     history.iter().take(prior_count).cloned().collect();
                 let history_msgs: Vec<ChatMessage> =
                     providers::thread_history_to_chat_messages(provider_name, &history_slice);
@@ -334,7 +334,7 @@ pub(crate) async fn handle_chat_frame(
             .unwrap_or("openai");
         let thread_context = active_thread_id.and_then(|thread_id| {
             thread_mgr.get(thread_id).map(|thread| {
-                let history: Vec<eiva_core::threads::ThreadMessage> =
+                let history: Vec<eiva_claw_core::threads::ThreadMessage> =
                     thread.messages.iter().cloned().collect();
                 (
                     providers::thread_history_to_chat_messages(provider_name, &history),
@@ -401,7 +401,7 @@ pub(crate) async fn handle_chat_frame(
         {
             let query = last_user.content.clone();
             let ws = config.workspace_dir().to_path_buf();
-            if let Ok(mem) = eiva_core::steel_memory::SteelMemory::new(&ws) {
+            if let Ok(mem) = eiva_claw_core::steel_memory::SteelMemory::new(&ws) {
                 if let Ok(results) = mem.search(&query, 3, Some(0.4)).await {
                     if !results.is_empty() {
                         let mut ctx = String::from("\n\n## Relevant Memories\n");
@@ -486,10 +486,10 @@ pub(crate) async fn handle_chat_frame(
         );
 
         // --- Auto-start / Auto-load local engines ---
-        let registry = eiva_core::engines::EngineRegistry::new();
+        let registry = eiva_claw_core::engines::EngineRegistry::new();
         if let Some(engine) = registry.get(&current_model_ctx.provider) {
             let config = shared_config.read().await;
-            let default_cfg = eiva_core::engines::EngineConfig {
+            let default_cfg = eiva_claw_core::engines::EngineConfig {
                 enabled: true,
                 auto_start: true,
                 ..Default::default()
@@ -507,7 +507,7 @@ pub(crate) async fn handle_chat_frame(
             let status = engine.status(engine_cfg).await;
 
             let needs_load = match status.run_status {
-                eiva_core::engines::EngineRunStatus::Running { .. } => {
+                eiva_claw_core::engines::EngineRunStatus::Running { .. } => {
                     if let Ok(models) = engine.list_models(engine_cfg).await {
                         if !models
                             .iter()

@@ -5,8 +5,8 @@ use std::io::{self, BufRead, Write};
 use anyhow::Result;
 
 use crate::prompts::arrow_select;
-use eiva_core::config::Config;
-use eiva_core::theme as t;
+use eiva_claw_core::config::Config;
+use eiva_claw_core::theme as t;
 
 /// Recommended skills with descriptions (excludes messaging — handled separately).
 struct RecommendedSkill {

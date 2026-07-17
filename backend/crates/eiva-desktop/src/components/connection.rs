@@ -10,7 +10,7 @@ use dioxus_bulma::prelude::{
     BulmaColor, BulmaSize, Button, Buttons, Checkbox, Control, Delete, Field, FieldLabel, Help,
     Notification,
 };
-use eiva_core::ui::ConnectionStatus;
+use eiva_claw_core::ui::ConnectionStatus;
 use eiva_view::ConnectionDialogData;
 
 use super::{RcModal, copy_to_clipboard};

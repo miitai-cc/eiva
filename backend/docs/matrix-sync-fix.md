@@ -63,5 +63,5 @@ if !messages.is_empty() || allowed_rooms_in_sync || (self.allowed_chats.is_empty
 If we never get events for allowed rooms, token never advances. This is fine — we'll get them eventually when someone sends a message.
 
 ## Implementation
-File: `crates/eiva-core/src/messengers/matrix_cli.rs`
+File: `crates/eiva-claw-core/src/messengers/matrix_cli.rs`
 Lines: ~455-460 (save_sync_token section)

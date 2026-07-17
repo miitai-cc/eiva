@@ -28,7 +28,7 @@ pub(super) struct Ui {
     pub messages: State<Vec<DisplayMessage>>,
     pub input_value: State<String>,
     pub input_cursor_offset: State<usize>,
-    pub gw_status: State<eiva_core::types::GatewayStatus>,
+    pub gw_status: State<eiva_claw_core::types::GatewayStatus>,
     pub streaming: State<bool>,
     pub stream_start: State<Option<Instant>>,
     /// When the current thinking block began (for "Thought for Xs").
@@ -74,7 +74,7 @@ pub(super) struct Ui {
     pub user_prompt_title: State<String>,
     pub user_prompt_desc: State<String>,
     pub user_prompt_input: State<String>,
-    pub user_prompt_type: State<Option<eiva_core::user_prompt_types::PromptType>>,
+    pub user_prompt_type: State<Option<eiva_claw_core::user_prompt_types::PromptType>>,
     pub user_prompt_selected: State<usize>,
     /// Per-option checked flags for MultiSelect prompts.
     pub user_prompt_checked: State<Vec<bool>>,
@@ -108,7 +108,7 @@ pub(super) struct Ui {
     pub model_selector_cursor: State<usize>,
     pub model_selector_loading: State<bool>,
     pub threads: State<Vec<eiva_view::SidebarItemData>>,
-    pub projects: State<Vec<eiva_core::ui::ProjectInfo>>,
+    pub projects: State<Vec<eiva_claw_core::ui::ProjectInfo>>,
     pub active_project_id: State<u64>,
     pub tab_focused: State<bool>,
     pub tab_selected: State<usize>,

@@ -1,15 +1,15 @@
 //! Gateway-side handlers for managed service requests.
 
 use anyhow::Result;
-use eiva_core::gateway::TransportWriter;
-use eiva_core::gateway::protocol::frames::{
+use eiva_claw_core::gateway::TransportWriter;
+use eiva_claw_core::gateway::protocol::frames::{
     ServerFrame, ServerFrameType, ServerPayload, ServiceInfoDto,
 };
 use tracing::debug;
 
 /// Handle a `ServiceListRequest` frame: respond with all services.
 pub async fn handle_service_list(writer: &mut dyn TransportWriter) -> Result<()> {
-    let payload = match eiva_core::runtime_ctx::get_service_manager() {
+    let payload = match eiva_claw_core::runtime_ctx::get_service_manager() {
         Some(mgr) => {
             let mgr = mgr.read().await;
             let services: Vec<ServiceInfoDto> = mgr.list().into_iter().map(Into::into).collect();
@@ -32,7 +32,7 @@ pub async fn handle_service_list(writer: &mut dyn TransportWriter) -> Result<()>
 
 /// Handle a `ServiceStartRequest` frame: start a named service.
 pub async fn handle_service_start(writer: &mut dyn TransportWriter, name: &str) -> Result<()> {
-    let payload = match eiva_core::runtime_ctx::get_service_manager() {
+    let payload = match eiva_claw_core::runtime_ctx::get_service_manager() {
         Some(mgr) => {
             let mut mgr = mgr.write().await;
             match mgr.start(name).await {
@@ -67,7 +67,7 @@ pub async fn handle_service_start(writer: &mut dyn TransportWriter, name: &str) 
 
 /// Handle a `ServiceStopRequest` frame: stop a named service.
 pub async fn handle_service_stop(writer: &mut dyn TransportWriter, name: &str) -> Result<()> {
-    let payload = match eiva_core::runtime_ctx::get_service_manager() {
+    let payload = match eiva_claw_core::runtime_ctx::get_service_manager() {
         Some(mgr) => {
             let mut mgr = mgr.write().await;
             match mgr.stop(name).await {
@@ -102,7 +102,7 @@ pub async fn handle_service_stop(writer: &mut dyn TransportWriter, name: &str) -
 
 /// Handle a `ServiceRestartRequest` frame: restart a named service.
 pub async fn handle_service_restart(writer: &mut dyn TransportWriter, name: &str) -> Result<()> {
-    let payload = match eiva_core::runtime_ctx::get_service_manager() {
+    let payload = match eiva_claw_core::runtime_ctx::get_service_manager() {
         Some(mgr) => {
             let mut mgr = mgr.write().await;
             match mgr.restart(name).await {
@@ -141,7 +141,7 @@ pub async fn handle_service_logs(
     name: &str,
     tail: Option<usize>,
 ) -> Result<()> {
-    let payload = match eiva_core::runtime_ctx::get_service_manager() {
+    let payload = match eiva_claw_core::runtime_ctx::get_service_manager() {
         Some(mgr) => {
             let mgr = mgr.read().await;
             match mgr.logs(name, tail) {

@@ -3,9 +3,9 @@
 //! Extracted from main.rs for modularity. Handles `eiva gateway <sub>` commands.
 
 use anyhow::Result;
-use eiva_core::config::Config;
-use eiva_core::daemon;
-use eiva_core::theme as t;
+use eiva_claw_core::config::Config;
+use eiva_claw_core::daemon;
+use eiva_claw_core::theme as t;
 
 /// Handle `gateway start` command.
 pub fn handle_start(

@@ -64,12 +64,12 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
-use eiva_core::gateway::protocol::{
+use eiva_claw_core::gateway::protocol::{
     ClientFrame, ServerFrame, WireFrame, deserialize_frame, deserialize_wire_frame,
     serialize_wire_frame,
 };
-use eiva_core::gateway::transport::TransportAcceptor;
-use eiva_core::gateway::transport::{
+use eiva_claw_core::gateway::transport::TransportAcceptor;
+use eiva_claw_core::gateway::transport::{
     PeerInfo, Transport, TransportReader, TransportType, TransportWriter,
 };
 use std::path::PathBuf;

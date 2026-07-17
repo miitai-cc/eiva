@@ -17,7 +17,7 @@ the rest are recorded here as prioritized follow-ups.
 
 ## 1. Error handling
 
-The codebase has two documented error strategies (`eiva-core/src/error.rs`):
+The codebase has two documented error strategies (`eiva-claw-core/src/error.rs`):
 typed errors for internal logic, and `Result<String, String>` at the AI-tool
 boundary, where the error string is the payload sent back to the model. The
 tool boundary is a legitimate display boundary — flattening a typed error with

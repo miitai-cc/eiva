@@ -43,8 +43,8 @@ pub(crate) enum SwarmCommands {
 
 /// Run a `swarm` subcommand.
 pub(crate) fn run(sub: SwarmCommands) -> Result<()> {
-    use eiva_core::swarm::{builtin_templates, swarm_manager};
-    use eiva_core::theme as t;
+    use eiva_claw_core::swarm::{builtin_templates, swarm_manager};
+    use eiva_claw_core::theme as t;
 
     match sub {
         SwarmCommands::Create { template } => {
@@ -89,11 +89,11 @@ pub(crate) fn run(sub: SwarmCommands) -> Result<()> {
             } else {
                 for inst in swarms {
                     let status = match inst.status {
-                        eiva_core::swarm::SwarmStatus::Running => t::icon_ok("Running"),
-                        eiva_core::swarm::SwarmStatus::Idle => t::info("Idle"),
-                        eiva_core::swarm::SwarmStatus::Paused => t::info("Paused"),
-                        eiva_core::swarm::SwarmStatus::Stopped => t::muted("Stopped"),
-                        eiva_core::swarm::SwarmStatus::Error => t::icon_fail("Error"),
+                        eiva_claw_core::swarm::SwarmStatus::Running => t::icon_ok("Running"),
+                        eiva_claw_core::swarm::SwarmStatus::Idle => t::info("Idle"),
+                        eiva_claw_core::swarm::SwarmStatus::Paused => t::info("Paused"),
+                        eiva_claw_core::swarm::SwarmStatus::Stopped => t::muted("Stopped"),
+                        eiva_claw_core::swarm::SwarmStatus::Error => t::icon_fail("Error"),
                     };
                     println!(
                         "  {} {} — {} agents, {} tasks",
@@ -152,7 +152,7 @@ pub(crate) fn run(sub: SwarmCommands) -> Result<()> {
                 let inst = m
                     .get_mut(&swarm)
                     .ok_or_else(|| anyhow::anyhow!("Swarm '{}' not found", swarm))?;
-                if inst.status != eiva_core::swarm::SwarmStatus::Running {
+                if inst.status != eiva_claw_core::swarm::SwarmStatus::Running {
                     anyhow::bail!("Swarm '{}' is not running", swarm);
                 }
                 let a = inst
@@ -178,7 +178,7 @@ pub(crate) fn run(sub: SwarmCommands) -> Result<()> {
             };
 
             // Phase 2: route via session manager (no swarm lock held).
-            let session_mgr = eiva_core::sessions::session_manager();
+            let session_mgr = eiva_claw_core::sessions::session_manager();
             let mut sess_mgr = session_mgr
                 .lock()
                 .map_err(|_| anyhow::anyhow!("Session manager lock error"))?;

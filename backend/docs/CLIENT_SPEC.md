@@ -12,7 +12,7 @@ the AI agent experience to a user. The reference client is `eiva-tui`
 
 ```text
 ┌──────────────────────────────────────────────────────────────┐
-│                      eiva-core                          │
+│                      eiva-claw-core                          │
 │  config · gateway protocol · secrets · skills · providers    │
 │  commands · streaming · soul · tools · sessions · messengers │
 └──────────────┬───────────────────────────────┬───────────────┘
@@ -23,7 +23,7 @@ the AI agent experience to a user. The reference client is `eiva-tui`
     └─────────────────────┘         └─────────────────────┘
 ```
 
-Clients depend on `eiva-core` for all shared logic. They **never**
+Clients depend on `eiva-claw-core` for all shared logic. They **never**
 duplicate gateway protocol handling, config parsing, secrets management,
 or tool dispatch.
 
@@ -37,7 +37,7 @@ A feature-complete client MUST implement the following capabilities.
 
 | Requirement | Description |
 | --- | --- |
-| **SSH connect** | Connect to the gateway at a configured `ssh://` URL using the binary frame protocol defined in `eiva-core::gateway`. |
+| **SSH connect** | Connect to the gateway at a configured `ssh://` URL using the binary frame protocol defined in `eiva-claw-core::gateway`. |
 | **Wire framing** | Send and receive length-prefixed bincode `WireFrame<T>` envelopes. Stream `0` is reserved for connection-level control; chat requests SHOULD use nonzero client-allocated stream IDs. |
 | **Hello handshake** | Receive and process the `Hello` server frame (provider, model, version, capabilities). |
 | **Auth challenge** | Handle `AuthChallenge` frames — prompt the user for a TOTP code and send `AuthResponse`. |
@@ -107,7 +107,7 @@ A feature-complete client MUST implement the following capabilities.
 
 ### 2.8 Slash Commands
 
-The client MUST handle these slash commands (delegating to `eiva-core::commands`):
+The client MUST handle these slash commands (delegating to `eiva-claw-core::commands`):
 
 | Command | Description |
 | --- | --- |
@@ -146,7 +146,7 @@ The client MUST handle these slash commands (delegating to `eiva-core::commands`
 
 ---
 
-## 3. Core Types (from `eiva-core`)
+## 3. Core Types (from `eiva-claw-core`)
 
 Clients MUST use these types from the core library — they should **not**
 redefine protocol or domain types.

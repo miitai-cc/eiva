@@ -1,15 +1,15 @@
 //! Client-side protocol adapter.
 //!
-//! Wire-frame parsing is shared in `eiva_core::gateway`
+//! Wire-frame parsing is shared in `eiva_claw_core::gateway`
 //! ([`GatewayEvent::from_server_frame`]); the core [`GatewayClient`] produces
 //! [`GatewayEvent`]s, and this module adapts those into the TUI's UI-level
 //! [`GwEvent`]s (dialog prompts, render updates, status messages). It is the
 //! single translation between the shared event model and the TUI.
 //!
-//! [`GatewayClient`]: eiva_core::gateway::GatewayClient
+//! [`GatewayClient`]: eiva_claw_core::gateway::GatewayClient
 
 use crate::app::{GwEvent, PanelKind};
-use eiva_core::gateway::GatewayEvent;
+use eiva_claw_core::gateway::GatewayEvent;
 
 /// Adapt a shared gateway event into a TUI UI event.
 ///
@@ -89,7 +89,7 @@ pub(crate) fn gateway_event_to_gw_event(event: GatewayEvent) -> Option<GwEvent> 
             message,
         } => GwEvent::ToolStatus {
             id,
-            status: eiva_core::ui::ToolLiveStatus {
+            status: eiva_claw_core::ui::ToolLiveStatus {
                 elapsed_ms,
                 pid,
                 cpu_percent,
@@ -166,7 +166,7 @@ pub(crate) fn gateway_event_to_gw_event(event: GatewayEvent) -> Option<GwEvent> 
         } => GwEvent::ProjectsUpdate {
             projects: projects
                 .into_iter()
-                .map(|p| eiva_core::ui::ProjectInfo {
+                .map(|p| eiva_claw_core::ui::ProjectInfo {
                     id: p.id,
                     name: p.name,
                     path: p.path,
@@ -516,7 +516,7 @@ pub(crate) fn gateway_event_to_gw_event(event: GatewayEvent) -> Option<GwEvent> 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use eiva_core::gateway::{
+    use eiva_claw_core::gateway::{
         SecretEntryDto, ServerFrame, ServerFrameType, ServerPayload, StatusType,
     };
 

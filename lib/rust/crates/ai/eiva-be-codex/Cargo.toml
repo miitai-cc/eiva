@@ -1,0 +1,17 @@
+[package]
+name = "eiva-be-codex"
+version = "0.4.0"
+edition = "2024"
+authors = ["Erica Stith <erica@example.com>"]
+license = "MIT"
+workspace = "../../../../../backend"
+
+[dependencies]
+salvo = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+async-trait = { workspace = true }
+anyhow = { workspace = true }

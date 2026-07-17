@@ -1,6 +1,6 @@
 use tracing::debug;
 
-use eiva_core::gateway::ChatMessage;
+use eiva_claw_core::gateway::ChatMessage;
 
 // ── Context window helpers ──────────────────────────────────────────────────
 

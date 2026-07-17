@@ -10,8 +10,8 @@ pub struct UsageTotalsData {
     pub period: String,
 }
 
-impl From<&eiva_core::gateway::protocol::frames::UsageTotalsDto> for UsageTotalsData {
-    fn from(dto: &eiva_core::gateway::protocol::frames::UsageTotalsDto) -> Self {
+impl From<&eiva_claw_core::gateway::protocol::frames::UsageTotalsDto> for UsageTotalsData {
+    fn from(dto: &eiva_claw_core::gateway::protocol::frames::UsageTotalsDto) -> Self {
         Self {
             total_requests: dto.total_requests,
             total_input_tokens: dto.total_input_tokens,
@@ -58,8 +58,8 @@ pub struct ModelUsageData {
     pub avg_latency_ms: u64,
 }
 
-impl From<&eiva_core::gateway::protocol::frames::ModelUsageDto> for ModelUsageData {
-    fn from(dto: &eiva_core::gateway::protocol::frames::ModelUsageDto) -> Self {
+impl From<&eiva_claw_core::gateway::protocol::frames::ModelUsageDto> for ModelUsageData {
+    fn from(dto: &eiva_claw_core::gateway::protocol::frames::ModelUsageDto) -> Self {
         Self {
             provider: dto.provider.clone(),
             model: dto.model.clone(),
@@ -87,8 +87,8 @@ pub struct SessionUsageData {
     pub output_tokens: u64,
 }
 
-impl From<&eiva_core::gateway::protocol::frames::SessionUsageDto> for SessionUsageData {
-    fn from(dto: &eiva_core::gateway::protocol::frames::SessionUsageDto) -> Self {
+impl From<&eiva_claw_core::gateway::protocol::frames::SessionUsageDto> for SessionUsageData {
+    fn from(dto: &eiva_claw_core::gateway::protocol::frames::SessionUsageDto) -> Self {
         Self {
             session_id: dto.session_id.clone(),
             thread_label: dto.thread_label.clone(),

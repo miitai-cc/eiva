@@ -1,16 +1,16 @@
 use anyhow::Result;
-use eiva_core::tools::error::{ToolError, ToolResult};
+use eiva_claw_core::tools::error::{ToolError, ToolResult};
 use tracing::{debug, instrument, warn};
 
-use eiva_core::gateway::protocol::server::{
+use eiva_claw_core::gateway::protocol::server::{
     send_secrets_delete_credential_result, send_secrets_delete_result, send_secrets_get_result,
     send_secrets_has_totp_result, send_secrets_list_result, send_secrets_peek_result,
     send_secrets_remove_totp_result, send_secrets_set_disabled_result,
     send_secrets_set_policy_result, send_secrets_setup_totp_result, send_secrets_store_result,
     send_secrets_verify_totp_result, send_vault_unlocked,
 };
-use eiva_core::gateway::{ClientPayload, SecretEntryDto, transport};
-use eiva_core::secrets::{AccessContext, AccessPolicy, CredentialValue, SecretEntry, SecretKind};
+use eiva_claw_core::gateway::{ClientPayload, SecretEntryDto, transport};
+use eiva_claw_core::secrets::{AccessContext, AccessPolicy, CredentialValue, SecretEntry, SecretKind};
 
 use super::SharedVault;
 

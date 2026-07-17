@@ -8,8 +8,8 @@ use anyhow::{Context, Result};
 use serde_json::{Value, json};
 use tracing::{debug, trace};
 
-use eiva_core::gateway::MediaRef;
-use eiva_core::messengers::MediaAttachment;
+use eiva_claw_core::gateway::MediaRef;
+use eiva_claw_core::messengers::MediaAttachment;
 
 /// Maximum image size to download (10 MB).
 const MAX_IMAGE_SIZE: usize = 10 * 1024 * 1024;

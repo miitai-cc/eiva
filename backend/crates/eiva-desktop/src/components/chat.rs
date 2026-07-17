@@ -11,8 +11,8 @@
 use dioxus::prelude::*;
 use dioxus_bulma::prelude::{BulmaColor, BulmaSize, Button};
 use dioxus_genai_chat::{ChatControls, ChatSurface, ContextEvent};
-use eiva_core::ui::ChatMessage;
-use eiva_core::user_prompt_types::{PromptResponseValue, UserPrompt};
+use eiva_claw_core::ui::ChatMessage;
+use eiva_claw_core::user_prompt_types::{PromptResponseValue, UserPrompt};
 
 use super::composer_accessory::{ComposerAccessory, ModelSelection};
 use super::user_prompt::UserPromptCard;

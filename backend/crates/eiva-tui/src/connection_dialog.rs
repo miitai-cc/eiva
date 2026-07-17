@@ -11,12 +11,12 @@ use std::io::{self, BufRead, Write};
 use eiva_view::anyhow;
 use eiva_view::anyhow::Result;
 
-use eiva_core::client_prefs::{
+use eiva_claw_core::client_prefs::{
     DEFAULT_GATEWAY_URL, load_auto_connect_gateway_urls, load_default_startup_gateway_urls,
     load_saved_gateway_url, save_gateway_url, should_bypass_connection_dialog,
 };
-use eiva_core::gateway::{SshConnection, SshReader, SshWriter};
-use eiva_core::theme as t;
+use eiva_claw_core::gateway::{SshConnection, SshReader, SshWriter};
+use eiva_claw_core::theme as t;
 
 /// Outcome of attempting to establish a gateway connection.
 pub struct ConnectionResult {

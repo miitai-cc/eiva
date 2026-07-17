@@ -78,7 +78,7 @@ pub struct RootProps {
     // sidebar (two-level: projects → threads)
     pub surface: eiva_view::ChatSurfaceData,
     pub threads: Vec<eiva_view::SidebarItemData>,
-    pub projects: Vec<eiva_core::ui::ProjectInfo>,
+    pub projects: Vec<eiva_claw_core::ui::ProjectInfo>,
     pub active_project_id: u64,
     pub tab_focused: bool,
     pub tab_selected: usize,
@@ -103,7 +103,7 @@ pub struct RootProps {
     pub user_prompt_title: String,
     pub user_prompt_desc: String,
     pub user_prompt_input: String,
-    pub user_prompt_type: Option<eiva_core::user_prompt_types::PromptType>,
+    pub user_prompt_type: Option<eiva_claw_core::user_prompt_types::PromptType>,
     pub user_prompt_selected: usize,
     pub user_prompt_checked: Vec<bool>,
 

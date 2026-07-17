@@ -7,7 +7,7 @@
 
 use crate::theme;
 use iocraft::prelude::*;
-use eiva_core::ui::ProjectInfo;
+use eiva_claw_core::ui::ProjectInfo;
 use eiva_view::SidebarItemData;
 
 #[derive(Default, Props)]

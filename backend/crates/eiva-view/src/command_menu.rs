@@ -108,7 +108,7 @@ pub fn build_slash_completions(
     live_models: Option<&[String]>,
     partial: &str,
 ) -> Vec<String> {
-    let mut names = eiva_core::commands::command_names_for_provider(provider);
+    let mut names = eiva_claw_core::commands::command_names_for_provider(provider);
     if let Some(live) = live_models {
         let mut seen: std::collections::HashSet<String> = names.iter().cloned().collect();
         for model in live {

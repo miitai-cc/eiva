@@ -196,7 +196,7 @@ Eiva is organized as a **Cargo workspace** with four crates:
 
 | Crate | Path | Description |
 |-------|------|-------------|
-| **eiva-core** | `crates/eiva-core/` | Core library — config, gateway, tools, secrets, providers |
+| **eiva-claw-core** | `crates/eiva-claw-core/` | Core library — config, gateway, tools, secrets, providers |
 | **eiva-cli** | `crates/eiva-cli/` | CLI binaries (`eiva` and `eiva-gateway`) |
 | **eiva-tui** | `crates/eiva-tui/` | Terminal UI client (ratatui) |
 | **eiva-desktop** | `crates/eiva-desktop/` | Desktop UI client (Dioxus) |
@@ -265,7 +265,7 @@ Features are split across the workspace crates:
 | `tui` | Terminal UI (ratatui + crossterm) | ✅ |
 | `desktop` | Desktop UI launcher (`eiva desktop`) | ✅ |
 
-**eiva-core** (library crate):
+**eiva-claw-core** (library crate):
 
 | Feature | Description | Default |
 |---------|-------------|---------|
@@ -283,13 +283,13 @@ cargo build --release
 cargo build --release -p eiva-cli --no-default-features
 
 # With Matrix support
-cargo build --release --features eiva-core/matrix
+cargo build --release --features eiva-claw-core/matrix
 
 # Everything enabled
-cargo build --release --features eiva-core/full
+cargo build --release --features eiva-claw-core/full
 
 # Build only the core library
-cargo check -p eiva-core
+cargo check -p eiva-claw-core
 
 # Build only the TUI client
 cargo check -p eiva-tui
@@ -305,7 +305,7 @@ cargo check -p eiva-desktop
 cargo test --workspace
 
 # Core library tests only
-cargo test -p eiva-core
+cargo test -p eiva-claw-core
 
 # TUI client tests only
 cargo test -p eiva-tui
@@ -484,7 +484,7 @@ trait RuntimeAdapter {
 Eiva/
 ├── Cargo.toml              # Workspace root
 ├── crates/
-│   ├── eiva-core/     # Core library (config, gateway, tools, secrets, providers)
+│   ├── eiva-claw-core/     # Core library (config, gateway, tools, secrets, providers)
 │   ├── eiva-cli/      # CLI binaries (eiva + eiva-gateway)
 │   └── eiva-tui/      # Terminal UI client (ratatui)
 ├── docs/                   # Architecture, security, and client spec docs

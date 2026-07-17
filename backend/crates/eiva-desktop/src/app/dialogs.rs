@@ -14,10 +14,10 @@ use crate::app_support::{
 };
 use crate::components::*;
 use crate::state::{AppState, Theme};
-use eiva_core::gateway::client_types::{GatewayCommand, GatewayEvent};
-use eiva_core::gateway::{EngineActionKind, GatewayClient, ModelActionKind};
-use eiva_core::types::MessageRole;
-use eiva_core::ui::{ConnectionStatus, ThreadInfo};
+use eiva_claw_core::gateway::client_types::{GatewayCommand, GatewayEvent};
+use eiva_claw_core::gateway::{EngineActionKind, GatewayClient, ModelActionKind};
+use eiva_claw_core::types::MessageRole;
+use eiva_claw_core::ui::{ConnectionStatus, ThreadInfo};
 use eiva_view::*;
 
 use super::signals::{AppSignals, do_reconnect};
@@ -100,7 +100,7 @@ pub(super) fn render_dialogs(sig: AppSignals) -> Element {
                 on_connect: move |url: String| {
                     // Record in the history (most recent first); the default
                     // marker is only changed explicitly via the star toggle.
-                    eiva_core::client_prefs::record_recent_connection(&url);
+                    eiva_claw_core::client_prefs::record_recent_connection(&url);
                     connection_prefs.set(ConnectionDialogData::load());
                     state.write().gateway_url = url.clone();
                     // Mark auto-connect as done so it does not also fire when
@@ -111,15 +111,15 @@ pub(super) fn render_dialogs(sig: AppSignals) -> Element {
                     });
                 },
                 on_set_default: move |(url, is_default): (String, bool)| {
-                    eiva_core::client_prefs::set_default_connection(&url, is_default);
+                    eiva_claw_core::client_prefs::set_default_connection(&url, is_default);
                     connection_prefs.set(ConnectionDialogData::load());
                 },
                 on_remove: move |url: String| {
-                    eiva_core::client_prefs::remove_connection(&url);
+                    eiva_claw_core::client_prefs::remove_connection(&url);
                     connection_prefs.set(ConnectionDialogData::load());
                 },
                 on_toggle_autoconnect: move |enabled: bool| {
-                    eiva_core::client_prefs::set_autoconnect_on_startup(enabled);
+                    eiva_claw_core::client_prefs::set_autoconnect_on_startup(enabled);
                     connection_prefs.set(ConnectionDialogData::load());
                 },
                 on_cancel: move |_| show_connection.set(false),
@@ -201,7 +201,7 @@ pub(super) fn render_dialogs(sig: AppSignals) -> Element {
                     do_reconnect(sig);
                 },
                 on_credential_save: move |(provider_id, api_key): (String, String)| {
-                    let secret_key = eiva_core::providers::secret_key_for_provider(&provider_id)
+                    let secret_key = eiva_claw_core::providers::secret_key_for_provider(&provider_id)
                         .unwrap_or(&provider_id)
                         .to_string();
                     let gw = gateway.read().clone();
@@ -219,15 +219,15 @@ pub(super) fn render_dialogs(sig: AppSignals) -> Element {
                         MessageRole::Success,
                         format!(
                             "API key saved for {}",
-                            eiva_core::providers::display_name_for_provider(&provider_id)
+                            eiva_claw_core::providers::display_name_for_provider(&provider_id)
                         ),
                     );
                 },
-                on_custom_provider_add: move |cfg: eiva_core::providers::CustomProviderConfig| {
+                on_custom_provider_add: move |cfg: eiva_claw_core::providers::CustomProviderConfig| {
                     // Persist to the local config; `Config::save` re-registers
                     // the runtime provider catalogue, so the model bar picks
                     // the new provider up immediately.
-                    match eiva_core::config::Config::load(None) {
+                    match eiva_claw_core::config::Config::load(None) {
                         Ok(mut config) => {
                             let id = cfg.id.clone();
                             let replaced = config
@@ -264,7 +264,7 @@ pub(super) fn render_dialogs(sig: AppSignals) -> Element {
                     }
                 },
                 on_custom_provider_remove: move |id: String| {
-                    match eiva_core::config::Config::load(None) {
+                    match eiva_claw_core::config::Config::load(None) {
                         Ok(mut config) => {
                             let before = config.custom_providers.len();
                             config.custom_providers.retain(|p| p.id != id);

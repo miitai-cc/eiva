@@ -2,7 +2,7 @@
 //!
 //! These types represent the exact slice of data that `MessageBubble`
 //! and `ToolCallPanel` need to render — distinct from the canonical
-//! [`ChatMessage`] / [`ToolCallInfo`] models in `eiva_core::ui`.
+//! [`ChatMessage`] / [`ToolCallInfo`] models in `eiva_claw_core::ui`.
 //!
 //! The key difference: a `ChatMessage` owns tool calls and carries
 //! enough state for translation from `GatewayEvent`. A `MessageBubbleData`
@@ -13,7 +13,7 @@
 use std::borrow::Cow;
 
 use chrono::{DateTime, Utc};
-use eiva_core::types::MessageRole;
+use eiva_claw_core::types::MessageRole;
 
 use crate::tone::Tone;
 
@@ -77,13 +77,13 @@ impl Default for MessageBubbleData {
 }
 
 impl MessageBubbleData {
-    /// Build from a canonical [`eiva_core::ui::ChatMessage`].
+    /// Build from a canonical [`eiva_claw_core::ui::ChatMessage`].
     ///
     /// Preserves role, content, timestamp, and streaming state.
     /// `agent_name` must be set by the caller (it depends on external
     /// state, not the message itself).
     pub fn from_chat_message(
-        msg: &eiva_core::ui::ChatMessage,
+        msg: &eiva_claw_core::ui::ChatMessage,
         agent_name: Option<String>,
     ) -> Self {
         Self {
@@ -307,7 +307,7 @@ pub struct ToolCallData {
 
     /// Live execution status streamed by the gateway while the call is
     /// still running (cleared when the result arrives).
-    pub live_status: Option<eiva_core::ui::ToolLiveStatus>,
+    pub live_status: Option<eiva_claw_core::ui::ToolLiveStatus>,
     /// Live output tail streamed while the tool runs (CR-overwrites
     /// applied, ANSI stripped, bounded). Cleared when the result arrives.
     pub live_output: String,
@@ -390,10 +390,10 @@ impl ToolCallData {
 
     /// The arguments string, truncated for display.
     ///
-    /// Uses `eiva_core::ui::truncate_content` to limit both
+    /// Uses `eiva_claw_core::ui::truncate_content` to limit both
     /// character count and line count.
     pub fn arguments_preview(&self, max_chars: usize, max_lines: usize) -> String {
-        eiva_core::ui::truncate_content(&self.arguments, max_chars, max_lines)
+        eiva_claw_core::ui::truncate_content(&self.arguments, max_chars, max_lines)
     }
 
     /// The result string, truncated for display.
@@ -403,7 +403,7 @@ impl ToolCallData {
     pub fn result_preview(&self, max_chars: usize, max_lines: usize) -> Option<String> {
         self.result
             .as_deref()
-            .map(|r| eiva_core::ui::truncate_content(r, max_chars, max_lines))
+            .map(|r| eiva_claw_core::ui::truncate_content(r, max_chars, max_lines))
     }
 
     /// Wall-clock duration label, e.g. `"0.4s"` / `"12s"` / `"2m 03s"`.
@@ -630,12 +630,12 @@ fn one_line(s: &str, max_chars: usize) -> String {
     out
 }
 
-impl From<&eiva_core::ui::ToolCallInfo> for ToolCallData {
-    fn from(tc: &eiva_core::ui::ToolCallInfo) -> Self {
+impl From<&eiva_claw_core::ui::ToolCallInfo> for ToolCallData {
+    fn from(tc: &eiva_claw_core::ui::ToolCallInfo) -> Self {
         Self {
             id: tc.id.clone(),
             name: tc.name.clone(),
-            arguments: eiva_core::ui::pretty_print_json(&tc.arguments),
+            arguments: eiva_claw_core::ui::pretty_print_json(&tc.arguments),
             result: tc.result.clone(),
             is_error: tc.is_error,
             collapsed: tc.collapsed,

@@ -10,8 +10,8 @@ pub struct PendingApprovalData {
     pub selected: bool,
 }
 
-impl From<&eiva_core::gateway::protocol::frames::PendingApprovalDto> for PendingApprovalData {
-    fn from(dto: &eiva_core::gateway::protocol::frames::PendingApprovalDto) -> Self {
+impl From<&eiva_claw_core::gateway::protocol::frames::PendingApprovalDto> for PendingApprovalData {
+    fn from(dto: &eiva_claw_core::gateway::protocol::frames::PendingApprovalDto) -> Self {
         Self {
             id: dto.id.clone(),
             tool_name: dto.tool_name.clone(),
@@ -25,7 +25,7 @@ impl From<&eiva_core::gateway::protocol::frames::PendingApprovalDto> for Pending
 impl PendingApprovalData {
     /// Truncated arguments preview.
     pub fn arguments_preview(&self, max_chars: usize) -> String {
-        eiva_core::ui::truncate_content(&self.arguments, max_chars, usize::MAX)
+        eiva_claw_core::ui::truncate_content(&self.arguments, max_chars, usize::MAX)
     }
 }
 

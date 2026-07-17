@@ -103,8 +103,8 @@ impl SidebarItemData {
     }
 }
 
-impl From<&eiva_core::ui::ThreadInfo> for SidebarItemData {
-    fn from(t: &eiva_core::ui::ThreadInfo) -> Self {
+impl From<&eiva_claw_core::ui::ThreadInfo> for SidebarItemData {
+    fn from(t: &eiva_claw_core::ui::ThreadInfo) -> Self {
         Self {
             id: t.id,
             project_id: t.project_id,
@@ -169,8 +169,8 @@ impl SidebarTree {
     /// is placed under the active project so it's never dropped. Project order
     /// follows `projects`; threads keep their incoming order within a group.
     pub fn build(
-        projects: &[eiva_core::ui::ProjectInfo],
-        threads: &[eiva_core::ui::ThreadInfo],
+        projects: &[eiva_claw_core::ui::ProjectInfo],
+        threads: &[eiva_claw_core::ui::ThreadInfo],
         active_project_id: u64,
     ) -> Self {
         let items = threads.iter().map(SidebarItemData::from).collect();
@@ -201,7 +201,7 @@ impl SidebarTree {
     ///
     /// [`effective_project_id`]: SidebarTree::effective_project_id
     pub fn from_items(
-        projects: &[eiva_core::ui::ProjectInfo],
+        projects: &[eiva_claw_core::ui::ProjectInfo],
         items: Vec<SidebarItemData>,
         active_project_id: u64,
     ) -> Self {
@@ -262,7 +262,7 @@ impl SidebarTree {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use eiva_core::ui::{ProjectInfo, ThreadInfo};
+    use eiva_claw_core::ui::{ProjectInfo, ThreadInfo};
 
     fn thread(id: u64, project_id: u64) -> ThreadInfo {
         ThreadInfo {

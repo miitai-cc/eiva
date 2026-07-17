@@ -1,7 +1,7 @@
 // ── Eiva TUI Theme ─────────────────────────────────────────────────────
 //
 // Colour palette for the iocraft TUI.
-// Follows the "lobster palette" from eiva-core/src/theme.rs
+// Follows the "lobster palette" from eiva-claw-core/src/theme.rs
 //
 // | Token          | Hex       | Usage                          |
 // |----------------|-----------|--------------------------------|
@@ -15,7 +15,7 @@
 // | muted          | `#8B7F77` | de-emphasis, metadata          |
 
 use iocraft::prelude::*;
-use eiva_core::types::MessageRole;
+use eiva_claw_core::types::MessageRole;
 
 // ── Accent (lobster orange) ─────────────────────────────────────────────────
 
@@ -146,8 +146,8 @@ pub fn role_border(role: &MessageRole) -> Color {
     }
 }
 
-pub fn gateway_color(status: &eiva_core::types::GatewayStatus) -> Color {
-    use eiva_core::types::GatewayStatus::*;
+pub fn gateway_color(status: &eiva_claw_core::types::GatewayStatus) -> Color {
+    use eiva_claw_core::types::GatewayStatus::*;
     match status {
         Connected | ModelReady => SUCCESS,
         Connecting => WARN,
@@ -157,8 +157,8 @@ pub fn gateway_color(status: &eiva_core::types::GatewayStatus) -> Color {
     }
 }
 
-pub fn gateway_icon(status: &eiva_core::types::GatewayStatus) -> &'static str {
-    use eiva_core::types::GatewayStatus::*;
+pub fn gateway_icon(status: &eiva_claw_core::types::GatewayStatus) -> &'static str {
+    use eiva_claw_core::types::GatewayStatus::*;
     match status {
         Connected | ModelReady => "●",
         Connecting => "◌",

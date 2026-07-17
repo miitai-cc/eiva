@@ -5,10 +5,10 @@
 
 use anyhow::Result;
 use clap::{Args, Parser, Subcommand, ValueEnum};
-use eiva_core::args::CommonArgs;
-use eiva_core::config::Config;
-use eiva_core::daemon;
-use eiva_core::skills::SkillManager;
+use eiva_claw_core::args::CommonArgs;
+use eiva_claw_core::config::Config;
+use eiva_claw_core::daemon;
+use eiva_claw_core::skills::SkillManager;
 use eiva_onboard::{OnboardArgs as WizardArgs, run_onboard_wizard};
 
 mod commands;
@@ -370,7 +370,7 @@ struct GatewayRunArgs {
     /// Verbose logging (equivalent to --log-level=debug)
     #[arg(long, short)]
     verbose: bool,
-    /// Log level filter (e.g., "debug", "eiva=debug,info", "eiva_core::providers=debug")
+    /// Log level filter (e.g., "debug", "eiva=debug,info", "eiva_claw_core::providers=debug")
     #[arg(long, value_name = "LEVEL")]
     log_level: Option<String>,
 }
@@ -451,10 +451,10 @@ async fn main() -> Result<()> {
     // Set RUSTYCLAW_LOG=debug or RUST_LOG=debug for verbose output.
     // (The `tui`/`desktop` subcommands spawn separate binaries that configure
     // their own logging.)
-    eiva_core::logging::init_from_env();
+    eiva_claw_core::logging::init_from_env();
 
     // Initialise colour output (respects --no-color / NO_COLOR).
-    eiva_core::theme::init_color(cli.common.no_color);
+    eiva_claw_core::theme::init_color(cli.common.no_color);
 
     let config_path = cli.common.config_path();
     let mut config = Config::load(config_path)?;
@@ -484,14 +484,14 @@ async fn main() -> Result<()> {
                 run_onboard_wizard(&mut config, &mut secrets, Some(tui_args))?;
                 // Optional agent setup step
                 let ws_dir = config.workspace_dir();
-                match eiva_core::tools::agent_setup::exec_agent_setup(
+                match eiva_claw_core::tools::agent_setup::exec_agent_setup(
                     &serde_json::json!({}),
                     &ws_dir,
                 ) {
-                    Ok(msg) => println!("{}", eiva_core::theme::icon_ok(&msg)),
+                    Ok(msg) => println!("{}", eiva_claw_core::theme::icon_ok(&msg)),
                     Err(e) => println!(
                         "{}",
-                        eiva_core::theme::icon_fail(&format!("Agent setup failed: {}", e))
+                        eiva_claw_core::theme::icon_fail(&format!("Agent setup failed: {}", e))
                     ),
                 }
             } else {
@@ -503,21 +503,21 @@ async fn main() -> Result<()> {
                 config.save(None)?;
                 println!(
                     "{}",
-                    eiva_core::theme::icon_ok(&format!(
+                    eiva_claw_core::theme::icon_ok(&format!(
                         "Initialised config + workspace at {}",
-                        eiva_core::theme::info(&config.settings_dir.display().to_string())
+                        eiva_claw_core::theme::info(&config.settings_dir.display().to_string())
                     ))
                 );
                 // Optional agent setup step
                 let ws_dir = config.workspace_dir();
-                match eiva_core::tools::agent_setup::exec_agent_setup(
+                match eiva_claw_core::tools::agent_setup::exec_agent_setup(
                     &serde_json::json!({}),
                     &ws_dir,
                 ) {
-                    Ok(msg) => println!("{}", eiva_core::theme::icon_ok(&msg)),
+                    Ok(msg) => println!("{}", eiva_claw_core::theme::icon_ok(&msg)),
                     Err(e) => println!(
                         "{}",
-                        eiva_core::theme::icon_fail(&format!("Agent setup failed: {}", e))
+                        eiva_claw_core::theme::icon_fail(&format!("Agent setup failed: {}", e))
                     ),
                 }
             }
@@ -565,10 +565,10 @@ async fn main() -> Result<()> {
                 config.save(None)?;
                 println!(
                     "{}",
-                    eiva_core::theme::icon_ok(&format!(
+                    eiva_claw_core::theme::icon_ok(&format!(
                         "Set {} = {}",
-                        eiva_core::theme::accent_bright(&path),
-                        eiva_core::theme::info(&value)
+                        eiva_claw_core::theme::accent_bright(&path),
+                        eiva_claw_core::theme::info(&value)
                     ))
                 );
             }
@@ -577,9 +577,9 @@ async fn main() -> Result<()> {
                 config.save(None)?;
                 println!(
                     "{}",
-                    eiva_core::theme::icon_ok(&format!(
+                    eiva_claw_core::theme::icon_ok(&format!(
                         "Unset {}",
-                        eiva_core::theme::accent_bright(&path)
+                        eiva_claw_core::theme::accent_bright(&path)
                     ))
                 );
             }
@@ -587,7 +587,7 @@ async fn main() -> Result<()> {
 
         // ── Doctor ──────────────────────────────────────────────
         Commands::Doctor(_args) => {
-            use eiva_core::theme as t;
+            use eiva_claw_core::theme as t;
 
             let sp = t::spinner("Running health checks…");
 
@@ -725,7 +725,7 @@ async fn main() -> Result<()> {
                 commands::handle_status(&config, json);
             }
             GatewayCommands::Reload => {
-                use eiva_core::theme as t;
+                use eiva_claw_core::theme as t;
 
                 let url = config
                     .gateway_url
@@ -777,7 +777,7 @@ async fn main() -> Result<()> {
 
             match sub {
                 SkillsCommands::List => {
-                    use eiva_core::theme as t;
+                    use eiva_claw_core::theme as t;
                     let skills = sm.get_skills();
                     if skills.is_empty() {
                         println!("{}", t::muted("No skills installed."));
@@ -794,7 +794,7 @@ async fn main() -> Result<()> {
                 SkillsCommands::Info { name } => {
                     println!(
                         "{}",
-                        eiva_core::theme::muted(&format!(
+                        eiva_claw_core::theme::muted(&format!(
                             "Skill info for '{}' is not yet implemented.",
                             name
                         ))
@@ -803,7 +803,7 @@ async fn main() -> Result<()> {
                 SkillsCommands::Check => {
                     println!(
                         "{}",
-                        eiva_core::theme::muted("Skill check is not yet implemented.")
+                        eiva_claw_core::theme::muted("Skill check is not yet implemented.")
                     );
                 }
             }

@@ -18,9 +18,9 @@
 
 use anyhow::Result;
 use async_trait::async_trait;
-use eiva_core::gateway::protocol::frames::{ServerFrame, serialize_frame};
-use eiva_core::gateway::transport::TransportWriter;
-use eiva_core::threads::ThreadId;
+use eiva_claw_core::gateway::protocol::frames::{ServerFrame, serialize_frame};
+use eiva_claw_core::gateway::transport::TransportWriter;
+use eiva_claw_core::threads::ThreadId;
 use tokio::sync::mpsc;
 
 /// A message from a spawned model task back to the main connection handler.

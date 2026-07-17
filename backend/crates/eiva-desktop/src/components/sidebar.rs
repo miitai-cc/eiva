@@ -11,7 +11,7 @@ use dioxus_bulma::prelude::{
     BulmaColor, BulmaSize, Button, Delete, Menu, MenuLabel, MenuList, Tag, Tags,
 };
 
-use eiva_core::ui::ConnectionStatus;
+use eiva_claw_core::ui::ConnectionStatus;
 use eiva_view::{ProjectGroupData, SidebarItemData, SidebarTree, StatusBarData};
 
 use super::tone_color;

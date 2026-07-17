@@ -18,7 +18,7 @@ pub async fn connect_and_pair(host: &str, port: u16, public_key: &str) -> Result
     let _ = public_key;
 
     // Load the client keypair
-    let keypair = eiva_core::pairing::ClientKeyPair::load_or_generate(None)
+    let keypair = eiva_claw_core::pairing::ClientKeyPair::load_or_generate(None)
         .context("Failed to load client keypair")?;
 
     // Create SSH client config

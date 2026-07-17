@@ -10,12 +10,12 @@ use std::sync::Arc;
 use anyhow::Result;
 use tracing::debug;
 
-use eiva_core::config::{Config, ModelProvider};
-use eiva_core::gateway::protocol;
-use eiva_core::gateway::protocol::server::send_reload_result;
-use eiva_core::gateway::{ModelContext, StatusType, transport};
-use eiva_core::providers as crate_providers;
-use eiva_core::tools;
+use eiva_claw_core::config::{Config, ModelProvider};
+use eiva_claw_core::gateway::protocol;
+use eiva_claw_core::gateway::protocol::server::send_reload_result;
+use eiva_claw_core::gateway::{ModelContext, StatusType, transport};
+use eiva_claw_core::providers as crate_providers;
+use eiva_claw_core::tools;
 
 use crate::session::init_copilot_session;
 use crate::{SharedConfig, SharedCopilotSession, SharedModelCtx, SharedModelRegistry, SharedVault};

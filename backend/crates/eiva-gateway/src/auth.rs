@@ -6,9 +6,9 @@ use std::time::Instant;
 use tokio::sync::Mutex;
 use tracing::{debug, instrument, warn};
 
-use eiva_core::gateway::transport::TransportReader;
-use eiva_core::gateway::{ClientFrameType, ClientPayload, CopilotSession};
-use eiva_core::providers;
+use eiva_claw_core::gateway::transport::TransportReader;
+use eiva_claw_core::gateway::{ClientFrameType, ClientPayload, CopilotSession};
+use eiva_claw_core::providers;
 
 /// Maximum consecutive TOTP failures before lockout.
 const MAX_TOTP_FAILURES: u32 = 3;

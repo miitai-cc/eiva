@@ -23,10 +23,10 @@
 
 use std::collections::{HashMap, VecDeque};
 
-use eiva_core::gateway::protocol;
-use eiva_core::types::MessageRole;
-use eiva_core::ui::{ChatMessage, ConnectionStatus, ProjectInfo, ThreadInfo, ToolCallInfo};
-use eiva_core::user_prompt_types::UserPrompt;
+use eiva_claw_core::gateway::protocol;
+use eiva_claw_core::types::MessageRole;
+use eiva_claw_core::ui::{ChatMessage, ConnectionStatus, ProjectInfo, ThreadInfo, ToolCallInfo};
+use eiva_claw_core::user_prompt_types::UserPrompt;
 
 use crate::PromptAttachment;
 

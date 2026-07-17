@@ -8,7 +8,7 @@ use std::time::Instant;
 
 use eiva_view::{chrono, dirs};
 
-use eiva_core::gateway::EngineActionKind;
+use eiva_claw_core::gateway::EngineActionKind;
 
 use super::state;
 use crate::app::UserInput;
@@ -627,9 +627,9 @@ pub(super) fn handle_normal_key(
             let ap = active_process.read().clone();
             if let Some(ap) = ap {
                 let action = if ap.paused {
-                    eiva_core::exec_status::ProcessControlAction::Resume
+                    eiva_claw_core::exec_status::ProcessControlAction::Resume
                 } else {
-                    eiva_core::exec_status::ProcessControlAction::Pause
+                    eiva_claw_core::exec_status::ProcessControlAction::Pause
                 };
                 if let Ok(guard) = tx_for_keys.lock() {
                     if let Some(ref tx) = *guard {
@@ -655,7 +655,7 @@ pub(super) fn handle_normal_key(
                     if let Some(ref tx) = *guard {
                         let _ = tx.send(UserInput::ProcessControl {
                             pid: ap.pid,
-                            action: eiva_core::exec_status::ProcessControlAction::Stop,
+                            action: eiva_claw_core::exec_status::ProcessControlAction::Stop,
                         });
                     }
                 }
@@ -669,7 +669,7 @@ pub(super) fn handle_normal_key(
                     if let Some(ref tx) = *guard {
                         let _ = tx.send(UserInput::ProcessControl {
                             pid: ap.pid,
-                            action: eiva_core::exec_status::ProcessControlAction::Kill,
+                            action: eiva_claw_core::exec_status::ProcessControlAction::Kill,
                         });
                     }
                 }
@@ -1039,15 +1039,15 @@ pub(super) fn handle_normal_key(
             let entry = msgs.iter().rev().find(|m| {
                 matches!(
                     m.role,
-                    eiva_core::types::MessageRole::Warning
-                        | eiva_core::types::MessageRole::Error
+                    eiva_claw_core::types::MessageRole::Warning
+                        | eiva_claw_core::types::MessageRole::Error
                 ) && m.details.is_some()
             });
             if let Some(msg) = entry {
                 details_dialog_text.set(msg.details.clone().unwrap_or_default());
                 details_dialog_is_error.set(matches!(
                     msg.role,
-                    eiva_core::types::MessageRole::Error
+                    eiva_claw_core::types::MessageRole::Error
                 ));
                 details_dialog_scroll.set(0);
                 show_details_dialog.set(true);
@@ -1062,7 +1062,7 @@ pub(super) fn handle_normal_key(
         {
             {
                 // Generate keypair and populate dialog
-                use eiva_core::pairing::{
+                use eiva_claw_core::pairing::{
                     ClientKeyPair, PairingData, format_fingerprint_art, generate_pairing_qr_ascii,
                     key_fingerprint,
                 };

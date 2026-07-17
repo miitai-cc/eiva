@@ -1,8 +1,8 @@
 use crate::cron_dispatch::{CronRuntime, CronType};
 use chrono::Datelike;
-use eiva_core::gateway::GatewayCommand;
-use eiva_core::gateway::client::GatewayClient;
-use eiva_core::tasks::TaskManager;
+use eiva_claw_core::gateway::GatewayCommand;
+use eiva_claw_core::gateway::client::GatewayClient;
+use eiva_claw_core::tasks::TaskManager;
 use prost::Message as ProstMessage;
 use salvo::cors::Cors;
 use salvo::http::Method;
@@ -31,9 +31,7 @@ fn get_broadcaster() -> broadcast::Sender<proto::ServerMessage> {
         .clone()
 }
 
-pub mod proto {
-    include!(concat!(env!("OUT_DIR"), "/eiva.rs"));
-}
+pub use eiva_common::eiva as proto;
 
 static TASK_MGR: OnceLock<Arc<TaskManager>> = OnceLock::new();
 pub static WORKFLOW_DB: OnceLock<crate::db::WorkflowDb> = OnceLock::new();
@@ -390,10 +388,10 @@ async fn dispatch_prompt_task(requirement: String, source_schedule_id: Option<St
                 let mut full_result = String::new();
                 while let Some(event) = client_arc.recv().await {
                     match event {
-                        eiva_core::gateway::GatewayEvent::Chunk { delta } => {
+                        eiva_claw_core::gateway::GatewayEvent::Chunk { delta } => {
                             full_result.push_str(&delta);
                         }
-                        eiva_core::gateway::GatewayEvent::ResponseDone => {
+                        eiva_claw_core::gateway::GatewayEvent::ResponseDone => {
                             save_task_record(
                                 &task_id_clone,
                                 &requirement,
@@ -415,9 +413,9 @@ async fn dispatch_prompt_task(requirement: String, source_schedule_id: Option<St
                             });
                             break;
                         }
-                        eiva_core::gateway::GatewayEvent::AuthFailed { message, .. }
-                        | eiva_core::gateway::GatewayEvent::ModelError { message }
-                        | eiva_core::gateway::GatewayEvent::Error { message } => {
+                        eiva_claw_core::gateway::GatewayEvent::AuthFailed { message, .. }
+                        | eiva_claw_core::gateway::GatewayEvent::ModelError { message }
+                        | eiva_claw_core::gateway::GatewayEvent::Error { message } => {
                             save_task_record(
                                 &task_id_clone,
                                 &requirement,
@@ -839,7 +837,7 @@ async fn create_task(req: &mut Request, res: &mut Response) {
                             let mut full_result = String::new();
                             while let Some(event) = client_arc.recv().await {
                                 match event {
-                                    eiva_core::gateway::GatewayEvent::Chunk { delta } => {
+                                    eiva_claw_core::gateway::GatewayEvent::Chunk { delta } => {
                                         full_result.push_str(&delta);
                                         if !delta.trim().is_empty() {
                                             let _ = tx.send(proto::ServerMessage {
@@ -855,7 +853,7 @@ async fn create_task(req: &mut Request, res: &mut Response) {
                                             });
                                         }
                                     }
-                                    eiva_core::gateway::GatewayEvent::ResponseDone => {
+                                    eiva_claw_core::gateway::GatewayEvent::ResponseDone => {
                                         let _ = tx.send(proto::ServerMessage {
                                             payload: Some(
                                                 proto::server_message::Payload::TaskCompleted(
@@ -869,7 +867,7 @@ async fn create_task(req: &mut Request, res: &mut Response) {
                                         });
                                         break;
                                     }
-                                    eiva_core::gateway::GatewayEvent::ToolOutput {
+                                    eiva_claw_core::gateway::GatewayEvent::ToolOutput {
                                         chunk, ..
                                     } => {
                                         let _ = tx.send(proto::ServerMessage {
@@ -882,12 +880,12 @@ async fn create_task(req: &mut Request, res: &mut Response) {
                                             )),
                                         });
                                     }
-                                    eiva_core::gateway::GatewayEvent::AuthFailed {
+                                    eiva_claw_core::gateway::GatewayEvent::AuthFailed {
                                         message,
                                         ..
                                     }
-                                    | eiva_core::gateway::GatewayEvent::ModelError { message }
-                                    | eiva_core::gateway::GatewayEvent::Error { message } => {
+                                    | eiva_claw_core::gateway::GatewayEvent::ModelError { message }
+                                    | eiva_claw_core::gateway::GatewayEvent::Error { message } => {
                                         let _ = tx.send(proto::ServerMessage {
                                             payload: Some(
                                                 proto::server_message::Payload::TaskFailed(
@@ -901,8 +899,8 @@ async fn create_task(req: &mut Request, res: &mut Response) {
                                         });
                                         break; // End the task loop on error
                                     }
-                                    eiva_core::gateway::GatewayEvent::StreamStart
-                                    | eiva_core::gateway::GatewayEvent::ThinkingStart => {
+                                    eiva_claw_core::gateway::GatewayEvent::StreamStart
+                                    | eiva_claw_core::gateway::GatewayEvent::ThinkingStart => {
                                         let _ = tx.send(proto::ServerMessage {
                                             payload: Some(
                                                 proto::server_message::Payload::TaskStatus(
@@ -914,7 +912,7 @@ async fn create_task(req: &mut Request, res: &mut Response) {
                                             ),
                                         });
                                     }
-                                    eiva_core::gateway::GatewayEvent::ToolCall { name, .. } => {
+                                    eiva_claw_core::gateway::GatewayEvent::ToolCall { name, .. } => {
                                         let _ = tx.send(proto::ServerMessage {
                                             payload: Some(proto::server_message::Payload::TaskLog(
                                                 proto::TaskLogEvent {
@@ -953,197 +951,10 @@ async fn create_task(req: &mut Request, res: &mut Response) {
     }
 }
 
-fn authorize_openclaw_request(req: &Request, res: &mut Response) -> bool {
-    let token = std::env::var("OPENCLAW_WEB_CODEX_TOKEN").unwrap_or_default();
-    if token.trim().is_empty() {
-        res.status_code(StatusCode::SERVICE_UNAVAILABLE);
-        res.render(Json(
-            serde_json::json!({"error": "OPENCLAW_WEB_CODEX_TOKEN 尚未設定"}),
-        ));
-        return false;
-    }
 
-    let expected = format!("Bearer {}", token.trim());
-    let authorization = req
-        .headers()
-        .get("authorization")
-        .and_then(|value| value.to_str().ok())
-        .unwrap_or_default();
-    if authorization != expected {
-        res.status_code(StatusCode::UNAUTHORIZED);
-        res.render(Json(
-            serde_json::json!({"error": "OpenClaw token 驗證失敗"}),
-        ));
-        return false;
-    }
 
-    true
-}
 
-fn format_task_for_openclaw(
-    task: &serde_json::Value,
-    message: Option<String>,
-) -> serde_json::Value {
-    let status = string_value(task.get("status"));
-    let logs = task
-        .get("logs")
-        .or_else(|| task.get("processLogs"))
-        .and_then(|value| value.as_array())
-        .map(|items| {
-            items
-                .iter()
-                .filter(|item| {
-                    !item
-                        .get("message")
-                        .and_then(|value| value.as_str())
-                        .unwrap_or_default()
-                        .starts_with("[stderr]")
-                })
-                .rev()
-                .take(12)
-                .cloned()
-                .collect::<Vec<_>>()
-                .into_iter()
-                .rev()
-                .collect::<Vec<_>>()
-        })
-        .unwrap_or_default();
 
-    serde_json::json!({
-        "taskId": string_value(task.get("taskId")),
-        "status": status,
-        "message": message.unwrap_or_else(|| match status {
-            "completed" => format!("任務完成：{}", string_value(task.get("taskId"))),
-            "failed" => format!("任務失敗：{}", string_value(task.get("error"))),
-            "interrupted" => format!("任務已停止：{}", string_value(task.get("taskId"))),
-            "running" => format!("任務執行中：{}", string_value(task.get("taskId"))),
-            "queued" => format!("任務排隊中：{}", string_value(task.get("taskId"))),
-            _ => format!("任務狀態 {}：{}", status, string_value(task.get("taskId"))),
-        }),
-        "logs": logs,
-        "result": string_value(task.get("result")),
-        "error": string_value(task.get("error")),
-        "createdAt": string_value(task.get("createdAt")),
-        "startedAt": string_value(task.get("startedAt")),
-        "completedAt": string_value(task.get("completedAt")),
-    })
-}
-
-#[handler]
-async fn create_openclaw_task(req: &mut Request, res: &mut Response) {
-    if !authorize_openclaw_request(req, res) {
-        return;
-    }
-
-    let body = match req.parse_json::<serde_json::Value>().await {
-        Ok(body) => body,
-        Err(e) => {
-            res.status_code(StatusCode::BAD_REQUEST);
-            res.render(Json(serde_json::json!({"error": e.to_string()})));
-            return;
-        }
-    };
-    let requirement = body
-        .get("requirement")
-        .and_then(|value| value.as_str())
-        .unwrap_or_default()
-        .trim()
-        .to_string();
-
-    if requirement.is_empty() {
-        res.status_code(StatusCode::BAD_REQUEST);
-        res.render(Json(serde_json::json!({"error": "requirement 不可為空"})));
-        return;
-    }
-    if requirement.chars().count() > 8000 {
-        res.status_code(StatusCode::PAYLOAD_TOO_LARGE);
-        res.render(Json(
-            serde_json::json!({"error": "requirement 最多 8000 字"}),
-        ));
-        return;
-    }
-
-    let task_id = dispatch_prompt_task(requirement, None).await;
-    res.status_code(StatusCode::ACCEPTED);
-    res.render(Json(serde_json::json!({
-        "taskId": task_id,
-        "status": "queued",
-        "message": format!("任務已建立：{}", task_id),
-        "logs": [],
-        "result": "",
-        "error": "",
-        "createdAt": chrono::Utc::now().to_rfc3339(),
-        "startedAt": "",
-        "completedAt": ""
-    })));
-}
-
-#[handler]
-async fn get_openclaw_task(req: &mut Request, res: &mut Response) {
-    if !authorize_openclaw_request(req, res) {
-        return;
-    }
-
-    let task_id = req.param::<String>("taskId").unwrap_or_default();
-    let Some(db) = WORKFLOW_DB.get() else {
-        res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
-        res.render(Json(serde_json::json!({"error": "DB not initialized"})));
-        return;
-    };
-
-    match db.get_task(task_id).await {
-        Ok(Some(task)) => match serde_json::from_str::<serde_json::Value>(&task) {
-            Ok(task) => res.render(Json(format_task_for_openclaw(&task, None))),
-            Err(e) => {
-                res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
-                res.render(Json(serde_json::json!({"error": e.to_string()})));
-            }
-        },
-        Ok(None) => {
-            res.status_code(StatusCode::NOT_FOUND);
-            res.render(Json(serde_json::json!({"error": "找不到任務"})));
-        }
-        Err(e) => {
-            res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
-            res.render(Json(serde_json::json!({"error": e.to_string()})));
-        }
-    }
-}
-
-#[handler]
-async fn stop_openclaw_task(req: &mut Request, res: &mut Response) {
-    if !authorize_openclaw_request(req, res) {
-        return;
-    }
-
-    let task_id = req.param::<String>("taskId").unwrap_or_default();
-    let client_opt = get_client_sessions().read().await.get(&task_id).cloned();
-    match client_opt {
-        Some(client) => {
-            if let Err(e) = client.send(GatewayCommand::Cancel).await {
-                res.status_code(StatusCode::INTERNAL_SERVER_ERROR);
-                res.render(Json(serde_json::json!({"error": e.to_string()})));
-                return;
-            }
-            res.status_code(StatusCode::ACCEPTED);
-            res.render(Json(serde_json::json!({
-                "taskId": task_id,
-                "status": "stopping",
-                "message": format!("已要求停止任務：{}", task_id),
-                "logs": [],
-                "result": "",
-                "error": "",
-                "createdAt": "",
-                "startedAt": "",
-                "completedAt": ""
-            })));
-        }
-        None => {
-            res.status_code(StatusCode::NOT_FOUND);
-            res.render(Json(serde_json::json!({"error": "找不到任務或任務已結束"})));
-        }
-    }
-}
 
 #[handler]
 async fn stop_task(req: &mut Request, res: &mut Response) {
@@ -1500,13 +1311,12 @@ async fn run_workflow(req: &mut Request, res: &mut Response) {
     if let Some(db) = WORKFLOW_DB.get() {
         match db.get_workflow(id.clone()).await {
             Ok(Some(data)) => {
-                let parsed_data: Result<eiva_core::workflow::models::WorkflowData, _> =
+                let parsed_data: Result<eiva_be_workflow::models::WorkflowData, _> =
                     serde_json::from_str(&data);
                 match parsed_data {
                     Ok(workflow_data) => {
-                        let runner =
-                            eiva_core::workflow::runner::WorkflowRunner::new(workflow_data);
-                        let ctx = eiva_core::workflow::context::WorkflowContext::new();
+                        let runner = eiva_be_workflow::WorkflowRunner::new(workflow_data);
+                        let ctx = eiva_be_workflow::context::WorkflowContext::new();
                         let task_id = uuid::Uuid::new_v4().to_string();
                         let created_at = chrono::Utc::now().to_rfc3339();
                         let requirement = format!("執行工作流程：{}", id);
@@ -1796,7 +1606,7 @@ async fn test_mcp_server(req: &mut Request, res: &mut Response) {
             .unwrap_or_default();
         let cwd = v["cwd"].as_str().map(String::from);
         let timeout_secs = v["timeout_secs"].as_u64().unwrap_or(30);
-        let server_cfg = eiva_core::mcp::McpServerConfig {
+        let server_cfg = eiva_claw_core::mcp::McpServerConfig {
             command,
             args,
             env,
@@ -1804,7 +1614,7 @@ async fn test_mcp_server(req: &mut Request, res: &mut Response) {
             enabled: true,
             timeout_secs,
         };
-        if let Some(mgr) = eiva_core::runtime_ctx::get_mcp_manager() {
+        if let Some(mgr) = eiva_claw_core::runtime_ctx::get_mcp_manager() {
             let mgr = mgr.lock().await;
             // Disconnect first if already connected
             let _ = mgr.disconnect(&server_name).await;
@@ -2021,6 +1831,33 @@ async fn test_skill(req: &mut Request, res: &mut Response) {
     }
 }
 
+
+pub struct GatewayCodexContext;
+
+#[async_trait::async_trait]
+impl eiva_be_codex::CodexApiContext for GatewayCodexContext {
+    async fn dispatch_prompt_task(&self, requirement: String) -> String {
+        dispatch_prompt_task(requirement, None).await
+    }
+    async fn get_task(&self, task_id: &str) -> anyhow::Result<Option<String>> {
+        if let Some(db) = WORKFLOW_DB.get() {
+            let task = db.get_task(task_id.to_string()).await?;
+            Ok(task)
+        } else {
+            anyhow::bail!("DB not initialized")
+        }
+    }
+    async fn stop_task(&self, task_id: &str) -> anyhow::Result<()> {
+        let client_opt = get_client_sessions().read().await.get(task_id).cloned();
+        if let Some(client) = client_opt {
+            client.send(eiva_claw_core::gateway::GatewayCommand::Cancel).await?;
+            Ok(())
+        } else {
+            anyhow::bail!("找不到任務或任務已結束")
+        }
+    }
+}
+
 pub async fn run_server(
     task_mgr: Arc<TaskManager>,
     workflow_db: crate::db::WorkflowDb,
@@ -2051,16 +1888,8 @@ pub async fn run_server(
         .push(Router::with_path("index").get(redirect_home))
         .push(Router::with_path("index.html").get(redirect_home))
         .push(
-            Router::with_path("api/openclaw/tasks")
-                .post(create_openclaw_task)
-                .options(handle_options)
-                .push(
-                    Router::with_path("<taskId>").get(get_openclaw_task).push(
-                        Router::with_path("stop")
-                            .post(stop_openclaw_task)
-                            .options(handle_options),
-                    ),
-                ),
+            Router::with_path("api/openclaw")
+                .push(eiva_be_openclaw::build_openclaw_router(Arc::new(GatewayCodexContext)))
         )
         .push(
             Router::with_path("eiva/backend/api/ver-0.95")
@@ -2091,16 +1920,8 @@ pub async fn run_server(
                         ),
                 )
                 .push(
-                    Router::with_path("openclaw/tasks")
-                        .post(create_openclaw_task)
-                        .options(handle_options)
-                        .push(
-                            Router::with_path("<taskId>").get(get_openclaw_task).push(
-                                Router::with_path("stop")
-                                    .post(stop_openclaw_task)
-                                    .options(handle_options),
-                            ),
-                        ),
+                    Router::with_path("openclaw")
+                        .push(eiva_be_openclaw::build_openclaw_router(Arc::new(GatewayCodexContext)))
                 )
                 .push(Router::with_path("workflows").get(list_workflows_handler))
                 .push(Router::with_path("ws").get(ws_handler))

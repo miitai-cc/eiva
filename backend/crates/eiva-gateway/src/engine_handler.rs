@@ -3,10 +3,10 @@
 //! Dispatches engine/model lifecycle operations to the [`EngineRegistry`].
 
 use anyhow::Result;
-use eiva_core::engines::{EngineConfig, EngineRegistry, EngineRunStatus};
-use eiva_core::gateway::TransportWriter;
-use eiva_core::gateway::protocol::frames::*;
-use eiva_core::gateway::protocol::server::send_frame;
+use eiva_claw_core::engines::{EngineConfig, EngineRegistry, EngineRunStatus};
+use eiva_claw_core::gateway::TransportWriter;
+use eiva_claw_core::gateway::protocol::frames::*;
+use eiva_claw_core::gateway::protocol::server::send_frame;
 use std::collections::HashMap;
 use tracing::warn;
 
@@ -257,7 +257,7 @@ async fn handle_engine_model_pull(
 
     // Disk space pre-flight check.
     if let Some(expected) = expected_size_bytes {
-        if let Err(e) = eiva_core::engines::preflight_disk_check(expected) {
+        if let Err(e) = eiva_claw_core::engines::preflight_disk_check(expected) {
             warn!(engine = %engine, model = %model, error = ?e, "Disk space pre-flight check failed");
             return send_action_result(writer, engine, Some(model), false, format!("{e:#}")).await;
         }

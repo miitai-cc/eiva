@@ -1,6 +1,6 @@
 //! Connection-dialog data: recent connections, default, and autoconnect.
 
-use eiva_core::client_prefs::ClientPreferences;
+use eiva_claw_core::client_prefs::ClientPreferences;
 
 /// One row in the connection dialog's recent-connections list.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -48,7 +48,7 @@ impl ConnectionDialogData {
 
     /// Reload from disk.
     pub fn load() -> Self {
-        Self::from_preferences(&eiva_core::client_prefs::load_client_preferences())
+        Self::from_preferences(&eiva_claw_core::client_prefs::load_client_preferences())
     }
 
     /// Whether a default connection exists (autoconnect requires one).

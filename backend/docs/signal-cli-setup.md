@@ -63,7 +63,7 @@ default = ["signal-cli"]
 Once configured, you can send Signal messages through Eiva:
 
 ```rust
-use eiva_core::messengers::{SignalCliMessenger, Messenger};
+use eiva_claw_core::messengers::{SignalCliMessenger, Messenger};
 
 let mut messenger = SignalCliMessenger::new(
     "my_signal".to_string(),

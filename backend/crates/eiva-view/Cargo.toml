@@ -11,7 +11,7 @@ description = "Shared component-oriented view types for Eiva clients"
 
 [dependencies]
 # Internal
-eiva-core.workspace = true
+eiva-claw-core.workspace = true
 
 # Shared dependencies consolidated here so clients compile them once
 # via eiva-view instead of each pulling them independently.

@@ -131,7 +131,7 @@ Whether it's customer service automation, internal knowledge querying, process d
 | Technology | Purpose |
 |------------|---------|
 | **Rust 1.86+ (Edition 2024)** | Core backend language |
-| **eiva-core** | Agent core library (config, gateway, tools, security) |
+| **eiva-claw-core** | Agent core library (config, gateway, tools, security) |
 | **eiva-gateway** | Standalone gateway daemon (WebSocket protocol) |
 | **eiva-cli** | CLI tools and management interface |
 | **tokio** | Async runtime |
@@ -327,7 +327,7 @@ cargo build --release
 cargo build --workspace
 
 # Full feature build (Matrix, Browser Automation)
-cargo build --release --features eiva-core/full
+cargo build --release --features eiva-claw-core/full
 ```
 
 #### Configuration Example (`config.example.toml` → `~/.eiva/config.toml`)
@@ -596,7 +596,7 @@ eiva/
 │   ├── CHANGELOG.md            # Version history
 │   ├── config.example.toml     # Config file example
 │   ├── crates/                 # Rust Crate modules
-│   │   ├── eiva-core/     # Core library (gateway, tools, security)
+│   │   ├── eiva-claw-core/     # Core library (gateway, tools, security)
 │   │   ├── eiva-cli/      # CLI tools
 │   │   ├── eiva-tui/      # Terminal UI
 │   │   ├── eiva-gateway/  # Gateway service

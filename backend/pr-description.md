@@ -9,9 +9,9 @@ This PR implements Signal Private Messenger integration for Eiva using the `sign
 ## Changes Made
 
 ### Core Implementation
-- **`crates/eiva-core/src/messengers/signal_cli.rs`**: Complete SignalCliMessenger implementation
-- **`crates/eiva-core/Cargo.toml`**: Added `signal-cli` feature flag
-- **`crates/eiva-core/src/messengers/mod.rs`**: Exported SignalCliMessenger with feature gating
+- **`crates/eiva-claw-core/src/messengers/signal_cli.rs`**: Complete SignalCliMessenger implementation
+- **`crates/eiva-claw-core/Cargo.toml`**: Added `signal-cli` feature flag
+- **`crates/eiva-claw-core/src/messengers/mod.rs`**: Exported SignalCliMessenger with feature gating
 
 ### Documentation
 - **`docs/signal-cli-setup.md`**: Comprehensive setup and configuration guide
@@ -48,7 +48,7 @@ enabled = true
 ## Usage Example
 
 ```rust
-use eiva_core::messengers::{SignalCliMessenger, Messenger};
+use eiva_claw_core::messengers::{SignalCliMessenger, Messenger};
 
 let mut messenger = SignalCliMessenger::new(
     "my_signal".to_string(),

@@ -4,11 +4,11 @@ use eiva_view::anyhow::Result;
 use eiva_view::tokio;
 use std::sync::mpsc as sync_mpsc;
 
-use eiva_core::commands::CommandAction;
-use eiva_core::config::Config;
-use eiva_core::gateway::{GatewayClient, GatewayCommand};
-use eiva_core::secrets::SecretsManager;
-use eiva_core::skills::SkillManager;
+use eiva_claw_core::commands::CommandAction;
+use eiva_claw_core::config::Config;
+use eiva_claw_core::gateway::{GatewayClient, GatewayCommand};
+use eiva_claw_core::secrets::SecretsManager;
+use eiva_claw_core::skills::SkillManager;
 use eiva_view::PromptAttachment;
 
 use super::GwEvent;
@@ -68,7 +68,7 @@ pub(super) async fn handle_command_action(
             });
         }
         CommandAction::ShowToolPermissions => {
-            let tool_names = eiva_core::tools::all_tool_names();
+            let tool_names = eiva_claw_core::tools::all_tool_names();
             let tools: Vec<_> = tool_names
                 .iter()
                 .map(|name| {
@@ -80,7 +80,7 @@ pub(super) async fn handle_command_action(
                     eiva_view::ToolPermInfoData {
                         name: name.to_string(),
                         permission: perm.badge().to_string(),
-                        summary: eiva_core::tools::tool_summary(name).to_string(),
+                        summary: eiva_claw_core::tools::tool_summary(name).to_string(),
                     }
                 })
                 .collect();
@@ -147,7 +147,7 @@ pub(super) async fn handle_command_action(
                 .unwrap_or_else(|| "openrouter".to_string());
 
             // Update config — keep the current provider, only change model
-            config.model = Some(eiva_core::config::ModelProvider {
+            config.model = Some(eiva_claw_core::config::ModelProvider {
                 provider: existing_provider,
                 model: Some(model_name.clone()),
                 base_url: config.model.as_ref().and_then(|m| m.base_url.clone()),
@@ -169,12 +169,12 @@ pub(super) async fn handle_command_action(
         CommandAction::SetProvider(provider_name) => {
             // Update config with new provider, keep existing model
             let existing_model = config.model.as_ref().and_then(|m| m.model.clone());
-            let base_url = eiva_core::providers::base_url_override_for_switch(
+            let base_url = eiva_claw_core::providers::base_url_override_for_switch(
                 &provider_name,
                 config.model.as_ref().map(|m| m.provider.as_str()),
                 config.model.as_ref().and_then(|m| m.base_url.clone()),
             );
-            config.model = Some(eiva_core::config::ModelProvider {
+            config.model = Some(eiva_claw_core::config::ModelProvider {
                 provider: provider_name.clone(),
                 model: existing_model,
                 base_url,
@@ -208,7 +208,7 @@ pub(super) async fn handle_command_action(
             // Read the API key: try the encrypted vault first
             // (where onboarding stores it), then fall back to
             // environment variables.
-            let api_key = eiva_core::providers::secret_key_for_provider(&provider_id)
+            let api_key = eiva_claw_core::providers::secret_key_for_provider(&provider_id)
                 .and_then(|key_name| {
                     secrets_manager
                         .get_secret(key_name, true)
@@ -219,7 +219,7 @@ pub(super) async fn handle_command_action(
 
             let gw_tx2 = gw_tx.clone();
             tokio::spawn(async move {
-                match eiva_core::providers::fetch_models_detailed(
+                match eiva_claw_core::providers::fetch_models_detailed(
                     &provider_id,
                     api_key.as_deref(),
                     base_url.as_deref(),
@@ -229,7 +229,7 @@ pub(super) async fn handle_command_action(
                     Ok(models) => {
                         let count = models.len();
                         let display =
-                            eiva_core::providers::display_name_for_provider(&provider_id);
+                            eiva_claw_core::providers::display_name_for_provider(&provider_id);
                         let _ = gw_tx2
                             .send(GwEvent::Info(
                                 format!("{} models from {}:", count, display,),
@@ -251,11 +251,11 @@ pub(super) async fn handle_command_action(
         }
         CommandAction::ShowProviderSelector => {
             // Build the provider list (built-in + custom) and send it to the UI
-            let all = eiva_core::providers::all_providers();
+            let all = eiva_claw_core::providers::all_providers();
             let providers: Vec<String> = all
                 .iter()
                 .map(|p| {
-                    if eiva_core::providers::is_custom_provider(p.id) {
+                    if eiva_claw_core::providers::is_custom_provider(p.id) {
                         format!("{} (custom)", p.display)
                     } else {
                         p.display.to_string()
@@ -266,10 +266,10 @@ pub(super) async fn handle_command_action(
             let hints: Vec<String> = all
                 .iter()
                 .map(|p| match p.auth_method {
-                    eiva_core::providers::AuthMethod::ApiKey => "apikey".to_string(),
-                    eiva_core::providers::AuthMethod::DeviceFlow => "deviceflow".to_string(),
-                    eiva_core::providers::AuthMethod::None => "none".to_string(),
-                    eiva_core::providers::AuthMethod::OptionalApiKey => "apikey".to_string(),
+                    eiva_claw_core::providers::AuthMethod::ApiKey => "apikey".to_string(),
+                    eiva_claw_core::providers::AuthMethod::DeviceFlow => "deviceflow".to_string(),
+                    eiva_claw_core::providers::AuthMethod::None => "none".to_string(),
+                    eiva_claw_core::providers::AuthMethod::OptionalApiKey => "apikey".to_string(),
                 })
                 .collect();
             let _ = gw_tx.send(GwEvent::ShowProviderSelector {

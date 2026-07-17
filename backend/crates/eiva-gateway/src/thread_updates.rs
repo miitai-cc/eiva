@@ -6,7 +6,7 @@
 use anyhow::Result;
 use tracing::info;
 
-use eiva_core::gateway::{ServerFrame, ServerFrameType, ServerPayload, protocol, transport};
+use eiva_claw_core::gateway::{ServerFrame, ServerFrameType, ServerPayload, protocol, transport};
 
 use crate::SharedTaskManager;
 use protocol::server::send_frame;
@@ -19,11 +19,11 @@ use protocol::server::send_frame;
 /// - Active sub-agent sessions (from SessionManager)
 pub(crate) async fn send_threads_update(
     writer: &mut dyn transport::TransportWriter,
-    thread_mgr: &eiva_core::threads::ThreadManager,
+    thread_mgr: &eiva_claw_core::threads::ThreadManager,
     task_mgr: &SharedTaskManager,
     session_key: Option<&str>,
 ) -> Result<()> {
-    use eiva_core::sessions::{SessionKind, SessionStatus, session_manager};
+    use eiva_claw_core::sessions::{SessionKind, SessionStatus, session_manager};
 
     let thread_list = thread_mgr.list_info();
     let foreground_id = thread_mgr.foreground().map(|t| t.task_id().0);
@@ -158,7 +158,7 @@ pub(crate) async fn send_threads_update(
 /// Send a projects update frame (the full project list + active project).
 pub(crate) async fn send_projects_update(
     writer: &mut dyn transport::TransportWriter,
-    project_mgr: &eiva_core::projects::ProjectManager,
+    project_mgr: &eiva_claw_core::projects::ProjectManager,
 ) -> Result<()> {
     let projects = project_mgr
         .list_info()
@@ -180,17 +180,17 @@ pub(crate) async fn send_projects_update(
 }
 
 pub(crate) fn thread_history_messages(
-    thread: &eiva_core::threads::AgentThread,
+    thread: &eiva_claw_core::threads::AgentThread,
 ) -> Vec<protocol::types::ChatMessage> {
     thread
         .messages
         .iter()
         .map(|message| {
             let role = match message.role {
-                eiva_core::threads::MessageRole::User => "user",
-                eiva_core::threads::MessageRole::Assistant => "assistant",
-                eiva_core::threads::MessageRole::System => "system",
-                eiva_core::threads::MessageRole::Tool => "tool",
+                eiva_claw_core::threads::MessageRole::User => "user",
+                eiva_claw_core::threads::MessageRole::Assistant => "assistant",
+                eiva_claw_core::threads::MessageRole::System => "system",
+                eiva_claw_core::threads::MessageRole::Tool => "tool",
             };
             protocol::types::ChatMessage::text(role, &message.content)
         })
@@ -199,8 +199,8 @@ pub(crate) fn thread_history_messages(
 
 pub(crate) async fn send_thread_messages_update(
     writer: &mut dyn transport::TransportWriter,
-    thread_id: eiva_core::threads::ThreadId,
-    thread_mgr: &eiva_core::threads::ThreadManager,
+    thread_id: eiva_claw_core::threads::ThreadId,
+    thread_mgr: &eiva_claw_core::threads::ThreadManager,
 ) -> Result<()> {
     let messages = thread_mgr
         .get(thread_id)

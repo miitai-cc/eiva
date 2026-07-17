@@ -13,11 +13,11 @@ use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
 use tracing::{trace, warn};
 
-use eiva_core::gateway::{
+use eiva_claw_core::gateway::{
     ClientFrame, ClientFrameType, ClientPayload, ProbeResult, ServerFrame, ServerFrameType,
     ServerPayload, StatusType, WireFrame, deserialize_frame, protocol, transport,
 };
-use eiva_core::providers as crate_providers;
+use eiva_claw_core::providers as crate_providers;
 
 use protocol::server::send_frame;
 
@@ -55,7 +55,7 @@ pub(crate) async fn handle_connection(
     // Thread manager for multi-task conversations.
     // Load from persistent storage or create new with default "Main" thread.
     let threads_path = config.sessions_dir().join("threads.json");
-    let mut thread_mgr = eiva_core::threads::ThreadManager::load_or_default(&threads_path);
+    let mut thread_mgr = eiva_claw_core::threads::ThreadManager::load_or_default(&threads_path);
 
     // Project registry (each project is a working directory grouping threads).
     // Migration: ensure a "Default" project exists pointing at the current
@@ -63,7 +63,7 @@ pub(crate) async fn handle_connection(
     // DEFAULT_PROJECT_ID and thus land in it. Then point the workspace at the
     // active project so tools run in the right directory from the first turn.
     let projects_path = config.sessions_dir().join("projects.json");
-    let mut project_mgr = eiva_core::projects::ProjectManager::load_or_new(&projects_path);
+    let mut project_mgr = eiva_claw_core::projects::ProjectManager::load_or_new(&projects_path);
     project_mgr.ensure_default(config.workspace_dir());
     if let Some(active_path) = project_mgr.path_of(project_mgr.active_id()) {
         admin::handle_set_working_directory(&mut config, active_path.display().to_string());
@@ -71,7 +71,7 @@ pub(crate) async fn handle_connection(
     let _ = project_mgr.save_to_file(&projects_path);
 
     // Local engine registry for model management.
-    let engine_registry = eiva_core::engines::EngineRegistry::new();
+    let engine_registry = eiva_claw_core::engines::EngineRegistry::new();
 
     // Subscribe to thread events for push-based sidebar updates
     let mut thread_events_rx = thread_mgr.subscribe();
@@ -383,7 +383,7 @@ pub(crate) async fn handle_connection(
     let (user_prompt_tx, user_prompt_rx) = tokio::sync::mpsc::channel::<(
         String,
         bool,
-        eiva_core::user_prompt_types::PromptResponseValue,
+        eiva_claw_core::user_prompt_types::PromptResponseValue,
     )>(4);
     let user_prompt_rx = Arc::new(Mutex::new(user_prompt_rx));
 
@@ -433,7 +433,7 @@ pub(crate) async fn handle_connection(
                             // blocked awaiting the very tool being controlled.
                             if frame.frame_type == ClientFrameType::ProcessControl {
                                 if let ClientPayload::ProcessControl { pid, action } = frame.payload {
-                                    match eiva_core::exec_status::control(pid, action) {
+                                    match eiva_claw_core::exec_status::control(pid, action) {
                                         Ok(msg) => tracing::info!(pid, %action, "Process control: {msg}"),
                                         Err(e) => tracing::warn!(pid, %action, "Process control failed: {e}"),
                                     }
@@ -565,7 +565,7 @@ pub(crate) async fn handle_connection(
                                 let pid = if project_id == 0 {
                                     project_mgr.active_id()
                                 } else {
-                                    eiva_core::projects::ProjectId(project_id)
+                                    eiva_claw_core::projects::ProjectId(project_id)
                                 };
                                 // Creating into a different project also makes it
                                 // active and repoints the workspace dir.
@@ -689,13 +689,13 @@ pub(crate) async fn handle_connection(
                             ClientPayload::ProjectDelete { project_id } => {
                                 // Reassign the doomed project's threads to Default
                                 // so they aren't orphaned, then delete + repoint.
-                                let pid = eiva_core::projects::ProjectId(project_id);
+                                let pid = eiva_claw_core::projects::ProjectId(project_id);
                                 let orphans: Vec<_> =
                                     thread_mgr.threads_for(pid).iter().map(|t| t.id).collect();
                                 for tid in orphans {
                                     thread_mgr.set_project(
                                         tid,
-                                        eiva_core::projects::DEFAULT_PROJECT_ID,
+                                        eiva_claw_core::projects::DEFAULT_PROJECT_ID,
                                     );
                                 }
                                 project_handler::handle_project_delete(
@@ -816,7 +816,7 @@ pub(crate) async fn handle_connection(
                             // Record assistant response in thread history if provided
                             if let Some(text) = response {
                                 if let Some(thread) = thread_mgr.get_mut(thread_id) {
-                                    thread.add_message(eiva_core::threads::MessageRole::Assistant, &text);
+                                    thread.add_message(eiva_claw_core::threads::MessageRole::Assistant, &text);
                                 }
                                 send_thread_messages_update(&mut *writer, thread_id, &thread_mgr).await?;
                             }
@@ -873,12 +873,12 @@ mod tests {
     use super::*;
     use crate::listen::handle_transport_connection;
     use async_trait::async_trait;
-    use eiva_core::config::Config;
-    use eiva_core::gateway::{
+    use eiva_claw_core::config::Config;
+    use eiva_claw_core::gateway::{
         ChatMessage, PeerInfo, Transport, TransportReader, TransportType, TransportWriter,
     };
-    use eiva_core::secrets::SecretsManager;
-    use eiva_core::skills::SkillManager;
+    use eiva_claw_core::secrets::SecretsManager;
+    use eiva_claw_core::skills::SkillManager;
     use std::collections::VecDeque;
     use tempfile::tempdir;
     use tokio::sync::RwLock;
@@ -1016,8 +1016,8 @@ mod tests {
         let vault: SharedVault = Arc::new(Mutex::new(SecretsManager::new(cfg.credentials_dir())));
         let skill_mgr: SharedSkillManager =
             Arc::new(Mutex::new(SkillManager::new(cfg.skills_dir())));
-        let task_mgr: SharedTaskManager = Arc::new(eiva_core::tasks::TaskManager::new());
-        let model_registry = eiva_core::models::create_model_registry();
+        let task_mgr: SharedTaskManager = Arc::new(eiva_claw_core::tasks::TaskManager::new());
+        let model_registry = eiva_claw_core::models::create_model_registry();
 
         handle_transport_connection(
             Box::new(mock_transport),
@@ -1069,8 +1069,8 @@ mod tests {
         let vault: SharedVault = Arc::new(Mutex::new(SecretsManager::new(cfg.credentials_dir())));
         let skill_mgr: SharedSkillManager =
             Arc::new(Mutex::new(SkillManager::new(cfg.skills_dir())));
-        let task_mgr: SharedTaskManager = Arc::new(eiva_core::tasks::TaskManager::new());
-        let model_registry = eiva_core::models::create_model_registry();
+        let task_mgr: SharedTaskManager = Arc::new(eiva_claw_core::tasks::TaskManager::new());
+        let model_registry = eiva_claw_core::models::create_model_registry();
 
         handle_transport_connection(
             Box::new(mock_transport),

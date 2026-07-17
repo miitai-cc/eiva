@@ -3,8 +3,8 @@
 //! Provides a unified way to build system prompts with all necessary context
 //! including workspace files (SOUL.md, etc.), skills, tasks, and guidelines.
 
-use eiva_core::config::Config;
-use eiva_core::workspace_context::{SessionType, WorkspaceContext};
+use eiva_claw_core::config::Config;
+use eiva_claw_core::workspace_context::{SessionType, WorkspaceContext};
 
 use super::{SharedModelRegistry, SharedSkillManager, SharedTaskManager};
 

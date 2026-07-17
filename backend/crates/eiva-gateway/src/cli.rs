@@ -3,8 +3,8 @@
 
 use anyhow::Result;
 use clap::{Parser, Subcommand, ValueEnum};
-use eiva_core::args::CommonArgs;
-use eiva_core::theme as t;
+use eiva_claw_core::args::CommonArgs;
+use eiva_claw_core::theme as t;
 
 // ── Gateway bind modes ──────────────────────────────────────────────────────
 
@@ -153,7 +153,7 @@ impl Default for RunArgs {
 
 /// Handle pairing subcommands.
 pub(crate) async fn handle_pair_command(cmd: PairCommands) -> Result<()> {
-    use eiva_core::pairing::{
+    use eiva_claw_core::pairing::{
         add_authorized_client, default_authorized_clients_path, load_authorized_clients,
         remove_authorized_client,
     };
@@ -234,7 +234,7 @@ pub(crate) async fn handle_pair_command(cmd: PairCommands) -> Result<()> {
         }
 
         PairCommands::Qr { host } => {
-            use eiva_core::pairing::{PairingData, generate_pairing_qr_ascii};
+            use eiva_claw_core::pairing::{PairingData, generate_pairing_qr_ascii};
 
             // Generate gateway pairing data
             // For now, we use a placeholder key - in production, this would be the host key's public part

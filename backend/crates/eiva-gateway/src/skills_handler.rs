@@ -1,4 +1,4 @@
-use eiva_core::tools::error::{ToolError, ToolResult, missing_param, require_str};
+use eiva_claw_core::tools::error::{ToolError, ToolResult, missing_param, require_str};
 use tracing::{debug, instrument, warn};
 
 use super::SharedSkillManager;
@@ -56,7 +56,7 @@ pub async fn exec_gw_skill_list(
         .filter(|s| match filter {
             "enabled" => s.enabled,
             "disabled" => !s.enabled,
-            "registry" => matches!(s.source, eiva_core::skills::SkillSource::Registry { .. }),
+            "registry" => matches!(s.source, eiva_claw_core::skills::SkillSource::Registry { .. }),
             _ => true, // "all"
         })
         .collect();
@@ -71,8 +71,8 @@ pub async fn exec_gw_skill_list(
     for s in &filtered {
         let status = if s.enabled { "✓" } else { "✗" };
         let source = match &s.source {
-            eiva_core::skills::SkillSource::Local => "local".to_string(),
-            eiva_core::skills::SkillSource::Registry { version, .. } => {
+            eiva_claw_core::skills::SkillSource::Local => "local".to_string(),
+            eiva_claw_core::skills::SkillSource::Registry { version, .. } => {
                 format!("registry v{}", version)
             }
         };

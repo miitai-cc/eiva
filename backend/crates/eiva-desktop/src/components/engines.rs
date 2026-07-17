@@ -6,7 +6,7 @@
 
 use dioxus::prelude::*;
 use dioxus_bulma::prelude::BulmaColor;
-use eiva_core::gateway::{EngineActionKind, ModelActionKind};
+use eiva_claw_core::gateway::{EngineActionKind, ModelActionKind};
 
 use super::RcModal;
 

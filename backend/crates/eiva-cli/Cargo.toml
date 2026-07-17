@@ -17,10 +17,10 @@ workspace = true
 
 [features]
 default = []
-matrix = ["eiva-core/matrix"]
+matrix = ["eiva-claw-core/matrix"]
 
 [dependencies]
-eiva-core.workspace = true
+eiva-claw-core.workspace = true
 eiva-onboard.workspace = true
 
 anyhow.workspace = true

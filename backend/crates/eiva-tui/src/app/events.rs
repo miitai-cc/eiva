@@ -52,7 +52,7 @@ pub(crate) enum GwEvent {
     /// Live status for a still-running tool call (elapsed + process stats).
     ToolStatus {
         id: String,
-        status: eiva_core::ui::ToolLiveStatus,
+        status: eiva_claw_core::ui::ToolLiveStatus,
     },
     /// A chunk of live stdout/stderr from a still-running tool.
     ToolOutput {
@@ -66,7 +66,7 @@ pub(crate) enum GwEvent {
         arguments: String,
     },
     /// Gateway requests structured user input (ask_user tool).
-    UserPromptRequest(eiva_core::user_prompt_types::UserPrompt),
+    UserPromptRequest(eiva_claw_core::user_prompt_types::UserPrompt),
     /// Gateway requests an API key or credential from the user.
     CredentialRequest {
         id: String,
@@ -102,7 +102,7 @@ pub(crate) enum GwEvent {
 
     /// Project list update (the sidebar's top level).
     ProjectsUpdate {
-        projects: Vec<eiva_core::ui::ProjectInfo>,
+        projects: Vec<eiva_claw_core::ui::ProjectInfo>,
         active_id: u64,
     },
 
@@ -110,7 +110,7 @@ pub(crate) enum GwEvent {
     ThreadMessages {
         #[allow(dead_code)]
         thread_id: u64,
-        messages: Vec<eiva_core::gateway::protocol::types::ChatMessage>,
+        messages: Vec<eiva_claw_core::gateway::protocol::types::ChatMessage>,
     },
 
     /// Thread switch confirmed — clear messages and show context.
@@ -122,7 +122,7 @@ pub(crate) enum GwEvent {
     ThreadHistory {
         thread_id: u64,
         ok: bool,
-        messages: Vec<eiva_core::gateway::protocol::types::ChatMessage>,
+        messages: Vec<eiva_claw_core::gateway::protocol::types::ChatMessage>,
         error: Option<String>,
     },
     /// Open the provider selector dialog.
@@ -323,7 +323,7 @@ impl GwEvent {
     pub fn error_from_err(err: &anyhow_tracing::Error) -> Self {
         GwEvent::Error {
             summary: format!("{:#}", err),
-            details: Some(eiva_core::error_details::render_extended(err)),
+            details: Some(eiva_claw_core::error_details::render_extended(err)),
         }
     }
 }

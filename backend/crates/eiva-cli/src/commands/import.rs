@@ -3,9 +3,9 @@
 
 use anyhow::{Context, Result};
 use clap::Args;
-use eiva_core::config::Config;
-use eiva_core::providers;
-use eiva_core::secrets::SecretsManager;
+use eiva_claw_core::config::Config;
+use eiva_claw_core::providers;
+use eiva_claw_core::secrets::SecretsManager;
 
 /// Arguments for `eiva import`.
 #[derive(Debug, Args)]
@@ -140,7 +140,7 @@ pub(crate) fn run_import(args: &ImportArgs, config: &mut Config) -> Result<()> {
                 {
                     let parts: Vec<&str> = model_str.splitn(2, '/').collect();
                     if parts.len() == 2 {
-                        config.model = Some(eiva_core::config::ModelProvider {
+                        config.model = Some(eiva_claw_core::config::ModelProvider {
                             provider: parts[0].to_string(),
                             model: Some(parts[1].to_string()),
                             base_url: None,

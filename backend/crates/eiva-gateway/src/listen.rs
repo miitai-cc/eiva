@@ -14,11 +14,11 @@ use tokio::sync::{Mutex, RwLock};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, info, warn};
 
-use eiva_core::config::Config;
-use eiva_core::gateway::{
+use eiva_claw_core::config::Config;
+use eiva_claw_core::gateway::{
     CopilotSession, GatewayOptions, ModelContext, Transport, TransportAcceptor,
 };
-use eiva_core::tools;
+use eiva_claw_core::tools;
 
 use crate::messenger_handler::SharedMessengerManager;
 use crate::server::handle_connection;
@@ -55,10 +55,10 @@ pub async fn run_gateway(
     cancel: CancellationToken,
 ) -> Result<()> {
     // Create task manager if not provided
-    let task_mgr = task_mgr.unwrap_or_else(|| Arc::new(eiva_core::tasks::TaskManager::new()));
+    let task_mgr = task_mgr.unwrap_or_else(|| Arc::new(eiva_claw_core::tasks::TaskManager::new()));
 
     // Create model registry if not provided
-    let model_registry = model_registry.unwrap_or_else(eiva_core::models::create_model_registry);
+    let model_registry = model_registry.unwrap_or_else(eiva_claw_core::models::create_model_registry);
 
     // Populate the registry from the configured provider's live model
     // list so the catalog is a single source of truth (same data the
@@ -108,7 +108,7 @@ pub async fn run_gateway(
     // that periodically records CPU / memory load.  Both are stored in
     // the global runtime context so tools and peer-status queries can
     // access them without extra plumbing through every call site.
-    let host_caps = eiva_core::host::detect_host();
+    let host_caps = eiva_claw_core::host::detect_host();
     info!(
         hostname = %host_caps.hostname,
         cpus = host_caps.cpu_cores_logical,
@@ -116,14 +116,14 @@ pub async fn run_gateway(
         gpus = host_caps.gpus.len(),
         "Host capabilities detected"
     );
-    eiva_core::runtime_ctx::set_host(host_caps);
+    eiva_claw_core::runtime_ctx::set_host(host_caps);
 
-    let load_tracker = eiva_core::load::create_load_tracker();
-    let _load_sampler_handle = eiva_core::load::spawn_load_sampler(
+    let load_tracker = eiva_claw_core::load::create_load_tracker();
+    let _load_sampler_handle = eiva_claw_core::load::spawn_load_sampler(
         load_tracker.clone(),
         None, // use default 5 s interval
     );
-    eiva_core::runtime_ctx::set_load_tracker(load_tracker);
+    eiva_claw_core::runtime_ctx::set_load_tracker(load_tracker);
 
     // ── Managed services ────────────────────────────────────────────
     //
@@ -133,7 +133,7 @@ pub async fn run_gateway(
     {
         // Merge explicit [services.*] with auto-start engine service defs.
         let mut all_services = config.services.clone();
-        let engine_svcs = eiva_core::engines::engine_service_defs(&config.engines);
+        let engine_svcs = eiva_claw_core::engines::engine_service_defs(&config.engines);
         if !engine_svcs.is_empty() {
             info!(
                 count = engine_svcs.len(),
@@ -146,10 +146,10 @@ pub async fn run_gateway(
 
         if !all_services.is_empty() {
             let svc_count = all_services.len();
-            let svc_config = eiva_core::services::ServicesConfig {
+            let svc_config = eiva_claw_core::services::ServicesConfig {
                 services: all_services,
             };
-            let svc_mgr = eiva_core::services::create_service_manager(svc_config);
+            let svc_mgr = eiva_claw_core::services::create_service_manager(svc_config);
             info!(count = svc_count, "Managed services configured");
             // Auto-start services
             {
@@ -157,11 +157,11 @@ pub async fn run_gateway(
                 mgr.auto_start_all().await;
             }
             // Spawn background poller for lifecycle management and health checks
-            let _svc_poller_handle = eiva_core::services::spawn_service_poller(
+            let _svc_poller_handle = eiva_claw_core::services::spawn_service_poller(
                 svc_mgr.clone(),
                 None, // use default 2 s interval
             );
-            eiva_core::runtime_ctx::set_service_manager(svc_mgr);
+            eiva_claw_core::runtime_ctx::set_service_manager(svc_mgr);
         }
     }
 
@@ -172,10 +172,10 @@ pub async fn run_gateway(
     // so a slow server doesn't hold up gateway startup.
     #[cfg(feature = "mcp")]
     {
-        let mcp_mgr: eiva_core::mcp::SharedMcpManager = std::sync::Arc::new(
-            tokio::sync::Mutex::new(eiva_core::mcp::McpManager::new(config.mcp.clone())),
+        let mcp_mgr: eiva_claw_core::mcp::SharedMcpManager = std::sync::Arc::new(
+            tokio::sync::Mutex::new(eiva_claw_core::mcp::McpManager::new(config.mcp.clone())),
         );
-        eiva_core::runtime_ctx::set_mcp_manager(mcp_mgr.clone());
+        eiva_claw_core::runtime_ctx::set_mcp_manager(mcp_mgr.clone());
         if config.mcp.has_servers() {
             let server_count = config.mcp.servers.len();
             tokio::spawn(async move {
@@ -224,7 +224,7 @@ pub async fn run_gateway(
 
     // Store model info in global runtime context for tool access
     if let Some(ref ctx) = model_ctx {
-        eiva_core::runtime_ctx::set_model_info(&ctx.provider, &ctx.model, &ctx.base_url);
+        eiva_claw_core::runtime_ctx::set_model_info(&ctx.provider, &ctx.model, &ctx.base_url);
     }
 
     let shared_config: SharedConfig = Arc::new(RwLock::new(config.clone()));
@@ -321,7 +321,7 @@ pub async fn run_gateway(
         .clone()
         .or_else(|| {
             config.ssh.as_ref().and_then(|ssh_cfg| {
-                if ssh_cfg.enabled && ssh_cfg.mode == eiva_core::config::SshMode::Standalone {
+                if ssh_cfg.enabled && ssh_cfg.mode == eiva_claw_core::config::SshMode::Standalone {
                     Some(ssh_cfg.bind.clone())
                 } else {
                     None
@@ -448,7 +448,7 @@ pub async fn run_gateway(
     }
 
     // Graceful shutdown: stop all managed services.
-    if let Some(svc_mgr) = eiva_core::runtime_ctx::get_service_manager() {
+    if let Some(svc_mgr) = eiva_claw_core::runtime_ctx::get_service_manager() {
         info!("Stopping managed services…");
         let mut mgr = svc_mgr.write().await;
         mgr.stop_all().await;

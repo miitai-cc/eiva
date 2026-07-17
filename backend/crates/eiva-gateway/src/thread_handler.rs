@@ -2,17 +2,17 @@
 //!
 //! Each function handles one `ClientPayload` variant in the thread family
 //! (create / switch / list / history / close / rename) plus `TasksRequest`,
-//! operating on the connection's [`ThreadManager`](eiva_core::threads::ThreadManager)
+//! operating on the connection's [`ThreadManager`](eiva_claw_core::threads::ThreadManager)
 //! and streaming the resulting frames back to the client.
 
 use anyhow::Result;
 use tracing::{debug, info};
 
-use eiva_core::gateway::protocol::server::{send_frame, send_info};
-use eiva_core::gateway::{
+use eiva_claw_core::gateway::protocol::server::{send_frame, send_info};
+use eiva_claw_core::gateway::{
     ChatMessage, ProviderRequest, ServerFrame, ServerFrameType, ServerPayload, protocol, transport,
 };
-use eiva_core::threads::ThreadId;
+use eiva_claw_core::threads::ThreadId;
 
 use crate::thread_updates::{send_thread_messages_update, send_threads_update};
 use crate::{SharedModelCtx, SharedTaskManager, providers};
@@ -54,10 +54,10 @@ pub(crate) async fn handle_tasks_request(
 /// Handle a `ThreadCreate`: create a new thread and broadcast the new list.
 pub(crate) async fn handle_thread_create(
     writer: &mut dyn transport::TransportWriter,
-    thread_mgr: &mut eiva_core::threads::ThreadManager,
+    thread_mgr: &mut eiva_claw_core::threads::ThreadManager,
     task_mgr: &SharedTaskManager,
     threads_path: &std::path::Path,
-    project_id: eiva_core::projects::ProjectId,
+    project_id: eiva_claw_core::projects::ProjectId,
     label: String,
 ) -> Result<()> {
     let label = if label.is_empty() {
@@ -87,7 +87,7 @@ pub(crate) async fn handle_thread_create(
 /// `thread_id == 0` is a sentinel meaning "background the current thread".
 pub(crate) async fn handle_thread_switch(
     writer: &mut dyn transport::TransportWriter,
-    thread_mgr: &mut eiva_core::threads::ThreadManager,
+    thread_mgr: &mut eiva_claw_core::threads::ThreadManager,
     task_mgr: &SharedTaskManager,
     threads_path: &std::path::Path,
     shared_model_ctx: &SharedModelCtx,
@@ -207,7 +207,7 @@ pub(crate) async fn handle_thread_switch(
 /// Handle a `ThreadList`: broadcast the thread list and foreground history.
 pub(crate) async fn handle_thread_list(
     writer: &mut dyn transport::TransportWriter,
-    thread_mgr: &mut eiva_core::threads::ThreadManager,
+    thread_mgr: &mut eiva_claw_core::threads::ThreadManager,
     task_mgr: &SharedTaskManager,
 ) -> Result<()> {
     debug!("Thread list request");
@@ -222,7 +222,7 @@ pub(crate) async fn handle_thread_list(
 /// Handle a `ThreadHistoryRequest`: reply with one thread's full message log.
 pub(crate) async fn handle_thread_history(
     writer: &mut dyn transport::TransportWriter,
-    thread_mgr: &eiva_core::threads::ThreadManager,
+    thread_mgr: &eiva_claw_core::threads::ThreadManager,
     thread_id: u64,
 ) -> Result<()> {
     debug!("Thread history request: {}", thread_id);
@@ -234,10 +234,10 @@ pub(crate) async fn handle_thread_history(
                 .iter()
                 .map(|m| {
                     let role = match m.role {
-                        eiva_core::threads::MessageRole::User => "user",
-                        eiva_core::threads::MessageRole::Assistant => "assistant",
-                        eiva_core::threads::MessageRole::System => "system",
-                        eiva_core::threads::MessageRole::Tool => "tool",
+                        eiva_claw_core::threads::MessageRole::User => "user",
+                        eiva_claw_core::threads::MessageRole::Assistant => "assistant",
+                        eiva_claw_core::threads::MessageRole::System => "system",
+                        eiva_claw_core::threads::MessageRole::Tool => "tool",
                     };
                     ChatMessage {
                         role: role.to_string(),
@@ -278,7 +278,7 @@ pub(crate) async fn handle_thread_history(
 /// Handle a `ThreadClose`: remove a thread and broadcast the new list.
 pub(crate) async fn handle_thread_close(
     writer: &mut dyn transport::TransportWriter,
-    thread_mgr: &mut eiva_core::threads::ThreadManager,
+    thread_mgr: &mut eiva_claw_core::threads::ThreadManager,
     task_mgr: &SharedTaskManager,
     threads_path: &std::path::Path,
     thread_id: u64,
@@ -296,7 +296,7 @@ pub(crate) async fn handle_thread_close(
 /// Handle a `ThreadRename`: relabel a thread and broadcast the new list.
 pub(crate) async fn handle_thread_rename(
     writer: &mut dyn transport::TransportWriter,
-    thread_mgr: &mut eiva_core::threads::ThreadManager,
+    thread_mgr: &mut eiva_claw_core::threads::ThreadManager,
     task_mgr: &SharedTaskManager,
     threads_path: &std::path::Path,
     thread_id: u64,

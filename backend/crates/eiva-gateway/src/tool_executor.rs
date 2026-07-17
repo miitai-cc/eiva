@@ -3,7 +3,7 @@
 //! This module provides a unified entry point for executing tools, handling
 //! the different tool types (user prompts, secrets, skills, standard tools).
 
-use eiva_core::tools;
+use eiva_claw_core::tools;
 use serde_json::Value;
 use std::collections::{HashMap, VecDeque};
 use std::hash::{DefaultHasher, Hash, Hasher};

@@ -5,8 +5,8 @@ use std::io::{self, BufRead, Write};
 use anyhow::Result;
 
 use crate::prompts::{arrow_select, prompt_line, prompt_secret};
-use eiva_core::config::{Config, MessengerConfig};
-use eiva_core::theme as t;
+use eiva_claw_core::config::{Config, MessengerConfig};
+use eiva_claw_core::theme as t;
 
 /// Walk the user through messaging setup — native messengers first, then optional skill.
 pub(crate) fn setup_messaging(

@@ -9,7 +9,7 @@
 //! both the desktop and TUI derive the same labels, summaries, and
 //! preview text without duplicating logic.
 
-use eiva_core::user_prompt_types::{PromptType, UserPrompt};
+use eiva_claw_core::user_prompt_types::{PromptType, UserPrompt};
 
 mod connection;
 pub use connection::*;
@@ -47,7 +47,7 @@ impl ToolApprovalData {
     /// Also limits to `max_lines` lines.  Useful for the tool-approval
     /// preview area.
     pub fn arguments_preview(&self, max_chars: usize, max_lines: usize) -> String {
-        eiva_core::ui::truncate_content(&self.arguments, max_chars, max_lines)
+        eiva_claw_core::ui::truncate_content(&self.arguments, max_chars, max_lines)
     }
 }
 

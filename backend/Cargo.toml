@@ -1,14 +1,18 @@
 [workspace]
 members = [
-    "crates/eiva-core",
+    "../lib/rust/crates/ai/eiva-claw-core",
     "crates/eiva-cli",
     "crates/eiva-tui",
     "crates/eiva-onboard",
     "crates/eiva-gateway",
     "crates/eiva-desktop",
     "crates/eiva-view",
-    "crates/tokenjuice",
-    "crates/memory-tree",
+    "../lib/rust/crates/ai/eiva-claw-tokenjuice",
+    "../lib/rust/crates/ai/eiva-claw-memory-tree",
+    "../lib/rust/crates/eiva-be-workflow",
+    "../lib/rust/crates/ai/eiva-be-codex",
+    "../lib/rust/crates/ai/eiva-be-openclaw",
+    "../lib/rust/crates/common/eiva-common",
 ]
 # WASM-only crates (require wasm32 target, excluded from default workspace build)
 exclude = ["crates/eiva-web"]
@@ -43,13 +47,16 @@ desktop = { description = "Enable desktop GUI client (requires GTK system librar
 # ── Shared dependency versions ───────────────────────────────────────────────
 [workspace.dependencies]
 # Internal crates
-eiva-core = { path = "crates/eiva-core", version = "0.4.0" }
+eiva-claw-core = { path = "../lib/rust/crates/ai/eiva-claw-core", version = "0.4.0", package = "eiva-claw-core" }
 eiva-tui = { path = "crates/eiva-tui", version = "0.4.0" }
 eiva-onboard = { path = "crates/eiva-onboard", version = "0.4.0" }
 eiva-gateway = { path = "crates/eiva-gateway", version = "0.4.0" }
 eiva-view = { path = "crates/eiva-view", version = "0.4.0" }
-tokenjuice = { path = "crates/tokenjuice", version = "0.4.0" }
-memory-tree = { path = "crates/memory-tree", version = "0.4.0" }
+eiva-claw-tokenjuice = { path = "../lib/rust/crates/ai/eiva-claw-tokenjuice", version = "0.4.0" }
+eiva-claw-memory-tree = { path = "../lib/rust/crates/ai/eiva-claw-memory-tree", version = "0.4.0" }
+eiva-be-codex = { path = "../lib/rust/crates/ai/eiva-be-codex", version = "0.4.0" }
+eiva-be-openclaw = { path = "../lib/rust/crates/ai/eiva-be-openclaw", version = "0.4.0" }
+eiva-common = { path = "../lib/rust/crates/common/eiva-common", version = "0.4.0" }
 chat-system = { version = "0.1.3", default-features = false }
 
 # Configuration and serialization

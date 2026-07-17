@@ -16,7 +16,7 @@ mod keyboard_normal;
 mod state;
 
 pub(super) fn display_message_from_gateway(
-    message: eiva_core::gateway::protocol::types::ChatMessage,
+    message: eiva_claw_core::gateway::protocol::types::ChatMessage,
 ) -> DisplayMessage {
     match message.role.as_str() {
         "user" => DisplayMessage::user(message.display_content()),
@@ -56,7 +56,7 @@ pub fn TuiRoot(props: &TuiRootProps, mut hooks: Hooks) -> impl Into<AnyElement<'
     let messages: State<Vec<DisplayMessage>> = hooks.use_state(Vec::new);
     let input_value = hooks.use_state(String::new);
     let input_cursor_offset = hooks.use_state(|| 0usize);
-    let gw_status = hooks.use_state(|| eiva_core::types::GatewayStatus::Connecting);
+    let gw_status = hooks.use_state(|| eiva_claw_core::types::GatewayStatus::Connecting);
     let streaming = hooks.use_state(|| false);
     let stream_start: State<Option<Instant>> = hooks.use_state(|| None);
     let thinking_start: State<Option<Instant>> = hooks.use_state(|| None);
@@ -116,7 +116,7 @@ pub fn TuiRoot(props: &TuiRootProps, mut hooks: Hooks) -> impl Into<AnyElement<'
     let user_prompt_title = hooks.use_state(String::new);
     let user_prompt_desc = hooks.use_state(String::new);
     let user_prompt_input = hooks.use_state(String::new);
-    let user_prompt_type: State<Option<eiva_core::user_prompt_types::PromptType>> =
+    let user_prompt_type: State<Option<eiva_claw_core::user_prompt_types::PromptType>> =
         hooks.use_state(|| None);
     let user_prompt_selected = hooks.use_state(|| 0usize);
     let user_prompt_checked: State<Vec<bool>> = hooks.use_state(Vec::new);
@@ -159,7 +159,7 @@ pub fn TuiRoot(props: &TuiRootProps, mut hooks: Hooks) -> impl Into<AnyElement<'
 
     // ── Thread state (unified tasks + threads) ───────────────────────
     let threads: State<Vec<eiva_view::SidebarItemData>> = hooks.use_state(Vec::new);
-    let projects: State<Vec<eiva_core::ui::ProjectInfo>> = hooks.use_state(Vec::new);
+    let projects: State<Vec<eiva_claw_core::ui::ProjectInfo>> = hooks.use_state(Vec::new);
     let active_project_id = hooks.use_state(|| 0u64);
     let tab_focused = hooks.use_state(|| false);
     let tab_selected = hooks.use_state(|| 0usize);

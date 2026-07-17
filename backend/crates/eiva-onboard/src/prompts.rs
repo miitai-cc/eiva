@@ -5,7 +5,7 @@ use std::io::{self, BufRead, Write};
 use anyhow::Result;
 use crossterm::terminal;
 
-use eiva_core::theme as t;
+use eiva_claw_core::theme as t;
 
 /// Render a QR code as compact Unicode art in the terminal.
 ///

@@ -2,7 +2,7 @@
 //!
 //! Session handling, model dispatch, messenger and tool orchestration, and the
 //! SSH server. The client-facing wire protocol and transport interface live in
-//! [`eiva_core::gateway`], which this crate builds upon.
+//! [`eiva_claw_core::gateway`], which this crate builds upon.
 
 mod admin;
 mod api;
@@ -47,13 +47,13 @@ use tokio_util::sync::CancellationToken;
 
 use anyhow::Result;
 use clap::Parser;
-use eiva_core::config::Config;
-use eiva_core::daemon;
-use eiva_core::gateway::{CopilotSession, GatewayOptions, ModelContext};
-use eiva_core::logging;
-use eiva_core::secrets::SecretsManager;
-use eiva_core::skills::SkillManager;
-use eiva_core::theme as t;
+use eiva_claw_core::config::Config;
+use eiva_claw_core::daemon;
+use eiva_claw_core::gateway::{CopilotSession, GatewayOptions, ModelContext};
+use eiva_claw_core::logging;
+use eiva_claw_core::secrets::SecretsManager;
+use eiva_claw_core::skills::SkillManager;
+use eiva_claw_core::theme as t;
 
 use cli::{GatewayBind, GatewayCli, GatewayCommands, RunArgs, handle_pair_command};
 use listen::run_gateway;
@@ -82,13 +82,13 @@ pub type SharedModelCtx = Arc<RwLock<Option<Arc<ModelContext>>>>;
 pub type SharedCopilotSession = Arc<RwLock<Option<Arc<CopilotSession>>>>;
 
 /// Shared task manager for first-class task orchestration.
-pub type SharedTaskManager = Arc<eiva_core::tasks::TaskManager>;
+pub type SharedTaskManager = Arc<eiva_claw_core::tasks::TaskManager>;
 
 /// Shared model registry for model management.
-pub type SharedModelRegistry = eiva_core::models::SharedModelRegistry;
+pub type SharedModelRegistry = eiva_claw_core::models::SharedModelRegistry;
 
 /// Shared observer for recording telemetry events.
-pub type SharedObserver = Arc<dyn eiva_core::observability::Observer>;
+pub type SharedObserver = Arc<dyn eiva_claw_core::observability::Observer>;
 
 // ── Constants (shared with the server engine via `crate::`) ──────────────────
 
@@ -235,7 +235,7 @@ async fn main() -> Result<()> {
         .clone()
         .or_else(|| {
             config.ssh.as_ref().and_then(|s| {
-                if s.enabled && s.mode == eiva_core::config::SshMode::Standalone {
+                if s.enabled && s.mode == eiva_claw_core::config::SshMode::Standalone {
                     Some(s.bind.clone())
                 } else {
                     None
@@ -414,7 +414,7 @@ async fn main() -> Result<()> {
     let result = {
         // Load skills for the gateway.
         let skills_dir = config.skills_dir();
-        let mut sm = eiva_core::skills::SkillManager::new(skills_dir);
+        let mut sm = eiva_claw_core::skills::SkillManager::new(skills_dir);
         if let Err(e) = sm.load_skills() {
             eprintln!("⚠ Could not load skills: {}", e);
         }
@@ -428,11 +428,11 @@ async fn main() -> Result<()> {
         // analytics/logs panels, plus tracing output for operators. The
         // stats handle is registered globally so the panel handler can
         // query it.
-        let stats = std::sync::Arc::new(eiva_core::observability::StatsObserver::new());
-        eiva_core::runtime_ctx::set_stats_observer(stats.clone());
+        let stats = std::sync::Arc::new(eiva_claw_core::observability::StatsObserver::new());
+        eiva_claw_core::runtime_ctx::set_stats_observer(stats.clone());
         let observer: crate::SharedObserver =
-            std::sync::Arc::new(eiva_core::observability::CompositeObserver::new(vec![
-                std::sync::Arc::new(eiva_core::observability::LogObserver::new()),
+            std::sync::Arc::new(eiva_claw_core::observability::CompositeObserver::new(vec![
+                std::sync::Arc::new(eiva_claw_core::observability::LogObserver::new()),
                 stats,
             ]));
 

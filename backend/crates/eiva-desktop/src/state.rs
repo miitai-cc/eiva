@@ -1,15 +1,15 @@
 //! Application state management.
 //!
 //! Shared UI types (`ChatMessage`, `ToolCallInfo`, `ThreadInfo`,
-//! `ConnectionStatus`) live in [`eiva_core::ui`]. This module
+//! `ConnectionStatus`) live in [`eiva_claw_core::ui`]. This module
 //! adds desktop-specific wrappers: the Dioxus-friendly `AppState` struct
 //! and the `Theme` enum.
 
 use std::collections::{HashMap, VecDeque};
 
-use eiva_core::gateway::protocol;
-use eiva_core::ui::{ChatMessage, ConnectionStatus, ThreadInfo};
-use eiva_core::user_prompt_types::UserPrompt;
+use eiva_claw_core::gateway::protocol;
+use eiva_claw_core::ui::{ChatMessage, ConnectionStatus, ThreadInfo};
+use eiva_claw_core::user_prompt_types::UserPrompt;
 use eiva_view::{PromptAttachment, SecretsDialogData};
 use eiva_view::{chrono, uuid};
 
@@ -65,7 +65,7 @@ pub struct AppState {
     pub threads: Vec<ThreadInfo>,
 
     /// Known projects (the sidebar's top level)
-    pub projects: Vec<eiva_core::ui::ProjectInfo>,
+    pub projects: Vec<eiva_claw_core::ui::ProjectInfo>,
 
     /// The active project's ID
     pub active_project_id: u64,
@@ -210,7 +210,7 @@ pub struct AppState {
 
     /// User-defined custom providers from the local config (shown and
     /// edited in Settings).
-    pub custom_providers: Vec<eiva_core::providers::CustomProviderConfig>,
+    pub custom_providers: Vec<eiva_claw_core::providers::CustomProviderConfig>,
 
     /// Whether the skills manager dialog is visible.
     pub show_skills_dialog: bool,
@@ -233,17 +233,17 @@ impl Default for AppState {
         let working_directory = std::env::current_dir()
             .ok()
             .map(|p| p.display().to_string());
-        let configured_model = eiva_core::config::Config::load(None)
+        let configured_model = eiva_claw_core::config::Config::load(None)
             .ok()
             .and_then(|cfg| cfg.model);
         let provider = configured_model.as_ref().map(|m| m.provider.clone());
         let model = configured_model.and_then(|m| m.model);
 
         // Check whether SOUL.md needs first-run setup.
-        let needs_hatching = eiva_core::config::Config::load(None)
+        let needs_hatching = eiva_claw_core::config::Config::load(None)
             .ok()
             .map(|cfg| {
-                let mut sm = eiva_core::soul::SoulManager::new(cfg.soul_path());
+                let mut sm = eiva_claw_core::soul::SoulManager::new(cfg.soul_path());
                 let _ = sm.load();
                 sm.needs_hatching()
             })
@@ -315,7 +315,7 @@ impl Default for AppState {
             show_tools_dialog: false,
             tools_data: None,
             tools_stale: false,
-            custom_providers: eiva_core::config::Config::load(None)
+            custom_providers: eiva_claw_core::config::Config::load(None)
                 .map(|cfg| cfg.custom_providers)
                 .unwrap_or_default(),
             show_skills_dialog: false,
@@ -340,7 +340,7 @@ impl AppState {
     /// replacing the old transient status snackbar.
     pub fn push_notice(
         &mut self,
-        role: eiva_core::types::MessageRole,
+        role: eiva_claw_core::types::MessageRole,
         content: impl Into<String>,
     ) {
         self.messages.push_back(ChatMessage::notice(role, content));
@@ -385,7 +385,7 @@ impl AppState {
             .messages
             .iter_mut()
             .rev()
-            .find(|m| m.is_streaming && m.role == eiva_core::types::MessageRole::Assistant)
+            .find(|m| m.is_streaming && m.role == eiva_claw_core::types::MessageRole::Assistant)
         {
             msg.append_content(delta);
             return;
@@ -432,7 +432,7 @@ impl AppState {
             .messages
             .iter_mut()
             .rev()
-            .find(|m| m.is_streaming && m.role == eiva_core::types::MessageRole::Assistant)
+            .find(|m| m.is_streaming && m.role == eiva_claw_core::types::MessageRole::Assistant)
         {
             msg.add_tool_call(id, name, arguments);
             return;
@@ -444,7 +444,7 @@ impl AppState {
     }
 
     /// Update the live status of a still-running tool call.
-    pub fn set_tool_live_status(&mut self, id: &str, status: eiva_core::ui::ToolLiveStatus) {
+    pub fn set_tool_live_status(&mut self, id: &str, status: eiva_claw_core::ui::ToolLiveStatus) {
         for msg in self.messages.iter_mut().rev() {
             if msg.set_tool_live_status(id, status.clone()) {
                 return;
@@ -488,7 +488,7 @@ impl AppState {
     pub fn start_thinking_message(&mut self) {
         self.end_thinking_message();
         let tail_is_empty_assistant = self.messages.back().is_some_and(|m| {
-            m.role == eiva_core::types::MessageRole::Assistant
+            m.role == eiva_claw_core::types::MessageRole::Assistant
                 && m.is_streaming
                 && m.content.is_empty()
                 && m.tool_calls.is_empty()
@@ -507,7 +507,7 @@ impl AppState {
     /// latest message isn't a streaming Thinking block).
     pub fn append_thinking(&mut self, delta: &str) {
         if let Some(msg) = self.messages.back_mut()
-            && msg.role == eiva_core::types::MessageRole::Thinking
+            && msg.role == eiva_claw_core::types::MessageRole::Thinking
         {
             msg.content.push_str(delta);
         }
@@ -525,7 +525,7 @@ impl AppState {
             .take()
             .map(|t| t.elapsed().as_millis() as u64);
         let Some(idx) = self.messages.iter().rposition(|m| {
-            m.role == eiva_core::types::MessageRole::Thinking && m.is_streaming
+            m.role == eiva_claw_core::types::MessageRole::Thinking && m.is_streaming
         }) else {
             return;
         };
@@ -626,11 +626,11 @@ impl AppState {
 
 fn ui_message_from_gateway(message: protocol::types::ChatMessage) -> ChatMessage {
     let role = match message.role.as_str() {
-        "user" => eiva_core::types::MessageRole::User,
-        "assistant" => eiva_core::types::MessageRole::Assistant,
-        "system" => eiva_core::types::MessageRole::System,
-        "tool" => eiva_core::types::MessageRole::ToolResult,
-        _ => eiva_core::types::MessageRole::Info,
+        "user" => eiva_claw_core::types::MessageRole::User,
+        "assistant" => eiva_claw_core::types::MessageRole::Assistant,
+        "system" => eiva_claw_core::types::MessageRole::System,
+        "tool" => eiva_claw_core::types::MessageRole::ToolResult,
+        _ => eiva_claw_core::types::MessageRole::Info,
     };
 
     ChatMessage {
@@ -647,7 +647,7 @@ fn ui_message_from_gateway(message: protocol::types::ChatMessage) -> ChatMessage
 #[cfg(test)]
 mod tests {
     use super::*;
-    use eiva_core::types::MessageRole;
+    use eiva_claw_core::types::MessageRole;
 
     /// Regression test: with extended thinking, the reasoning block folds
     /// when the first answer chunk arrives — the chunk must open a fresh

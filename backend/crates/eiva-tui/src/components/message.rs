@@ -3,7 +3,7 @@
 use crate::markdown;
 use crate::theme;
 use iocraft::prelude::*;
-use eiva_core::types::MessageRole;
+use eiva_claw_core::types::MessageRole;
 use eiva_view::MessageBubbleData;
 
 #[derive(Default, Props)]

@@ -6,13 +6,13 @@ use futures_util::{SinkExt, StreamExt};
 use tokio_tungstenite::tungstenite::Message;
 use url::Url;
 
-use eiva_core::commands::{CommandAction, CommandContext, handle_command};
-use eiva_core::config::Config;
-use eiva_core::gateway::{
+use eiva_claw_core::commands::{CommandAction, CommandContext, handle_command};
+use eiva_claw_core::config::Config;
+use eiva_claw_core::gateway::{
     ClientFrame, ClientFrameType, ClientPayload, ServerFrame, ServerFrameType, ServerPayload,
     deserialize_frame, serialize_frame,
 };
-use eiva_core::skills::SkillManager;
+use eiva_claw_core::skills::SkillManager;
 
 use super::shared::open_secrets;
 
@@ -120,7 +120,7 @@ pub(crate) async fn send_gateway_reload(
                                 if let ServerPayload::AuthChallenge { method: _ } = frame.payload {
                                     let code = rpassword::prompt_password(format!(
                                         "{} 2FA code: ",
-                                        eiva_core::theme::info("🔑")
+                                        eiva_claw_core::theme::info("🔑")
                                     ))
                                     .unwrap_or_default();
                                     let auth_frame = ClientFrame {
@@ -162,7 +162,7 @@ pub(crate) async fn send_gateway_reload(
                         if frame_type == Some("auth_challenge") {
                             let code = rpassword::prompt_password(format!(
                                 "{} 2FA code: ",
-                                eiva_core::theme::info("🔑")
+                                eiva_claw_core::theme::info("🔑")
                             ))
                             .unwrap_or_default();
                             let auth_frame = ClientFrame {
@@ -220,7 +220,7 @@ pub(crate) async fn send_gateway_reload(
                             // with an AuthResponse frame.
                             let code = rpassword::prompt_password(format!(
                                 "{} 2FA code: ",
-                                eiva_core::theme::info("🔑")
+                                eiva_claw_core::theme::info("🔑")
                             ))
                             .unwrap_or_default();
                             let auth_frame = ClientFrame {
@@ -245,7 +245,7 @@ pub(crate) async fn send_gateway_reload(
                         if frame_type == Some("auth_challenge") && !totp_enabled {
                             let code = rpassword::prompt_password(format!(
                                 "{} 2FA code: ",
-                                eiva_core::theme::info("🔑")
+                                eiva_claw_core::theme::info("🔑")
                             ))
                             .unwrap_or_default();
                             let auth_frame = ClientFrame {
@@ -405,8 +405,8 @@ pub(crate) async fn send_command_via_gateway(gateway_url: &str, command: &str) -
 
 /// Handle the `ask` command — headless model interaction.
 pub(crate) async fn handle_ask(config: &Config, args: AskArgs) -> Result<()> {
-    use eiva_core::gateway::protocol::types::ChatMessage;
-    use eiva_core::gateway::protocol::{
+    use eiva_claw_core::gateway::protocol::types::ChatMessage;
+    use eiva_claw_core::gateway::protocol::{
         ClientFrame, ClientFrameType, ClientPayload, ServerFrame, ServerFrameType, ServerPayload,
         deserialize_frame, serialize_frame,
     };

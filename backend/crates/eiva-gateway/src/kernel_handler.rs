@@ -1,15 +1,15 @@
 //! Gateway-side handlers for kernel awareness requests (host info, load status).
 
 use anyhow::Result;
-use eiva_core::gateway::TransportWriter;
-use eiva_core::gateway::protocol::frames::{
+use eiva_claw_core::gateway::TransportWriter;
+use eiva_claw_core::gateway::protocol::frames::{
     GpuInfoDto, ServerFrame, ServerFrameType, ServerPayload,
 };
 use tracing::debug;
 
 /// Handle a `HostInfoRequest` frame: respond with hardware capabilities.
 pub async fn handle_host_info_request(writer: &mut dyn TransportWriter) -> Result<()> {
-    let payload = match eiva_core::runtime_ctx::get_host() {
+    let payload = match eiva_claw_core::runtime_ctx::get_host() {
         Some(host) => ServerPayload::HostInfoResult {
             hostname: host.hostname.clone(),
             os: format!("{} {}", host.os_name, host.os_version),
@@ -51,7 +51,7 @@ pub async fn handle_host_info_request(writer: &mut dyn TransportWriter) -> Resul
 
 /// Handle a `LoadStatusRequest` frame: respond with current load metrics.
 pub async fn handle_load_status_request(writer: &mut dyn TransportWriter) -> Result<()> {
-    let payload = match eiva_core::runtime_ctx::get_load_tracker() {
+    let payload = match eiva_claw_core::runtime_ctx::get_load_tracker() {
         Some(tracker) => {
             let tracker = tracker.read().await;
             let score = tracker.load_score() as f64;

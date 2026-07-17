@@ -4,14 +4,14 @@ use anyhow::{Context, Result};
 use serde_json::json;
 use tracing::debug;
 
-use eiva_core::error_details::{ErrorLike, RequestDetails};
-use eiva_core::gateway::protocol::server;
-use eiva_core::gateway::transport::TransportWriter;
-use eiva_core::gateway::{
+use eiva_claw_core::error_details::{ErrorLike, RequestDetails};
+use eiva_claw_core::gateway::protocol::server;
+use eiva_claw_core::gateway::transport::TransportWriter;
+use eiva_claw_core::gateway::{
     ChatMessage, CopilotSession, ModelContext, ModelResponse, ParsedToolCall, ProbeResult,
     ProviderRequest, ToolCallResult,
 };
-use eiva_core::providers;
+use eiva_claw_core::providers;
 
 // ── Connection retry helper ─────────────────────────────────────────────────
 
@@ -126,7 +126,7 @@ pub enum MissingRequestField {
 /// Fields present in the request take priority; missing fields fall back
 /// to the gateway defaults.
 pub fn resolve_request(
-    req: eiva_core::gateway::ChatRequest,
+    req: eiva_claw_core::gateway::ChatRequest,
     ctx: Option<&ModelContext>,
 ) -> std::result::Result<ProviderRequest, MissingRequestField> {
     let provider = req
@@ -181,7 +181,7 @@ pub fn append_tool_round(
 /// Encode the assistant turn (text + tool calls) into Eiva's canonical,
 /// provider-agnostic envelope.
 ///
-/// The encoding now lives in `eiva-core` alongside the genai decoder, so
+/// The encoding now lives in `eiva-claw-core` alongside the genai decoder, so
 /// the on-wire contract has a single owner; this delegates to it. The
 /// `_provider` argument is retained for call-site compatibility but no longer
 /// affects the output.
@@ -216,9 +216,9 @@ fn format_tool_results(_provider: &str, results: &[ToolCallResult]) -> Vec<(Stri
 /// with 'tool_calls'`.
 pub fn thread_history_to_chat_messages(
     provider: &str,
-    history: &[eiva_core::threads::ThreadMessage],
+    history: &[eiva_claw_core::threads::ThreadMessage],
 ) -> Vec<ChatMessage> {
-    use eiva_core::threads::MessageRole;
+    use eiva_claw_core::threads::MessageRole;
 
     let mut out: Vec<ChatMessage> = Vec::with_capacity(history.len());
     // Track seen tool_use IDs across the entire conversation to detect and
@@ -581,7 +581,7 @@ pub async fn compact_conversation(
 /// "fully ready", "connected with a warning", and "hard failure".
 ///
 /// On any failure path a structured `tracing::warn!` is emitted via
-/// [`eiva_core::error_details::RequestDetails`] so that JSON log output
+/// [`eiva_claw_core::error_details::RequestDetails`] so that JSON log output
 /// carries the request method, URL, status, redacted request/response
 /// headers, and body excerpt as named fields — rather than a single
 /// pre-formatted string.  The wire-protocol [`ProbeResult`] strings
@@ -790,7 +790,7 @@ fn format_probe_error(err: &anyhow_tracing::Error) -> String {
     }
 }
 
-// The genai-backed provider dispatch lives in `eiva-core` so the gateway
+// The genai-backed provider dispatch lives in `eiva-claw-core` so the gateway
 // and client crates share one genai instance. Re-export the single dispatch
 // entry point so call sites use `providers::call_with_tools`.
-pub use eiva_core::providers::call_with_tools;
+pub use eiva_claw_core::providers::call_with_tools;

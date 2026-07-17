@@ -8,7 +8,7 @@
 
 use dioxus::prelude::*;
 use dioxus_bulma::prelude::{BulmaColor, BulmaSize, Button, Buttons};
-use eiva_core::user_prompt_types::{PromptResponseValue, PromptType, UserPrompt};
+use eiva_claw_core::user_prompt_types::{PromptResponseValue, PromptType, UserPrompt};
 
 #[derive(Props, Clone, PartialEq)]
 pub struct UserPromptCardProps {

@@ -5,7 +5,7 @@ use crate::tone::Tone;
 /// The policy cycle order used by the "cycle policy" action:
 /// OPEN → ASK → AUTH → SKILL → OPEN.
 pub fn next_policy(current: &str) -> &'static str {
-    use eiva_core::secrets::AccessPolicy;
+    use eiva_claw_core::secrets::AccessPolicy;
     AccessPolicy::from_badge(current)
         .map(|p| p.cycled().badge())
         .unwrap_or("OPEN")
@@ -41,8 +41,8 @@ pub struct SecretInfoData {
     pub disabled: bool,
 }
 
-impl From<&eiva_core::gateway::client_types::SecretEntryInfo> for SecretInfoData {
-    fn from(e: &eiva_core::gateway::client_types::SecretEntryInfo) -> Self {
+impl From<&eiva_claw_core::gateway::client_types::SecretEntryInfo> for SecretInfoData {
+    fn from(e: &eiva_claw_core::gateway::client_types::SecretEntryInfo) -> Self {
         Self {
             key: e.name.clone(),
             label: e.label.clone(),
@@ -53,9 +53,9 @@ impl From<&eiva_core::gateway::client_types::SecretEntryInfo> for SecretInfoData
     }
 }
 
-impl From<eiva_core::gateway::client_types::SecretEntryDto> for SecretInfoData {
-    fn from(dto: eiva_core::gateway::client_types::SecretEntryDto) -> Self {
-        Self::from(&eiva_core::gateway::client_types::SecretEntryInfo::from(dto))
+impl From<eiva_claw_core::gateway::client_types::SecretEntryDto> for SecretInfoData {
+    fn from(dto: eiva_claw_core::gateway::client_types::SecretEntryDto) -> Self {
+        Self::from(&eiva_claw_core::gateway::client_types::SecretEntryInfo::from(dto))
     }
 }
 

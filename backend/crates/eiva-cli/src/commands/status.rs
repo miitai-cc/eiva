@@ -1,7 +1,7 @@
 //! `eiva status` — show gateway, model, and workspace status.
 
 use clap::Args;
-use eiva_core::config::Config;
+use eiva_claw_core::config::Config;
 
 /// Arguments for `eiva status`.
 #[derive(Debug, Args, Default)]
@@ -41,7 +41,7 @@ pub(crate) fn run(config: &Config, args: &StatusArgs) {
         }
         println!("}}");
     } else {
-        use eiva_core::theme as t;
+        use eiva_claw_core::theme as t;
         println!("{}\n", t::heading("Eiva status"));
         println!(
             "{}",
@@ -56,7 +56,7 @@ pub(crate) fn run(config: &Config, args: &StatusArgs) {
         );
         // Active project, if the gateway has created a project registry.
         let projects_path = config.sessions_dir().join("projects.json");
-        if let Ok(pm) = eiva_core::projects::ProjectManager::load_from_file(&projects_path) {
+        if let Ok(pm) = eiva_claw_core::projects::ProjectManager::load_from_file(&projects_path) {
             if let Some(p) = pm.active() {
                 println!(
                     "{}",

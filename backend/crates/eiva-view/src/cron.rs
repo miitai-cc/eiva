@@ -16,8 +16,8 @@ pub struct CronJobData {
     pub run_count: u64,
 }
 
-impl From<&eiva_core::gateway::protocol::frames::CronJobDto> for CronJobData {
-    fn from(dto: &eiva_core::gateway::protocol::frames::CronJobDto) -> Self {
+impl From<&eiva_claw_core::gateway::protocol::frames::CronJobDto> for CronJobData {
+    fn from(dto: &eiva_claw_core::gateway::protocol::frames::CronJobDto) -> Self {
         Self {
             id: dto.id.clone(),
             name: dto.name.clone(),

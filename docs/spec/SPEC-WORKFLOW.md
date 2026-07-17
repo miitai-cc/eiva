@@ -11,7 +11,7 @@
 工作流程本質上是一個 **DAG (Directed Acyclic Graph)**（有向無環圖）。後端引擎需要：
 1. 將前端儲存的 JSON 反序列化成 Rust Struct。
 2. 以 `tokio::spawn` 的方式將工作流程丟入背景非同步執行，避免阻塞 API。
-3. 引擎存放目錄位於 `backend/crates/eiva-core/src/workflow/`。
+3. 引擎存放目錄位於 `backend/crates/eiva-claw-core/src/workflow/`。
 
 ## 2. 後端執行引擎規格 (Engine Spec)
 
@@ -49,8 +49,8 @@
      3. **建構訊息陣列 (Chat Messages)**:
         - `System Message`: 預設為 "You are a helpful AI assistant in an automated workflow." (未來可擴充 `systemPrompt` 欄位)。
         - `User Message`: 以步驟 2 渲染出的字串為主。若使用者未在 prompt 中透過模板語法提取 `payload` 資料，則引擎可選擇將 `ctx.payload` 序列化為 JSON 附加於 User Message 末尾，確保 AI 能看見上下文資料。
-     4. 將訊息封裝為 `eiva_core::gateway::protocol::types::ChatMessage` 陣列。
-     5. 呼叫對應的 LLM Provider (如 `eiva_core::providers` 或 Chat System) 傳入 `modelName` 與 `temperature` 發送非同步 One-shot 推論請求。
+     4. 將訊息封裝為 `eiva_claw_core::gateway::protocol::types::ChatMessage` 陣列。
+     5. 呼叫對應的 LLM Provider (如 `eiva_claw_core::providers` 或 Chat System) 傳入 `modelName` 與 `temperature` 發送非同步 One-shot 推論請求。
      6. 等待 LLM 回應完成，將純文字回應字串存入 `ctx.payload[format!("{}_result", node.id)]` (使用節點 ID 作為 key 避免資料覆蓋)。
      7. 回傳 `Result::Ok(())`。
 
@@ -60,8 +60,8 @@
      1. 讀取 `node.data.parameters` 字串，透過 `minijinja` 進行變數渲染插值。
      2. 將渲染後的參數字串反序列化為 JSON Object `tool_args`。
      3. 進行 `match node.data.toolType` 分支執行：
-        - `"webSearch"`: 從 `tool_args["query"]` 取得關鍵字，呼叫 `eiva_core::tools::web_search(query).await`。
-        - `"fetchUrl"`: 從 `tool_args["url"]` 取得網址，呼叫 `eiva_core::tools::fetch_url(url).await`。
+        - `"webSearch"`: 從 `tool_args["query"]` 取得關鍵字，呼叫 `eiva_claw_core::tools::web_search(query).await`。
+        - `"fetchUrl"`: 從 `tool_args["url"]` 取得網址，呼叫 `eiva_claw_core::tools::fetch_url(url).await`。
         - `"calculator"`: 從 `tool_args["expression"]` 取得算式，呼叫 `evalexpr::eval(expression)`。
      4. 將工具回傳的結果封裝為 `serde_json::Value`，寫入 `ctx.payload[format!("{}_result", node.id)]`。
      5. 回傳 `Result::Ok(())`。
@@ -69,7 +69,7 @@
 4. **`mcpNode` (MCP 節點)**
    - **參數**: `mcpName` (MCP 伺服器名稱), `prompt`
    - **Algorithm**:
-     1. 從 `eiva_core::mcp::McpClientManager` 中，根據 `node.data.mcpName` 尋找並取得已連線的 Session。若找不到則回傳 Error，中斷 Workflow 執行。
+     1. 從 `eiva_claw_core::mcp::McpClientManager` 中，根據 `node.data.mcpName` 尋找並取得已連線的 Session。若找不到則回傳 Error，中斷 Workflow 執行。
      2. 透過 `minijinja` 渲染 `node.data.prompt` 以替換變數。
      3. 建立標準的 MCP JSON-RPC 請求 (例如 `CallToolRequest`)，將渲染後的 `prompt` 與 `ctx.payload` 放入請求參數中。
      4. 非同步發送請求並等待外部 MCP Server 回應。
@@ -79,7 +79,7 @@
 5. **`skillNode` (技能節點)**
    - **參數**: `skillName` (技能名稱), `prompt`
    - **Algorithm**:
-     1. 從 `eiva_core::skills::SkillRegistry` 依據 `node.data.skillName` 取得對應的 `SkillHandler`。
+     1. 從 `eiva_claw_core::skills::SkillRegistry` 依據 `node.data.skillName` 取得對應的 `SkillHandler`。
      2. 透過 `minijinja` 解析並渲染 `node.data.prompt` 內的變數。
      3. 建立執行上下文：`SkillExecutionContext { payload: &ctx.payload, prompt: &resolved_prompt }`。
      4. 呼叫 `SkillHandler::execute(skill_ctx).await` 執行技能邏輯。
@@ -156,7 +156,7 @@
 
 ### 3.1 執行 API
 - **Endpoint**: `GET /eiva/backend/api/ver-0.95/workflow/:id/run` (前端目前以 GET 呼叫，但從語意上建議未來改成 POST，現階段相容舊版前端)。
-- **行為**: 從 DB 取得 Workflow 後，將其轉交給 `eiva-core::workflow::runner::run_workflow` 在 `tokio::spawn` 中執行，並立刻回傳 HTTP 200 `{"ok": true, "message": "Workflow started"}`。
+- **行為**: 從 DB 取得 Workflow 後，將其轉交給 `eiva-claw-core::workflow::runner::run_workflow` 在 `tokio::spawn` 中執行，並立刻回傳 HTTP 200 `{"ok": true, "message": "Workflow started"}`。
 
 ### 3.2 狀態與進度追蹤 (SSE / WebSocket) (Optional / Future enhancement)
 - 新增一個 `/eiva/backend/api/ver-0.95/workflow/:id/status` 端點，讓前端輪詢或訂閱執行進度。
@@ -171,12 +171,12 @@
 以下提示詞切分為不同的開發階段。這份規格已經考量了「新建模組」與「後續增量修正」的過程，您可以直接複製這些 Prompt 貼給 AI 助手，請它逐步實作：
 
 ### Phase 1: 建立核心結構與 Graph 解析 (Models & Context)
-現在我們要在 `eiva-core` 內實作工作流程執行引擎。
-請在 `backend/crates/eiva-core/src/workflow/` 建立 `mod.rs`, `models.rs` 與 `context.rs`。
+現在我們要在 `eiva-claw-core` 內實作工作流程執行引擎。
+請在 `backend/crates/eiva-claw-core/src/workflow/` 建立 `mod.rs`, `models.rs` 與 `context.rs`。
 要求：
 1. `models.rs`: 定義 `WorkflowData`, `Node`, `Edge` 的 serde struct，能解析前端傳來的 JSON 結構。請注意 `node.data` 結構是動態的，可使用 `serde_json::Value` 或 `HashMap`。
 2. `context.rs`: 定義 `WorkflowContext` struct，內部包含 `payload: HashMap<String, serde_json::Value>` 以及 `global_variables: HashMap<String, serde_json::Value>`。
-3. 在 `mod.rs` 匯出這些型別，並將 `workflow` 模組宣告加入 `backend/crates/eiva-core/src/lib.rs` 中。
+3. 在 `mod.rs` 匯出這些型別，並將 `workflow` 模組宣告加入 `backend/crates/eiva-claw-core/src/lib.rs` 中。
 
 ### Phase 2: 建立 Graph Runner 與基礎節點 (Runner & Basic Nodes)
 接續前一階段，請在 `workflow` 模組下建立 `nodes.rs` 與 `runner.rs`：
@@ -190,7 +190,7 @@
 ### Phase 3: 與 Gateway API 介接 (API Integration)
 現在要在 API 層次整合剛做好的 workflow runner，將工作流程放進背景執行。
 請修改 `backend/crates/eiva-gateway/src/api.rs` 的 `run_workflow` API：
-1. 取得 workflow JSON 資料後，反序列化成 `eiva_core::workflow::models::WorkflowData`。
+1. 取得 workflow JSON 資料後，反序列化成 `eiva_claw_core::workflow::models::WorkflowData`。
 2. 建立 `WorkflowContext` 並呼叫 `WorkflowRunner::run`。
 3. 請使用 `tokio::spawn` 將 `run` 包裝為背景任務，使其不阻塞 API。
 4. 如果解析或啟動失敗，回傳 500/400 錯誤；若成功啟動，立即回傳 HTTP 200 JSON `{"ok": true, "message": "Workflow is running in background"}`。
@@ -201,7 +201,7 @@
 2. `AgentNode`: 
    - 透過 `minijinja` 渲染 `node.data.prompt`。
    - 將渲染結果作為 User Message，並預設一段 System Message (You are a helpful AI assistant in an automated workflow)。若 User Message 內未參照 payload，可將 payload JSON 附加於後。
-   - 使用 `eiva_core::gateway::protocol::types::ChatMessage` 建立訊息，並呼叫 `eiva_core` 中既有的 LLM Provider / Chat 介面發送推論請求。
+   - 使用 `eiva_claw_core::gateway::protocol::types::ChatMessage` 建立訊息，並呼叫 `eiva_claw_core` 中既有的 LLM Provider / Chat 介面發送推論請求。
    - 將取得的純文字結果寫入 `ctx.payload[format!("{}_result", node.id)]`。
 
 ### Phase 5: 實作 ConditionNode 與 CalculateNode (Evalexpr)
@@ -211,6 +211,6 @@
 
 ### Phase 6: 擴充 ToolNode, McpNode 與 SkillNode
 最後，實作與外部系統互動的進階節點：
-1. `ToolNode`: 解析 `node.data.toolType` 與 `parameters`。依據類型呼叫 `eiva_core::tools` 內的對應功能 (如 webSearch, fetchUrl)，並將結果存入 payload。
-2. `McpNode`: 透過 `eiva_core::mcp::McpClientManager` 根據 `mcpName` 取得連線，並將渲染後的 `prompt` 與 `payload` 發送為 MCP CallToolRequest，接收並寫入結果。
-3. `SkillNode`: 透過 `eiva_core::skills::SkillRegistry` 取得對應的技能，傳遞 Context 並執行，結果合併回 `ctx.payload`。
+1. `ToolNode`: 解析 `node.data.toolType` 與 `parameters`。依據類型呼叫 `eiva_claw_core::tools` 內的對應功能 (如 webSearch, fetchUrl)，並將結果存入 payload。
+2. `McpNode`: 透過 `eiva_claw_core::mcp::McpClientManager` 根據 `mcpName` 取得連線，並將渲染後的 `prompt` 與 `payload` 發送為 MCP CallToolRequest，接收並寫入結果。
+3. `SkillNode`: 透過 `eiva_claw_core::skills::SkillRegistry` 取得對應的技能，傳遞 Context 並執行，結果合併回 `ctx.payload`。

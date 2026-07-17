@@ -5,7 +5,7 @@
 
 use dioxus::prelude::*;
 use dioxus_bulma::prelude::{BulmaColor, BulmaSize, Button, Help, Select};
-use eiva_core::providers;
+use eiva_claw_core::providers;
 
 /// (provider_id, model_id) pair emitted when the user changes model.
 pub type ModelSelection = (String, String);

@@ -1,6 +1,6 @@
 //! Convert Eiva's chat state into the `dioxus-genai-chat` data model.
 //!
-//! The desktop client keeps the conversation in `eiva_core::ui::ChatMessage`
+//! The desktop client keeps the conversation in `eiva_claw_core::ui::ChatMessage`
 //! (one bubble per turn, with `tool_calls` nested and an `is_streaming` flag).
 //! `ChatSurface` instead consumes a flat [`ChatTranscript`] of one-payload
 //! messages. This module is the (render-time) bridge between the two; it lives in
@@ -11,8 +11,8 @@ use dioxus_genai_chat::{
     ChatMessagePayload, ChatRole, ChatTranscript, ContextItem, ContextKind, Reasoning,
     ReasoningStep, SearchMatch, StepStatus, ToolCall, ToolCallHint, ToolCallStatus, ToolResultHint,
 };
-use eiva_core::types::MessageRole;
-use eiva_core::ui::ChatMessage;
+use eiva_claw_core::types::MessageRole;
+use eiva_claw_core::ui::ChatMessage;
 use eiva_view::serde_json;
 use eiva_view::{ChatSurfaceData, PromptAttachment, PromptAttachmentKind};
 
@@ -489,7 +489,7 @@ pub fn to_context_items(attachments: &[PromptAttachment]) -> Vec<ContextItem> {
 #[cfg(test)]
 mod ask_user_tests {
     use super::*;
-    use eiva_core::ui::ToolCallInfo;
+    use eiva_claw_core::ui::ToolCallInfo;
 
     fn ask_user_message(result: Option<&str>, is_error: bool) -> ChatMessage {
         let mut msg = ChatMessage::start_assistant("m1".to_string());

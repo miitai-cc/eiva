@@ -12,7 +12,7 @@ use iocraft::prelude::*;
 #[derive(Default, Props)]
 pub struct DetailsDialogProps {
     /// Multi-line details text (already rendered by
-    /// [`eiva_core::error_details::render_extended`]).
+    /// [`eiva_claw_core::error_details::render_extended`]).
     pub details: String,
     /// Whether this is for an error (vs. a warning) — drives the title
     /// and accent colour.

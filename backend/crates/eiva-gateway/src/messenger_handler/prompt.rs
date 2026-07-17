@@ -4,8 +4,8 @@
 //! workspace context, skills, active tasks, model guidance, tool-usage
 //! guidelines, and platform-specific formatting hints.
 
-use eiva_core::config::Config;
-use eiva_core::messengers::Message;
+use eiva_claw_core::config::Config;
+use eiva_claw_core::messengers::Message;
 
 use crate::SharedSkillManager;
 
@@ -19,7 +19,7 @@ pub(crate) async fn build_messenger_system_prompt(
     skill_mgr: &SharedSkillManager,
     session_key: &str,
 ) -> String {
-    use eiva_core::workspace_context::{SessionType, WorkspaceContext};
+    use eiva_claw_core::workspace_context::{SessionType, WorkspaceContext};
 
     let base_prompt = config
         .system_prompt

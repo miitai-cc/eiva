@@ -29,10 +29,10 @@ use tracing::{info, warn};
 
 use super::SharedVault;
 use super::providers;
-use eiva_core::gateway::ProviderRequest;
-use eiva_core::gateway::protocol;
-use eiva_core::gateway::transport::TransportWriter;
-use eiva_core::providers as crate_providers;
+use eiva_claw_core::gateway::ProviderRequest;
+use eiva_claw_core::gateway::protocol;
+use eiva_claw_core::gateway::transport::TransportWriter;
+use eiva_claw_core::providers as crate_providers;
 
 // ── Error enum ──────────────────────────────────────────────────────────────
 

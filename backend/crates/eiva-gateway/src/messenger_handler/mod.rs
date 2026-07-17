@@ -5,9 +5,9 @@
 //! them through the model for processing with full tool loop support.
 
 use anyhow::Result;
-use eiva_core::config::Config;
-use eiva_core::messengers::{Message, Messenger, MessengerManager, SendOptions};
-use eiva_core::tools;
+use eiva_claw_core::config::Config;
+use eiva_claw_core::messengers::{Message, Messenger, MessengerManager, SendOptions};
+use eiva_claw_core::tools;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
@@ -19,7 +19,7 @@ use crate::providers;
 use crate::secrets_handler;
 use crate::skills_handler;
 use crate::{SharedSkillManager, SharedVault};
-use eiva_core::gateway::{ChatMessage, MediaRef, ModelContext, ProviderRequest, ToolCallResult};
+use eiva_claw_core::gateway::{ChatMessage, MediaRef, ModelContext, ProviderRequest, ToolCallResult};
 
 mod builders;
 mod media;

@@ -14,7 +14,7 @@ Eiva is in excellent shape. The architecture is clean, the crate split (core/cli
 
 1. **Clean Crate Structure**
    ```
-   eiva-core    — shared logic, tools, providers, config
+   eiva-claw-core    — shared logic, tools, providers, config
    eiva-cli     — CLI binary
    eiva-tui     — terminal UI (now iocraft-based)
    ```

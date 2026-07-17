@@ -9,11 +9,11 @@ use crate::components::{Chat, NewProjectDialog, Sidebar};
 
 use crate::app_support::*;
 use crate::state::AppState;
-use eiva_core::gateway::GatewayClient;
-use eiva_core::gateway::client_types::{GatewayCommand, GatewayEvent};
-use eiva_core::types::MessageRole;
-use eiva_core::ui::ConnectionStatus;
-use eiva_core::user_prompt_types::PromptResponseValue;
+use eiva_claw_core::gateway::GatewayClient;
+use eiva_claw_core::gateway::client_types::{GatewayCommand, GatewayEvent};
+use eiva_claw_core::types::MessageRole;
+use eiva_claw_core::ui::ConnectionStatus;
+use eiva_claw_core::user_prompt_types::PromptResponseValue;
 
 use eiva_view::{
     BannerActionKind, HatchingDialogData, PromptAttachment, build_prompt_with_attachments,

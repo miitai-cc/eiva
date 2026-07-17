@@ -15,12 +15,12 @@
 //! stub responses.
 
 use anyhow::Result;
-use eiva_core::config::Config;
-use eiva_core::cron::{CronJob, CronJobPatch, CronStore, Payload, Schedule, SessionTarget};
-use eiva_core::gateway::TransportWriter;
-use eiva_core::gateway::protocol::frames::*;
-use eiva_core::gateway::protocol::server::send_frame;
-use eiva_core::memory_consolidation::{ConsolidationConfig, MemoryConsolidation};
+use eiva_claw_core::config::Config;
+use eiva_claw_core::cron::{CronJob, CronJobPatch, CronStore, Payload, Schedule, SessionTarget};
+use eiva_claw_core::gateway::TransportWriter;
+use eiva_claw_core::gateway::protocol::frames::*;
+use eiva_claw_core::gateway::protocol::server::send_frame;
+use eiva_claw_core::memory_consolidation::{ConsolidationConfig, MemoryConsolidation};
 
 pub async fn handle_panel_request(
     writer: &mut dyn TransportWriter,
@@ -145,7 +145,7 @@ fn period_start_ms(period: &str) -> Option<u64> {
 
 fn usage_stats(period: Option<String>) -> ServerFrame {
     let period = period.unwrap_or_else(|| "all".into());
-    let usage = eiva_core::runtime_ctx::get_stats_observer()
+    let usage = eiva_claw_core::runtime_ctx::get_stats_observer()
         .map(|stats| stats.usage(period_start_ms(&period)))
         .unwrap_or_default();
 
@@ -182,7 +182,7 @@ async fn logs(source: String, tail: Option<usize>) -> ServerFrame {
     let (ok, lines, message) = match source.as_str() {
         // The gateway/agent share one telemetry ring (LLM calls, tool
         // calls, channel traffic, errors).
-        "gateway" | "agent" => match eiva_core::runtime_ctx::get_stats_observer() {
+        "gateway" | "agent" => match eiva_claw_core::runtime_ctx::get_stats_observer() {
             Some(stats) => {
                 let lines = stats.recent_logs(tail);
                 if lines.is_empty() {
@@ -203,7 +203,7 @@ async fn logs(source: String, tail: Option<usize>) -> ServerFrame {
             Some("Cron has no runtime yet, so there are no run logs".to_string()),
         ),
         // Anything else is a managed-service name.
-        service => match eiva_core::runtime_ctx::get_service_manager() {
+        service => match eiva_claw_core::runtime_ctx::get_service_manager() {
             Some(mgr) => {
                 let mgr = mgr.read().await;
                 match mgr.logs(service, Some(tail)) {
@@ -672,7 +672,7 @@ fn history_search(config: &Config, query: String, limit: Option<usize>) -> Serve
 
 #[cfg(feature = "mcp")]
 async fn mcp_list(config: &Config) -> ServerFrame {
-    let mgr = eiva_core::runtime_ctx::get_mcp_manager();
+    let mgr = eiva_claw_core::runtime_ctx::get_mcp_manager();
     let mut servers: Vec<McpServerDto> = Vec::new();
 
     // Live status for connected servers.
@@ -740,7 +740,7 @@ async fn mcp_connect(
     url: Option<String>,
     env: Vec<(String, String)>,
 ) -> ServerFrame {
-    use eiva_core::mcp::McpServerConfig;
+    use eiva_claw_core::mcp::McpServerConfig;
 
     let result: Result<McpServerDto, String> = async {
         if url.is_some() {
@@ -748,7 +748,7 @@ async fn mcp_connect(
                 "URL-based MCP transports are not yet supported — use a stdio command".into(),
             );
         }
-        let mgr = eiva_core::runtime_ctx::get_mcp_manager().ok_or("MCP manager not initialised")?;
+        let mgr = eiva_claw_core::runtime_ctx::get_mcp_manager().ok_or("MCP manager not initialised")?;
 
         // An explicit command defines (and persists) the server; otherwise
         // the name must refer to a configured server.
@@ -819,7 +819,7 @@ async fn mcp_connect(
 #[cfg(feature = "mcp")]
 async fn mcp_disconnect(name: String) -> ServerFrame {
     let result: Result<(), String> = async {
-        let mgr = eiva_core::runtime_ctx::get_mcp_manager().ok_or("MCP manager not initialised")?;
+        let mgr = eiva_claw_core::runtime_ctx::get_mcp_manager().ok_or("MCP manager not initialised")?;
         let mgr = mgr.lock().await;
         mgr.disconnect(&name).await.map_err(|e| e.to_string())
     }
@@ -927,7 +927,7 @@ fn tool_category(name: &str) -> &'static str {
 }
 
 fn tool_config_list(config: &Config) -> ServerFrame {
-    use eiva_core::tools::{ToolPermission, all_tools, tool_summary};
+    use eiva_claw_core::tools::{ToolPermission, all_tools, tool_summary};
 
     let mut tools: Vec<ToolConfigDto> = all_tools()
         .iter()
@@ -966,7 +966,7 @@ fn tool_config_list(config: &Config) -> ServerFrame {
 }
 
 fn tool_toggle(config: &mut Config, tool_name: String, enabled: bool) -> ServerFrame {
-    use eiva_core::tools::{ToolPermission, all_tools};
+    use eiva_claw_core::tools::{ToolPermission, all_tools};
 
     let result = (|| -> Result<(), String> {
         if !all_tools().iter().any(|def| def.name == tool_name) {
@@ -995,7 +995,7 @@ fn tool_toggle(config: &mut Config, tool_name: String, enabled: bool) -> ServerF
 // Channels
 // ═════════════════════════════════════════════════════════════════════════
 
-fn messenger_display_name(m: &eiva_core::config::MessengerConfig) -> String {
+fn messenger_display_name(m: &eiva_claw_core::config::MessengerConfig) -> String {
     if m.name.is_empty() {
         m.messenger_type.clone()
     } else {
@@ -1004,7 +1004,7 @@ fn messenger_display_name(m: &eiva_core::config::MessengerConfig) -> String {
 }
 
 /// Whether a messenger entry has the credentials its backend needs.
-fn messenger_has_credentials(m: &eiva_core::config::MessengerConfig) -> bool {
+fn messenger_has_credentials(m: &eiva_claw_core::config::MessengerConfig) -> bool {
     m.token.is_some()
         || m.webhook_url.is_some()
         || m.access_token.is_some()
@@ -1013,7 +1013,7 @@ fn messenger_has_credentials(m: &eiva_core::config::MessengerConfig) -> bool {
         || m.config_path.is_some()
 }
 
-fn messenger_to_dto(m: &eiva_core::config::MessengerConfig) -> ChannelStatusDto {
+fn messenger_to_dto(m: &eiva_claw_core::config::MessengerConfig) -> ChannelStatusDto {
     ChannelStatusDto {
         name: messenger_display_name(m),
         channel_type: m.messenger_type.clone(),
@@ -1116,7 +1116,7 @@ mod tests {
 
     #[test]
     fn tool_categories_cover_registry() {
-        for def in eiva_core::tools::all_tools() {
+        for def in eiva_claw_core::tools::all_tools() {
             assert_ne!(
                 tool_category(def.name),
                 "other",

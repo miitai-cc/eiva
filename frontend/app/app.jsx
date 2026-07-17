@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
-import { eiva } from './eiva_api.js';
+import { eiva } from '@eiva/common';
 import './style.css';
-import WorkflowEditor from './WorkflowEditor.jsx';
+import { WorkflowEditor, WorkflowI18nContext } from 'eiva-fe-workflow';
 import McpConfigPage from './McpConfigPage.jsx';
 import SkillConfigPage from './SkillConfigPage.jsx';
 import WorkspacePage from './WorkspacePage.jsx';
@@ -1853,7 +1853,9 @@ function App() {
               </div>
             </article>
           ) : activeView === 'workflow' ? (
+          <WorkflowI18nContext.Provider value={{ t }}>
             <WorkflowEditor />
+          </WorkflowI18nContext.Provider>
           ) : activeView === 'workspace' ? (
             <WorkspacePage />
           ) : activeView === 'mcp' ? (

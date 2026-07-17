@@ -10,12 +10,12 @@ use std::sync::atomic::Ordering;
 use tokio::sync::Mutex;
 use tracing::{debug, trace};
 
-use eiva_core::gateway::{
+use eiva_claw_core::gateway::{
     ChatMessage, ChatRequest, CopilotSession, ModelContext, ModelResponse, ServerFrame,
     ServerFrameType, ServerPayload, ToolCallResult, protocol, transport,
 };
-use eiva_core::observability::ObserverEvent;
-use eiva_core::tools;
+use eiva_claw_core::observability::ObserverEvent;
+use eiva_claw_core::tools;
 
 use crate::thread_updates::{send_thread_messages_update, send_threads_update};
 use crate::{
@@ -107,7 +107,7 @@ where
                 // could come from another connection's child) — control
                 // stays safe regardless, since the registry allowlists
                 // every PID it hands out.
-                let proc = eiva_core::exec_status::sample_active()
+                let proc = eiva_claw_core::exec_status::sample_active()
                     .into_iter()
                     .filter(|p| p.elapsed_ms <= elapsed_ms.saturating_add(250))
                     .min_by_key(|p| p.elapsed_ms);
@@ -143,12 +143,12 @@ async fn execute_user_prompt(
             tokio::sync::mpsc::Receiver<(
                 String,
                 bool,
-                eiva_core::user_prompt_types::PromptResponseValue,
+                eiva_claw_core::user_prompt_types::PromptResponseValue,
             )>,
         >,
     >,
 ) -> (String, bool) {
-    use eiva_core::user_prompt_types::{FormField, PromptOption, PromptType, UserPrompt};
+    use eiva_claw_core::user_prompt_types::{FormField, PromptOption, PromptType, UserPrompt};
 
     // Parse arguments into a UserPrompt
     let prompt_type_str = arguments
@@ -305,7 +305,7 @@ async fn execute_user_prompt(
                     false,
                 )
             } else {
-                use eiva_core::user_prompt_types::PromptResponseValue;
+                use eiva_claw_core::user_prompt_types::PromptResponseValue;
                 match value {
                     PromptResponseValue::Text(s) => (s, false),
                     PromptResponseValue::Confirm(b) => {
@@ -423,13 +423,13 @@ pub(crate) async fn dispatch_text_message(
             tokio::sync::mpsc::Receiver<(
                 String,
                 bool,
-                eiva_core::user_prompt_types::PromptResponseValue,
+                eiva_claw_core::user_prompt_types::PromptResponseValue,
             )>,
         >,
     >,
     credential_rx: &Arc<Mutex<tokio::sync::mpsc::Receiver<(String, bool, Option<String>)>>>,
     dom_query_rx: &Arc<Mutex<tokio::sync::mpsc::Receiver<(String, String, bool)>>>,
-    thread_mgr: &mut eiva_core::threads::ThreadManager,
+    thread_mgr: &mut eiva_claw_core::threads::ThreadManager,
     threads_path: &std::path::Path,
 ) -> Result<()> {
     let mut resolved = match providers::resolve_request(req.clone(), model_ctx) {
@@ -453,7 +453,7 @@ pub(crate) async fn dispatch_text_message(
     // the vault.  This handles the case where a key was stored after
     // the gateway started (e.g. user entered it via the TUI dialog).
     if resolved.api_key.is_none() {
-        if let Some(key_name) = eiva_core::providers::secret_key_for_provider(&resolved.provider) {
+        if let Some(key_name) = eiva_claw_core::providers::secret_key_for_provider(&resolved.provider) {
             let mut v = vault.lock().await;
             if let Ok(Some(key)) = v.get_secret(key_name, true) {
                 resolved.api_key = Some(key);
@@ -467,7 +467,7 @@ pub(crate) async fn dispatch_text_message(
     // Copilot API, re-triggering the device flow in an infinite loop.
     let mut local_copilot: Option<Arc<CopilotSession>> = None;
     if copilot_session.is_none()
-        && eiva_core::providers::needs_copilot_session(&resolved.provider)
+        && eiva_claw_core::providers::needs_copilot_session(&resolved.provider)
         && resolved.api_key.is_some()
     {
         let session = Arc::new(CopilotSession::new(
@@ -511,7 +511,7 @@ pub(crate) async fn dispatch_text_message(
     let mut seen_tool_ids = collect_existing_tool_ids(&resolved.messages);
 
     // Memory flush controller - tracks whether we've flushed this conversation
-    use eiva_core::memory_flush::MemoryFlush;
+    use eiva_claw_core::memory_flush::MemoryFlush;
     let flush_config = {
         let cfg = shared_config.read().await;
         cfg.memory_flush.clone()
@@ -542,7 +542,7 @@ pub(crate) async fn dispatch_text_message(
                 // Use the plan-specific API base URL from the session exchange
                 // (e.g. api.individual.githubcopilot.com) when available.
                 if let Some(session) = effective_copilot {
-                    if eiva_core::providers::needs_copilot_session(&resolved.provider) {
+                    if eiva_claw_core::providers::needs_copilot_session(&resolved.provider) {
                         if let Some(base) = session.api_base_url().await {
                             resolved.base_url = base;
                         }
@@ -563,7 +563,7 @@ pub(crate) async fn dispatch_text_message(
                 .await?
                 {
                     std::ops::ControlFlow::Continue(()) => {
-                        if eiva_core::providers::needs_copilot_session(&resolved.provider)
+                        if eiva_claw_core::providers::needs_copilot_session(&resolved.provider)
                             && original_api_key.is_some()
                         {
                             let session = Arc::new(CopilotSession::new(
@@ -740,7 +740,7 @@ pub(crate) async fn dispatch_text_message(
                 .await?
                 {
                     std::ops::ControlFlow::Continue(()) => {
-                        if eiva_core::providers::needs_copilot_session(&resolved.provider)
+                        if eiva_claw_core::providers::needs_copilot_session(&resolved.provider)
                             && original_api_key.is_some()
                         {
                             let session = Arc::new(CopilotSession::new(
@@ -844,7 +844,7 @@ pub(crate) async fn dispatch_text_message(
                     if let Some(thread) = thread_mgr.foreground_mut() {
                         updated_thread_id = Some(thread.id);
                         thread.add_message(
-                            eiva_core::threads::MessageRole::Assistant,
+                            eiva_claw_core::threads::MessageRole::Assistant,
                             &model_resp.text,
                         );
                     }
@@ -857,7 +857,7 @@ pub(crate) async fn dispatch_text_message(
                         let ws = workspace_dir.to_path_buf();
                         let text = model_resp.text.clone();
                         tokio::spawn(async move {
-                            if let Ok(mem) = eiva_core::steel_memory::SteelMemory::new(&ws) {
+                            if let Ok(mem) = eiva_claw_core::steel_memory::SteelMemory::new(&ws) {
                                 let _ = mem
                                     .add_memory(&text, "conversations", "assistant", None)
                                     .await;
@@ -1236,7 +1236,7 @@ fn is_likely_non_unique_tool_id(id: &str) -> bool {
 /// to detect collisions when a new model response produces an ID that
 /// already exists in the replayed history.
 fn collect_existing_tool_ids(
-    messages: &[eiva_core::gateway::ChatMessage],
+    messages: &[eiva_claw_core::gateway::ChatMessage],
 ) -> std::collections::HashSet<String> {
     let mut ids = std::collections::HashSet::new();
     for msg in messages {

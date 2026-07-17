@@ -3,8 +3,8 @@
 use anyhow::Result;
 use clap::{Args, Subcommand};
 
-use eiva_core::config::Config;
-use eiva_core::skills::SkillManager;
+use eiva_claw_core::config::Config;
+use eiva_claw_core::skills::SkillManager;
 
 #[derive(Debug, Args)]
 pub(crate) struct ClawHubCommands {
@@ -102,7 +102,7 @@ pub(crate) enum ClawHubAuthCommands {
 
 /// Run a `clawhub` subcommand.
 pub(crate) fn run(args: ClawHubCommands, config: &mut Config) -> Result<()> {
-    use eiva_core::theme as t;
+    use eiva_claw_core::theme as t;
 
     // Use consolidated skills_dirs from config
     let skills_dirs = config.skills_dirs();

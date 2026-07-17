@@ -7,10 +7,10 @@ use dioxus::prelude::*;
 use eiva_view::{chrono, serde_json, tracing, uuid};
 
 use crate::state::AppState;
-use eiva_core::gateway::GatewayClient;
-use eiva_core::gateway::client_types::{GatewayCommand, GatewayEvent};
-use eiva_core::types::MessageRole;
-use eiva_core::ui::{ConnectionStatus, ThreadInfo};
+use eiva_claw_core::gateway::GatewayClient;
+use eiva_claw_core::gateway::client_types::{GatewayCommand, GatewayEvent};
+use eiva_claw_core::types::MessageRole;
+use eiva_claw_core::ui::{ConnectionStatus, ThreadInfo};
 use eiva_view::{SecretsDialogData, SwarmAgentData, SwarmData};
 
 // ── Shared buffer for the worker → UI bridge ───────────────────────────────
@@ -220,7 +220,7 @@ pub(crate) fn handle_gateway_event(event: GatewayEvent, mut state: Signal<AppSta
             if s.stream_targets_foreground() {
                 s.set_tool_live_status(
                     &id,
-                    eiva_core::ui::ToolLiveStatus {
+                    eiva_claw_core::ui::ToolLiveStatus {
                         elapsed_ms,
                         pid,
                         cpu_percent,
@@ -273,7 +273,7 @@ pub(crate) fn handle_gateway_event(event: GatewayEvent, mut state: Signal<AppSta
         } => {
             state.write().projects = projects
                 .into_iter()
-                .map(|p| eiva_core::ui::ProjectInfo {
+                .map(|p| eiva_claw_core::ui::ProjectInfo {
                     id: p.id,
                     name: p.name,
                     path: p.path,
@@ -302,8 +302,8 @@ pub(crate) fn handle_gateway_event(event: GatewayEvent, mut state: Signal<AppSta
                     foreground = ?state.read().foreground_thread_id,
                     "Desktop thread history reply received"
                 );
-                use eiva_core::types::MessageRole;
-                use eiva_core::ui::{ChatMessage as UiChatMessage, ToolCallInfo};
+                use eiva_claw_core::types::MessageRole;
+                use eiva_claw_core::ui::{ChatMessage as UiChatMessage, ToolCallInfo};
                 use std::collections::VecDeque;
                 let mut converted: VecDeque<UiChatMessage> =
                     VecDeque::with_capacity(messages.len());
@@ -802,7 +802,7 @@ fn host_resources(s: &AppState) -> (u64, u64, Option<String>) {
 }
 
 fn dto_to_engine_data(
-    dto: eiva_core::gateway::protocol::frames::EngineInfoDto,
+    dto: eiva_claw_core::gateway::protocol::frames::EngineInfoDto,
 ) -> eiva_view::LocalEngineData {
     eiva_view::LocalEngineData {
         id: dto.id,
@@ -827,7 +827,7 @@ fn dto_to_engine_data(
 
 fn dto_to_model_data(
     engine: &str,
-    dto: eiva_core::gateway::protocol::frames::EngineModelDto,
+    dto: eiva_claw_core::gateway::protocol::frames::EngineModelDto,
 ) -> eiva_view::LocalModelData {
     eiva_view::LocalModelData {
         engine: engine.to_string(),
@@ -985,7 +985,7 @@ pub(crate) fn build_directory_options(base_path: &str) -> Vec<eiva_view::Directo
 
 /// Build the current list of swarm infos from the global swarm manager.
 pub(crate) fn get_swarm_infos() -> Vec<SwarmData> {
-    use eiva_core::swarm::swarm_manager;
+    use eiva_claw_core::swarm::swarm_manager;
 
     let mgr = match swarm_manager().lock() {
         Ok(m) => m,
@@ -1018,7 +1018,7 @@ pub(crate) fn get_swarm_infos() -> Vec<SwarmData> {
 
 /// Create a swarm from a built-in template.
 pub(crate) fn create_swarm_from_template(template: &str) -> anyhow::Result<()> {
-    use eiva_core::swarm::{builtin_templates, swarm_manager};
+    use eiva_claw_core::swarm::{builtin_templates, swarm_manager};
 
     let templates = builtin_templates();
     let cfg = templates
@@ -1038,7 +1038,7 @@ pub(crate) fn create_swarm_from_template(template: &str) -> anyhow::Result<()> {
 
 /// Stop a running swarm.
 pub(crate) fn stop_swarm(name: &str) -> anyhow::Result<()> {
-    use eiva_core::swarm::swarm_manager;
+    use eiva_claw_core::swarm::swarm_manager;
 
     let mgr = swarm_manager();
     let mut m = mgr
@@ -1053,10 +1053,10 @@ pub(crate) fn stop_swarm(name: &str) -> anyhow::Result<()> {
 /// Skills live on the local filesystem, so this mirrors the TUI's local
 /// `SkillManager` rather than going through the gateway.
 pub(crate) fn load_skills_list() -> Vec<eiva_view::SkillInfoData> {
-    let Ok(config) = eiva_core::config::Config::load(None) else {
+    let Ok(config) = eiva_claw_core::config::Config::load(None) else {
         return Vec::new();
     };
-    let mut mgr = eiva_core::skills::SkillManager::with_dirs(config.skills_dirs());
+    let mut mgr = eiva_claw_core::skills::SkillManager::with_dirs(config.skills_dirs());
     let _ = mgr.load_skills();
     mgr.get_skills()
         .iter()
@@ -1070,8 +1070,8 @@ pub(crate) fn load_skills_list() -> Vec<eiva_view::SkillInfoData> {
 
 /// Toggle a skill's enabled state and return the refreshed list.
 pub(crate) fn toggle_skill(name: &str) -> Vec<eiva_view::SkillInfoData> {
-    if let Ok(config) = eiva_core::config::Config::load(None) {
-        let mut mgr = eiva_core::skills::SkillManager::with_dirs(config.skills_dirs());
+    if let Ok(config) = eiva_claw_core::config::Config::load(None) {
+        let mut mgr = eiva_claw_core::skills::SkillManager::with_dirs(config.skills_dirs());
         let _ = mgr.load_skills();
         let enabled = mgr
             .get_skills()

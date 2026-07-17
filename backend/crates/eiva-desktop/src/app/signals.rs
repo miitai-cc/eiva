@@ -7,7 +7,7 @@ use dioxus::prelude::*;
 
 use crate::app_support::connect_to_gateway;
 use crate::state::AppState;
-use eiva_core::gateway::GatewayClient;
+use eiva_claw_core::gateway::GatewayClient;
 use eiva_view::{ConnectionDialogData, HatchingDialogData};
 
 #[derive(Clone, Copy)]

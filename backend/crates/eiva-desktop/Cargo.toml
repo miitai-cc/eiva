@@ -20,7 +20,7 @@ path = "src/main.rs"
 
 [dependencies]
 # Core library
-eiva-core = { path = "../eiva-core", version = "0.4.0", default-features = false }
+eiva-claw-core = { path = "../../../lib/rust/crates/ai/eiva-claw-core", version = "0.4.0", default-features = false }
 eiva-view.workspace = true
 anyhow.workspace = true
 

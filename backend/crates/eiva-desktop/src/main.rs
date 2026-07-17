@@ -14,8 +14,8 @@ use eiva_view::tracing;
 use eiva_view::url::Url;
 use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
 
-use eiva_core::args::CommonArgs;
-use eiva_core::config::Config;
+use eiva_claw_core::args::CommonArgs;
+use eiva_claw_core::config::Config;
 
 mod app;
 mod app_support;
@@ -24,10 +24,10 @@ mod components;
 mod menu;
 mod state;
 
-// Shared client-preference helpers from `eiva-core`, surfaced at the crate
+// Shared client-preference helpers from `eiva-claw-core`, surfaced at the crate
 // root so the desktop modules can reach them as `crate::…` (kept in lock-step
 // with the TUI client).
-use eiva_core::client_prefs::{
+use eiva_claw_core::client_prefs::{
     DEFAULT_GATEWAY_URL, load_auto_connect_gateway_urls, load_saved_gateway_url, save_gateway_url,
     should_bypass_connection_dialog,
 };

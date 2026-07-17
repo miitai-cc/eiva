@@ -2,11 +2,11 @@
 //!
 //! Handles model_* tool calls by interacting with the shared ModelRegistry.
 
-use eiva_core::tools::error::ToolResult;
+use eiva_claw_core::tools::error::ToolResult;
 use serde_json::{Value, json};
 use tracing::instrument;
 
-use eiva_core::models::{CostTier, ProviderKind, SharedModelRegistry, TaskComplexity};
+use eiva_claw_core::models::{CostTier, ProviderKind, SharedModelRegistry, TaskComplexity};
 
 /// Check if a tool name is a model tool.
 pub fn is_model_tool(name: &str) -> bool {
@@ -243,7 +243,7 @@ async fn exec_model_recommend(args: &Value, model_registry: &SharedModelRegistry
 // ── Host & load tools ───────────────────────────────────────────────────────
 
 async fn exec_host_info() -> ToolResult {
-    let host = eiva_core::runtime_ctx::get_host()
+    let host = eiva_claw_core::runtime_ctx::get_host()
         .ok_or_else(|| "Host capabilities not yet detected".to_string())?;
 
     let gpus: Vec<Value> = host
@@ -288,7 +288,7 @@ async fn exec_host_info() -> ToolResult {
 }
 
 async fn exec_load_status() -> ToolResult {
-    let tracker = eiva_core::runtime_ctx::get_load_tracker()
+    let tracker = eiva_claw_core::runtime_ctx::get_load_tracker()
         .ok_or_else(|| "Load tracker not yet initialised".to_string())?;
 
     let guard = tracker.read().await;
@@ -319,7 +319,7 @@ async fn exec_load_status() -> ToolResult {
 // ── Service tools ───────────────────────────────────────────────────────────
 
 async fn exec_service_list() -> ToolResult {
-    let mgr = eiva_core::runtime_ctx::get_service_manager()
+    let mgr = eiva_claw_core::runtime_ctx::get_service_manager()
         .ok_or_else(|| "Service manager not initialised".to_string())?;
     let mgr = mgr.read().await;
     let services: Vec<Value> = mgr
@@ -348,7 +348,7 @@ async fn exec_service_list() -> ToolResult {
 
 async fn exec_service_start(args: &Value) -> ToolResult {
     let name = parse_service_name(args)?;
-    let mgr = eiva_core::runtime_ctx::get_service_manager()
+    let mgr = eiva_claw_core::runtime_ctx::get_service_manager()
         .ok_or_else(|| "Service manager not initialised".to_string())?;
     let mut mgr = mgr.write().await;
     let info = mgr.start(&name).await?;
@@ -363,7 +363,7 @@ async fn exec_service_start(args: &Value) -> ToolResult {
 
 async fn exec_service_stop(args: &Value) -> ToolResult {
     let name = parse_service_name(args)?;
-    let mgr = eiva_core::runtime_ctx::get_service_manager()
+    let mgr = eiva_claw_core::runtime_ctx::get_service_manager()
         .ok_or_else(|| "Service manager not initialised".to_string())?;
     let mut mgr = mgr.write().await;
     let info = mgr.stop(&name).await?;
@@ -377,7 +377,7 @@ async fn exec_service_stop(args: &Value) -> ToolResult {
 
 async fn exec_service_restart(args: &Value) -> ToolResult {
     let name = parse_service_name(args)?;
-    let mgr = eiva_core::runtime_ctx::get_service_manager()
+    let mgr = eiva_claw_core::runtime_ctx::get_service_manager()
         .ok_or_else(|| "Service manager not initialised".to_string())?;
     let mut mgr = mgr.write().await;
     let info = mgr.restart(&name).await?;
@@ -396,7 +396,7 @@ async fn exec_service_logs(args: &Value) -> ToolResult {
         .get("tail")
         .and_then(|v| v.as_u64())
         .map(|n| n as usize);
-    let mgr = eiva_core::runtime_ctx::get_service_manager()
+    let mgr = eiva_claw_core::runtime_ctx::get_service_manager()
         .ok_or_else(|| "Service manager not initialised".to_string())?;
     let mgr = mgr.read().await;
     let lines = mgr.logs(&name, tail)?;
@@ -412,7 +412,7 @@ fn parse_service_name(args: &Value) -> ToolResult {
     args.get("name")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string())
-        .ok_or_else(|| eiva_core::tools::error::missing_param("name (service name)"))
+        .ok_or_else(|| eiva_claw_core::tools::error::missing_param("name (service name)"))
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -423,11 +423,11 @@ fn parse_model_id(args: &Value) -> ToolResult {
         .or_else(|| args.get("modelId"))
         .and_then(|v| v.as_str())
         .map(|s| s.to_string())
-        .ok_or_else(|| eiva_core::tools::error::missing_param("id (model ID)"))
+        .ok_or_else(|| eiva_claw_core::tools::error::missing_param("id (model ID)"))
 }
 
 /// Generate system prompt section for model selection guidance.
 pub async fn generate_model_prompt_section(model_registry: &SharedModelRegistry) -> String {
     let registry = model_registry.read().await;
-    eiva_core::models::generate_subagent_guidance(&registry)
+    eiva_claw_core::models::generate_subagent_guidance(&registry)
 }

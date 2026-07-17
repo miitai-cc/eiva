@@ -20,7 +20,7 @@ type UserTx = Arc<StdMutex<Option<sync_mpsc::Sender<UserInput>>>>;
 /// block was closed.
 fn close_open_thinking(m: &mut Vec<DisplayMessage>, duration_ms: Option<u64>) -> bool {
     let Some(idx) = m.iter().rposition(|x| {
-        x.role == eiva_core::types::MessageRole::Thinking
+        x.role == eiva_claw_core::types::MessageRole::Thinking
             && x.duration_ms.is_none()
             && !x.collapsed
     }) else {
@@ -178,7 +178,7 @@ pub(super) fn apply_gw_event(
     match ev {
         GwEvent::AuthChallenge => {
             // Gateway wants TOTP — show the dialog
-            gw_status.set(eiva_core::types::GatewayStatus::AuthRequired);
+            gw_status.set(eiva_claw_core::types::GatewayStatus::AuthRequired);
             let mut hatching = hatching_dialog.read().clone();
             hatching.hide_temporarily();
             hatching_dialog.set(hatching);
@@ -192,7 +192,7 @@ pub(super) fn apply_gw_event(
             messages.set(m);
         }
         GwEvent::Disconnected(reason) => {
-            gw_status.set(eiva_core::types::GatewayStatus::Disconnected);
+            gw_status.set(eiva_claw_core::types::GatewayStatus::Disconnected);
             show_auth_dialog.set(false);
             active_process.set(None);
             let mut m = messages.read().clone();
@@ -200,7 +200,7 @@ pub(super) fn apply_gw_event(
             messages.set(m);
         }
         GwEvent::Connected => {
-            gw_status.set(eiva_core::types::GatewayStatus::Connected);
+            gw_status.set(eiva_claw_core::types::GatewayStatus::Connected);
             let mut m = messages.read().clone();
             m.push(DisplayMessage::info("Gateway connected."));
             messages.set(m);
@@ -215,7 +215,7 @@ pub(super) fn apply_gw_event(
             }
         }
         GwEvent::Authenticated => {
-            gw_status.set(eiva_core::types::GatewayStatus::Connected);
+            gw_status.set(eiva_claw_core::types::GatewayStatus::Connected);
             show_auth_dialog.set(false);
             let mut m = messages.read().clone();
             m.push(DisplayMessage::success("Authenticated"));
@@ -253,7 +253,7 @@ pub(super) fn apply_gw_event(
             let mut m = messages.read().clone();
             let msg = match details {
                 Some(d) => DisplayMessage::with_details(
-                    eiva_core::types::MessageRole::Warning,
+                    eiva_claw_core::types::MessageRole::Warning,
                     summary,
                     d,
                 ),
@@ -280,7 +280,7 @@ pub(super) fn apply_gw_event(
             let mut m = messages.read().clone();
             let msg = match details {
                 Some(d) => DisplayMessage::with_details(
-                    eiva_core::types::MessageRole::Error,
+                    eiva_claw_core::types::MessageRole::Error,
                     summary,
                     d,
                 ),
@@ -305,7 +305,7 @@ pub(super) fn apply_gw_event(
 
             let mut m = messages.read().clone();
             if let Some(last) = m.last_mut() {
-                if last.role == eiva_core::types::MessageRole::Assistant {
+                if last.role == eiva_claw_core::types::MessageRole::Assistant {
                     last.append(&text);
                 } else {
                     m.push(DisplayMessage::assistant(&text));
@@ -366,7 +366,7 @@ pub(super) fn apply_gw_event(
             // what it did.
             let mut m = messages.read().clone();
             match m.last_mut() {
-                Some(last) if last.role == eiva_core::types::MessageRole::Thinking => {
+                Some(last) if last.role == eiva_claw_core::types::MessageRole::Thinking => {
                     last.append(&delta);
                 }
                 _ => {
@@ -393,13 +393,13 @@ pub(super) fn apply_gw_event(
             }
         }
         GwEvent::ModelReady(detail) => {
-            gw_status.set(eiva_core::types::GatewayStatus::ModelReady);
+            gw_status.set(eiva_claw_core::types::GatewayStatus::ModelReady);
             let mut m = messages.read().clone();
             m.push(DisplayMessage::success(detail));
             messages.set(m);
         }
         GwEvent::ModelReloaded { provider, model } => {
-            gw_status.set(eiva_core::types::GatewayStatus::ModelReady);
+            gw_status.set(eiva_claw_core::types::GatewayStatus::ModelReady);
             let label = if provider.is_empty() {
                 String::new()
             } else if model.is_empty() {
@@ -428,7 +428,7 @@ pub(super) fn apply_gw_event(
             tool_started.set(started);
             let mut m = messages.read().clone();
             if m.last()
-                .map(|x| x.role == eiva_core::types::MessageRole::Assistant)
+                .map(|x| x.role == eiva_claw_core::types::MessageRole::Assistant)
                 .unwrap_or(false)
             {
                 if let Some(last) = m.last_mut() {
@@ -539,10 +539,10 @@ pub(super) fn apply_gw_event(
             user_prompt_type.set(Some(prompt.prompt_type.clone()));
             // Set default selection based on prompt type
             let default_sel = match &prompt.prompt_type {
-                eiva_core::user_prompt_types::PromptType::Select { default, .. } => {
+                eiva_claw_core::user_prompt_types::PromptType::Select { default, .. } => {
                     default.unwrap_or(0)
                 }
-                eiva_core::user_prompt_types::PromptType::Confirm { default } => {
+                eiva_claw_core::user_prompt_types::PromptType::Confirm { default } => {
                     if *default {
                         0
                     } else {
@@ -554,7 +554,7 @@ pub(super) fn apply_gw_event(
             user_prompt_selected.set(default_sel);
             // Seed MultiSelect checkboxes from the prompt's defaults.
             let checked = match &prompt.prompt_type {
-                eiva_core::user_prompt_types::PromptType::MultiSelect {
+                eiva_claw_core::user_prompt_types::PromptType::MultiSelect {
                     options,
                     defaults,
                 } => {
@@ -573,14 +573,14 @@ pub(super) fn apply_gw_event(
 
             // Build informative message based on prompt type
             let hint = match &prompt.prompt_type {
-                eiva_core::user_prompt_types::PromptType::Select { options, .. } => {
+                eiva_claw_core::user_prompt_types::PromptType::Select { options, .. } => {
                     let opt_list: Vec<_> = options.iter().map(|o| o.label.as_str()).collect();
                     format!("Options: {}", opt_list.join(", "))
                 }
-                eiva_core::user_prompt_types::PromptType::Confirm { .. } => {
+                eiva_claw_core::user_prompt_types::PromptType::Confirm { .. } => {
                     "Yes/No".to_string()
                 }
-                eiva_core::user_prompt_types::PromptType::MultiSelect { options, .. } => {
+                eiva_claw_core::user_prompt_types::PromptType::MultiSelect { options, .. } => {
                     let opt_list: Vec<_> = options.iter().map(|o| o.label.as_str()).collect();
                     format!("Select any of: {} (Space toggles)", opt_list.join(", "))
                 }
@@ -618,7 +618,7 @@ pub(super) fn apply_gw_event(
             messages.set(m);
         }
         GwEvent::VaultLocked => {
-            gw_status.set(eiva_core::types::GatewayStatus::VaultLocked);
+            gw_status.set(eiva_claw_core::types::GatewayStatus::VaultLocked);
             show_vault_unlock.set(true);
             vault_password.set(String::new());
             vault_error.set(String::new());

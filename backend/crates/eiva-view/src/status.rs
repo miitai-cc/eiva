@@ -3,7 +3,7 @@
 //! The status bar shows connection state, current model/provider,
 //! and streaming progress at the bottom of the client window.
 
-use eiva_core::ui::ConnectionStatus;
+use eiva_claw_core::ui::ConnectionStatus;
 
 use crate::tone::Tone;
 

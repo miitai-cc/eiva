@@ -2,7 +2,7 @@
 //!
 //! This crate defines the exact slice of data each UI component needs
 //! to render.  It sits between the canonical domain models in
-//! [`eiva_core::ui`] and the framework-specific rendering code
+//! [`eiva_claw_core::ui`] and the framework-specific rendering code
 //! in the TUI (iocraft) and desktop (Dioxus) crates.
 //!
 //! ## Design principles
@@ -19,9 +19,9 @@
 //!   types in their own Props struct, adding framework-specific fields
 //!   like `EventHandler` (Dioxus) or `State` / `Hooks` (iocraft).
 //!
-//! ## Why separate from `eiva_core::ui`
+//! ## Why separate from `eiva_claw_core::ui`
 //!
-//! [`eiva_core::ui`] owns the *canonical* models (`ChatMessage`,
+//! [`eiva_claw_core::ui`] owns the *canonical* models (`ChatMessage`,
 //! `ToolCallInfo`, `ThreadInfo`, `DialogState`, `StreamingState`).
 //! These carry enough state to translate from `GatewayEvent` and
 //! manage intermediate state.

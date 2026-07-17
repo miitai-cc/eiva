@@ -3,8 +3,8 @@
 //! These tests verify that `From` impls correctly convert canonical
 //! domain models into component-view types without data loss.
 
-use eiva_core::types::MessageRole;
-use eiva_core::ui::{ChatMessage, ThreadInfo, ToolCallInfo};
+use eiva_claw_core::types::MessageRole;
+use eiva_claw_core::ui::{ChatMessage, ThreadInfo, ToolCallInfo};
 use eiva_view::{
     ApiKeyDialogData, AuthDialogData, CredentialRequestData, MessageBubbleData, ModelSelectorData,
     PairingStep, ProviderOptionData, ProviderSelectorData, SidebarItemData, StatusBarData,
@@ -539,7 +539,7 @@ fn default_credential() -> CredentialRequestData {
 
 #[test]
 fn status_bar_connection_labels() {
-    use eiva_core::ui::ConnectionStatus;
+    use eiva_claw_core::ui::ConnectionStatus;
     let mut sb = StatusBarData::default();
     assert_eq!(sb.connection_label(), "Disconnected");
     sb.connection = ConnectionStatus::Connected;
@@ -551,7 +551,7 @@ fn status_bar_connection_labels() {
 #[test]
 fn status_bar_static_methods() {
     use ConnectionStatus::*;
-    use eiva_core::ui::ConnectionStatus;
+    use eiva_claw_core::ui::ConnectionStatus;
 
     assert_eq!(
         StatusBarData::connection_label_static(&Disconnected),
@@ -586,7 +586,7 @@ fn status_bar_static_methods() {
 
 #[test]
 fn status_bar_connection_class() {
-    use eiva_core::ui::ConnectionStatus;
+    use eiva_claw_core::ui::ConnectionStatus;
     let mut sb = StatusBarData::default();
     assert_eq!(sb.connection_class(), "is-warn");
     sb.connection = ConnectionStatus::Connected;
@@ -609,7 +609,7 @@ fn status_bar_model_display() {
 
 #[test]
 fn status_bar_is_connected() {
-    use eiva_core::ui::ConnectionStatus;
+    use eiva_claw_core::ui::ConnectionStatus;
     let mut sb = StatusBarData::default();
     assert!(!sb.is_connected());
     sb.connection = ConnectionStatus::Connected;
@@ -620,7 +620,7 @@ fn status_bar_is_connected() {
 
 #[test]
 fn status_bar_connection_error() {
-    use eiva_core::ui::ConnectionStatus;
+    use eiva_claw_core::ui::ConnectionStatus;
     let mut sb = StatusBarData::default();
     assert!(sb.connection_error().is_none());
     sb.connection = ConnectionStatus::Error("fail".into());
@@ -885,7 +885,7 @@ fn live_status_line_formats_process_stats() {
     let mut tc = ToolCallData {
         name: "execute_command".into(),
         arguments: r#"{"command":"cargo build"}"#.into(),
-        live_status: Some(eiva_core::ui::ToolLiveStatus {
+        live_status: Some(eiva_claw_core::ui::ToolLiveStatus {
             elapsed_ms: 12_000,
             pid: Some(4242),
             cpu_percent: Some(87.4),
@@ -915,7 +915,7 @@ fn live_status_line_formats_process_stats() {
 fn live_status_line_without_process_shows_elapsed_only() {
     let tc = ToolCallData {
         name: "web_search".into(),
-        live_status: Some(eiva_core::ui::ToolLiveStatus {
+        live_status: Some(eiva_claw_core::ui::ToolLiveStatus {
             elapsed_ms: 3_400,
             pid: None,
             cpu_percent: None,
@@ -934,7 +934,7 @@ fn live_status_line_without_process_shows_elapsed_only() {
 fn live_status_line_includes_tool_message() {
     let tc = ToolCallData {
         name: "engine_pull".into(),
-        live_status: Some(eiva_core::ui::ToolLiveStatus {
+        live_status: Some(eiva_claw_core::ui::ToolLiveStatus {
             elapsed_ms: 60_000,
             pid: None,
             cpu_percent: None,
@@ -957,7 +957,7 @@ fn set_tool_live_status_targets_running_call_and_clears_on_result() {
     let mut msg = DisplayMessageData::assistant("");
     msg.add_tool_call("tc-1".into(), "execute_command".into(), "{}".into());
 
-    let status = eiva_core::ui::ToolLiveStatus {
+    let status = eiva_claw_core::ui::ToolLiveStatus {
         elapsed_ms: 2_000,
         pid: Some(7),
         cpu_percent: None,

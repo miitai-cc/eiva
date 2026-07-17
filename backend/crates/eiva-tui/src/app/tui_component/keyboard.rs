@@ -181,7 +181,7 @@ pub(super) fn apply_key_event(
                         let mut m = messages.read().clone();
                         m.push(DisplayMessage::info("Authentication cancelled."));
                         messages.set(m);
-                        gw_status.set(eiva_core::types::GatewayStatus::Disconnected);
+                        gw_status.set(eiva_claw_core::types::GatewayStatus::Disconnected);
                     }
                     KeyCode::Char(c) if c.is_ascii_digit() => {
                         let mut code_val = auth_code.read().clone();
@@ -674,7 +674,7 @@ pub(super) fn apply_key_event(
                                 let _ = tx.send(UserInput::UserPromptResponse {
                                         id,
                                         dismissed: true,
-                                        value: eiva_core::user_prompt_types::PromptResponseValue::Text(String::new()),
+                                        value: eiva_claw_core::user_prompt_types::PromptResponseValue::Text(String::new()),
                                     });
                             }
                         }
@@ -682,8 +682,8 @@ pub(super) fn apply_key_event(
                     // Navigation for Select/MultiSelect
                     KeyCode::Up | KeyCode::Char('k') => {
                         if let Some(
-                            eiva_core::user_prompt_types::PromptType::Select { .. }
-                            | eiva_core::user_prompt_types::PromptType::MultiSelect { .. },
+                            eiva_claw_core::user_prompt_types::PromptType::Select { .. }
+                            | eiva_claw_core::user_prompt_types::PromptType::MultiSelect { .. },
                         ) = &prompt_type
                         {
                             let current = user_prompt_selected.get();
@@ -694,10 +694,10 @@ pub(super) fn apply_key_event(
                     }
                     KeyCode::Down | KeyCode::Char('j') => {
                         if let Some(
-                            eiva_core::user_prompt_types::PromptType::Select {
+                            eiva_claw_core::user_prompt_types::PromptType::Select {
                                 options, ..
                             }
-                            | eiva_core::user_prompt_types::PromptType::MultiSelect {
+                            | eiva_claw_core::user_prompt_types::PromptType::MultiSelect {
                                 options,
                                 ..
                             },
@@ -711,7 +711,7 @@ pub(super) fn apply_key_event(
                     }
                     // Left/Right for Confirm
                     KeyCode::Left | KeyCode::Right => {
-                        if let Some(eiva_core::user_prompt_types::PromptType::Confirm {
+                        if let Some(eiva_claw_core::user_prompt_types::PromptType::Confirm {
                             ..
                         }) = prompt_type
                         {
@@ -721,7 +721,7 @@ pub(super) fn apply_key_event(
                     }
                     // Y/N shortcuts for Confirm
                     KeyCode::Char('y') | KeyCode::Char('Y') => {
-                        if let Some(eiva_core::user_prompt_types::PromptType::Confirm {
+                        if let Some(eiva_claw_core::user_prompt_types::PromptType::Confirm {
                             ..
                         }) = prompt_type
                         {
@@ -734,7 +734,7 @@ pub(super) fn apply_key_event(
                         }
                     }
                     KeyCode::Char('n') | KeyCode::Char('N') => {
-                        if let Some(eiva_core::user_prompt_types::PromptType::Confirm {
+                        if let Some(eiva_claw_core::user_prompt_types::PromptType::Confirm {
                             ..
                         }) = prompt_type
                         {
@@ -749,7 +749,7 @@ pub(super) fn apply_key_event(
                     KeyCode::Char(' ')
                         if matches!(
                             prompt_type,
-                            Some(eiva_core::user_prompt_types::PromptType::MultiSelect { .. })
+                            Some(eiva_claw_core::user_prompt_types::PromptType::MultiSelect { .. })
                         ) =>
                     {
                         // Toggle the highlighted option's checkbox.
@@ -765,8 +765,8 @@ pub(super) fn apply_key_event(
                         if matches!(
                             prompt_type,
                             None | Some(
-                                eiva_core::user_prompt_types::PromptType::TextInput { .. }
-                            ) | Some(eiva_core::user_prompt_types::PromptType::Form { .. })
+                                eiva_claw_core::user_prompt_types::PromptType::TextInput { .. }
+                            ) | Some(eiva_claw_core::user_prompt_types::PromptType::Form { .. })
                         ) {
                             let mut input = user_prompt_input.read().clone();
                             input.push(c);
@@ -788,7 +788,7 @@ pub(super) fn apply_key_event(
 
                         // Build response based on prompt type
                         let (value, display) = match &prompt_type {
-                            Some(eiva_core::user_prompt_types::PromptType::Select {
+                            Some(eiva_claw_core::user_prompt_types::PromptType::Select {
                                 options,
                                 ..
                             }) => {
@@ -796,20 +796,20 @@ pub(super) fn apply_key_event(
                                     .get(selected)
                                     .map(|o| o.label.clone())
                                     .unwrap_or_default();
-                                (eiva_core::user_prompt_types::PromptResponseValue::Selected(vec![label.clone()]), format!("→ {}", label))
+                                (eiva_claw_core::user_prompt_types::PromptResponseValue::Selected(vec![label.clone()]), format!("→ {}", label))
                             }
-                            Some(eiva_core::user_prompt_types::PromptType::Confirm {
+                            Some(eiva_claw_core::user_prompt_types::PromptType::Confirm {
                                 ..
                             }) => {
                                 let yes = selected == 0;
                                 (
-                                    eiva_core::user_prompt_types::PromptResponseValue::Confirm(
+                                    eiva_claw_core::user_prompt_types::PromptResponseValue::Confirm(
                                         yes,
                                     ),
                                     format!("→ {}", if yes { "Yes" } else { "No" }),
                                 )
                             }
-                            Some(eiva_core::user_prompt_types::PromptType::MultiSelect {
+                            Some(eiva_claw_core::user_prompt_types::PromptType::MultiSelect {
                                 options,
                                 ..
                             }) => {
@@ -829,14 +829,14 @@ pub(super) fn apply_key_event(
                                 }
                                 let display = format!("→ {}", labels.join(", "));
                                 (
-                                    eiva_core::user_prompt_types::PromptResponseValue::Selected(
+                                    eiva_claw_core::user_prompt_types::PromptResponseValue::Selected(
                                         labels,
                                     ),
                                     display,
                                 )
                             }
                             _ => (
-                                eiva_core::user_prompt_types::PromptResponseValue::Text(
+                                eiva_claw_core::user_prompt_types::PromptResponseValue::Text(
                                     input.clone(),
                                 ),
                                 format!("→ {}", input),

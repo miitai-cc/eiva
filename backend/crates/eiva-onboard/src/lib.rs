@@ -8,11 +8,11 @@ use std::io::{self, Write};
 
 use anyhow::{Context, Result};
 
-use eiva_core::config::{Config, ModelProvider};
-use eiva_core::providers::PROVIDERS;
-use eiva_core::secrets::SecretsManager;
-use eiva_core::soul::{DEFAULT_SOUL_CONTENT, SoulManager};
-use eiva_core::theme as t;
+use eiva_claw_core::config::{Config, ModelProvider};
+use eiva_claw_core::providers::PROVIDERS;
+use eiva_claw_core::secrets::SecretsManager;
+use eiva_claw_core::soul::{DEFAULT_SOUL_CONTENT, SoulManager};
+use eiva_claw_core::theme as t;
 
 mod messaging;
 mod prompts;
@@ -389,7 +389,7 @@ pub fn run_onboard_wizard(
         } else {
             // No API key provided, show interactive selection
             // (built-in providers plus any user-defined custom providers)
-            let all_providers = eiva_core::providers::all_providers();
+            let all_providers = eiva_claw_core::providers::all_providers();
             let provider_names: Vec<&str> = all_providers.iter().map(|p| p.display).collect();
             match arrow_select(&provider_names, "Select a model provider:")? {
                 Some(idx) => all_providers[idx],
@@ -408,7 +408,7 @@ pub fn run_onboard_wizard(
     } else {
         // No args provided, show interactive selection
         // (built-in providers plus any user-defined custom providers)
-        let all_providers = eiva_core::providers::all_providers();
+        let all_providers = eiva_claw_core::providers::all_providers();
         let provider_names: Vec<&str> = all_providers.iter().map(|p| p.display).collect();
         match arrow_select(&provider_names, "Select a model provider:")? {
             Some(idx) => all_providers[idx],
@@ -433,7 +433,7 @@ pub fn run_onboard_wizard(
     println!();
 
     // ── 3. Authentication ──────────────────────────────────────────
-    use eiva_core::providers::AuthMethod;
+    use eiva_claw_core::providers::AuthMethod;
 
     if let Some(secret_key) = provider.secret_key {
         match provider.auth_method {
@@ -675,7 +675,7 @@ pub fn run_onboard_wizard(
         print!("  {} Fetching available models…", t::muted("⠋"));
         io::stdout().flush()?;
         let result = tokio::task::block_in_place(|| {
-            handle.block_on(eiva_core::providers::fetch_models(
+            handle.block_on(eiva_claw_core::providers::fetch_models(
                 provider.id,
                 api_key.as_deref(),
                 base_ref,

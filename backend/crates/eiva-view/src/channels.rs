@@ -12,8 +12,8 @@ pub struct ChannelStatusData {
     pub last_message: Option<String>,
 }
 
-impl From<&eiva_core::gateway::protocol::frames::ChannelStatusDto> for ChannelStatusData {
-    fn from(dto: &eiva_core::gateway::protocol::frames::ChannelStatusDto) -> Self {
+impl From<&eiva_claw_core::gateway::protocol::frames::ChannelStatusDto> for ChannelStatusData {
+    fn from(dto: &eiva_claw_core::gateway::protocol::frames::ChannelStatusDto) -> Self {
         Self {
             name: dto.name.clone(),
             channel_type: dto.channel_type.clone(),

@@ -15,7 +15,7 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
-eiva-core.workspace = true
+eiva-claw-core.workspace = true
 eiva-view.workspace = true
 
 # TUI framework

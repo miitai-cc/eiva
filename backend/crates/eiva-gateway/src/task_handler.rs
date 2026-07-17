@@ -2,12 +2,12 @@
 //!
 //! Handles task_* tool calls by interacting with the shared TaskManager.
 
-use eiva_core::tools::error::ToolResult;
+use eiva_claw_core::tools::error::ToolResult;
 use serde_json::{Value, json};
 use tracing::instrument;
 
 use super::SharedTaskManager;
-use eiva_core::tasks::{
+use eiva_claw_core::tasks::{
     Task, TaskIcon, TaskId, TaskStatus, format_task_indicators, format_task_status,
 };
 

@@ -131,7 +131,7 @@ EIVA 的後端核心採用 **[Eiva 🦀🦞](./backend/)** —— 一套以 Rust
 | 技術 | 用途 |
 |------|------|
 | **Rust 1.86+ (Edition 2024)** | 核心後端語言 |
-| **eiva-core** | Agent 核心庫（設定、閘道、工具、安全） |
+| **eiva-claw-core** | Agent 核心庫（設定、閘道、工具、安全） |
 | **eiva-gateway** | 獨立閘道守護程序（WebSocket 協議） |
 | **eiva-cli** | 命令列工具與管理介面 |
 | **tokio** | 非同步執行時 |
@@ -327,7 +327,7 @@ cargo build --release
 cargo build --workspace
 
 # 帶完整功能建置（Matrix、瀏覽器自動化）
-cargo build --release --features eiva-core/full
+cargo build --release --features eiva-claw-core/full
 ```
 
 #### 設定檔範例（`config.example.toml` → `~/.eiva/config.toml`）
@@ -596,7 +596,7 @@ eiva/
 │   ├── CHANGELOG.md            # 版本記錄
 │   ├── config.example.toml     # 設定檔範例
 │   ├── crates/                 # Rust Crate 模組
-│   │   ├── eiva-core/     # 核心庫（閘道、工具、安全）
+│   │   ├── eiva-claw-core/     # 核心庫（閘道、工具、安全）
 │   │   ├── eiva-cli/      # CLI 工具
 │   │   ├── eiva-tui/      # 終端 UI
 │   │   ├── eiva-gateway/  # 閘道服務

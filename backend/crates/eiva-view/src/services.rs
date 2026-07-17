@@ -14,8 +14,8 @@ pub struct ServiceInfoData {
     pub mcp_tools: u32,
 }
 
-impl From<eiva_core::gateway::protocol::frames::ServiceInfoDto> for ServiceInfoData {
-    fn from(dto: eiva_core::gateway::protocol::frames::ServiceInfoDto) -> Self {
+impl From<eiva_claw_core::gateway::protocol::frames::ServiceInfoDto> for ServiceInfoData {
+    fn from(dto: eiva_claw_core::gateway::protocol::frames::ServiceInfoDto) -> Self {
         Self {
             name: dto.name,
             service_type: dto.service_type,

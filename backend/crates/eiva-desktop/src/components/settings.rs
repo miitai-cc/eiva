@@ -6,7 +6,7 @@ use dioxus_bulma::components::{Title, TitleSize};
 use dioxus_bulma::prelude::{
     BulmaColor, BulmaSize, Button, Buttons, Control, Field, FieldLabel, Help,
 };
-use eiva_core::providers::{self, ApiFormat, CustomProviderConfig};
+use eiva_claw_core::providers::{self, ApiFormat, CustomProviderConfig};
 
 use super::RcModal;
 use crate::state::Theme;

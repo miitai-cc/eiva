@@ -12,8 +12,8 @@ pub struct ToolConfigData {
     pub description: String,
 }
 
-impl From<&eiva_core::gateway::protocol::frames::ToolConfigDto> for ToolConfigData {
-    fn from(dto: &eiva_core::gateway::protocol::frames::ToolConfigDto) -> Self {
+impl From<&eiva_claw_core::gateway::protocol::frames::ToolConfigDto> for ToolConfigData {
+    fn from(dto: &eiva_claw_core::gateway::protocol::frames::ToolConfigDto) -> Self {
         Self {
             name: dto.name.clone(),
             category: dto.category.clone(),

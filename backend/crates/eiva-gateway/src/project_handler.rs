@@ -1,7 +1,7 @@
 //! Project client-frame handlers (list / create / rename / delete / switch).
 //!
 //! A project is a named working directory that groups threads. The *active*
-//! project's [`path`](eiva_core::projects::Project::path) is the agent's
+//! project's [`path`](eiva_claw_core::projects::Project::path) is the agent's
 //! working directory: whenever the active project changes (here, or via a
 //! thread switch in [`crate::thread_handler`]), [`activate_project`] repoints
 //! `config.workspace_dir` so tool execution runs in that directory.
@@ -10,10 +10,10 @@ use anyhow::Result;
 use std::path::Path;
 use tracing::debug;
 
-use eiva_core::config::Config;
-use eiva_core::gateway::protocol::server::send_frame;
-use eiva_core::gateway::{ServerFrame, ServerFrameType, ServerPayload, transport};
-use eiva_core::projects::{ProjectId, ProjectManager};
+use eiva_claw_core::config::Config;
+use eiva_claw_core::gateway::protocol::server::send_frame;
+use eiva_claw_core::gateway::{ServerFrame, ServerFrameType, ServerPayload, transport};
+use eiva_claw_core::projects::{ProjectId, ProjectManager};
 
 use crate::admin;
 use crate::thread_updates::send_projects_update;

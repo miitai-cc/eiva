@@ -9,7 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@eiva/common": "file:../lib/react/common/eiva-common",
     "@xyflow/react": "^12.11.2",
+    "eiva-fe-workflow": "file:../lib/react/workflow/eiva-fe-workflow",
     "protobufjs": "^8.7.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

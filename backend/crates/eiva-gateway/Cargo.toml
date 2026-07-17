@@ -1,6 +1,6 @@
 [package]
 name = "eiva-gateway"
-description = "Eiva gateway server — WebSocket/SSH session handling, model dispatch, messenger and tool orchestration. The client/protocol interface lives in eiva-core."
+description = "Eiva gateway server — WebSocket/SSH session handling, model dispatch, messenger and tool orchestration. The client/protocol interface lives in eiva-claw-core."
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -17,15 +17,19 @@ default = ["semantic-memory"]
 # Semantic vector memory (auto-ingest + recall via steel-memory). On by
 # default for the gateway; disable for targets where ONNX Runtime is
 # unavailable (e.g. 32-bit ARM).
-semantic-memory = ["eiva-core/semantic-memory"]
-mcp = ["eiva-core/mcp"]
-matrix = ["eiva-core/matrix", "chat-system/matrix"]
-whatsapp = ["eiva-core/whatsapp", "chat-system/whatsapp"]
-signal-cli = ["eiva-core/signal-cli", "chat-system/signal-cli"]
+semantic-memory = ["eiva-claw-core/semantic-memory"]
+mcp = ["eiva-claw-core/mcp"]
+matrix = ["eiva-claw-core/matrix", "chat-system/matrix"]
+whatsapp = ["eiva-claw-core/whatsapp", "chat-system/whatsapp"]
+signal-cli = ["eiva-claw-core/signal-cli", "chat-system/signal-cli"]
 all-messengers = ["matrix", "whatsapp", "signal-cli"]
 
 [dependencies]
-eiva-core.workspace = true
+eiva-claw-core = { workspace = true }
+eiva-be-workflow = { path = "../../../lib/rust/crates/eiva-be-workflow" }
+eiva-be-codex = { workspace = true }
+eiva-be-openclaw = { workspace = true }
+eiva-common = { workspace = true }
 chat-system.workspace = true
 
 anyhow.workspace = true
@@ -69,5 +73,4 @@ rusqlite = { version = "0.37", features = ["bundled-full"] }
 [dev-dependencies]
 tempfile = "3"
 
-[build-dependencies]
-prost-build = "0.13"
+

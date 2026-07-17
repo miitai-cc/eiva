@@ -10,9 +10,9 @@ use std::sync::Arc;
 
 use tracing::{debug, info, warn};
 
-use eiva_core::gateway::CopilotSession;
-use eiva_core::providers as crate_providers;
-use eiva_core::secrets::SecretsManager;
+use eiva_claw_core::gateway::CopilotSession;
+use eiva_claw_core::providers as crate_providers;
+use eiva_claw_core::secrets::SecretsManager;
 
 use crate::SharedVault;
 

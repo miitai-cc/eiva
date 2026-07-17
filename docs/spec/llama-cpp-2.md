@@ -6,7 +6,7 @@
 
 在 Eiva 中，當設定為「完全在本地執行」的 `inner` 模式時，系統不再依賴外部的 HTTP 推理引擎 (如 Ollama API 伺服器)，而是透過 Rust 原生的 C++ 綁定套件 `llama-cpp-2` 直接在後端行程 (Process) 的記憶體中載入 `.gguf` 模型並進行推理。
 
-* **Provider 實作**：所有的 Native 推理邏輯皆封裝於 `eiva-core/src/providers/native_llama.rs` 中。
+* **Provider 實作**：所有的 Native 推理邏輯皆封裝於 `eiva-claw-core/src/providers/native_llama.rs` 中。
 * **懶加載機制 (Lazy Loading)**：為了避免啟動伺服器時的長時間等待，模型權重與 Backend 初始化被包裝在 `std::sync::OnceLock` 中。只有在接收到第一筆對話請求時，系統才會將 `.gguf` 檔案從硬碟載入至 CPU RAM 中。一旦載入後，模型實例將跨 Request 共用，加快後續的推論速度。
 * **Prompt 格式化**：目前採用基礎的 ChatML 格式化，將使用者的歷史訊息 (`req.messages`) 轉換為連續的字串（包含 `<|im_start|>` 與 `<|im_end|>` 標記），再進行 Tokenize 傳入模型。
 * **解碼與生成**：推理迴圈採用每次生成一個 Token 的 Greedy Sampling (貪婪演算法)，並利用 `token_to_piece_bytes` 方法處理 UTF-8 的對應轉換。

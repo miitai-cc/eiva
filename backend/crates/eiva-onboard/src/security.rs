@@ -5,15 +5,15 @@ use std::io::{self, BufRead, Write};
 use anyhow::{Context, Result};
 
 use crate::prompts::{print_qr_code, prompt_line, whoami};
-use eiva_core::config::Config;
-use eiva_core::secrets::SecretsManager;
-use eiva_core::theme as t;
+use eiva_claw_core::config::Config;
+use eiva_claw_core::secrets::SecretsManager;
+use eiva_claw_core::theme as t;
 
 /// Perform OAuth device flow authentication and store the token.
 pub(crate) fn perform_device_flow_auth(
     reader: &mut impl BufRead,
     provider_name: &str,
-    device_config: &eiva_core::providers::DeviceFlowConfig,
+    device_config: &eiva_claw_core::providers::DeviceFlowConfig,
     secret_key: &str,
     secrets: &mut SecretsManager,
 ) -> Result<()> {
@@ -26,7 +26,7 @@ pub(crate) fn perform_device_flow_auth(
     // Start the device flow
     let handle = tokio::runtime::Handle::current();
     let auth_response = tokio::task::block_in_place(|| {
-        handle.block_on(eiva_core::providers::start_device_flow(device_config))
+        handle.block_on(eiva_claw_core::providers::start_device_flow(device_config))
     })
     .map_err(|e| anyhow::anyhow!(e))?;
 
@@ -77,7 +77,7 @@ pub(crate) fn perform_device_flow_auth(
     let mut token: Option<String> = None;
     for _attempt in 0..max_attempts {
         match tokio::task::block_in_place(|| {
-            handle.block_on(eiva_core::providers::poll_device_token(
+            handle.block_on(eiva_claw_core::providers::poll_device_token(
                 device_config,
                 &auth_response.device_code,
             ))
@@ -249,7 +249,7 @@ pub(crate) fn setup_agent_ssh_key(
     reader: &mut impl BufRead,
     secrets: &mut SecretsManager,
 ) -> Result<()> {
-    use eiva_core::secrets::AccessPolicy;
+    use eiva_claw_core::secrets::AccessPolicy;
 
     // Check if one already exists.
     let has_key = secrets
